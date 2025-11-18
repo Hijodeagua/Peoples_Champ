@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Peoples Champ</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <!-- Top nav -->
+  <header class="pc-header">
+    <div class="pc-logo">
+      Peoples Champ
+    </div>
+    <nav class="pc-nav">
+      <a href="#daily">Daily Challenge</a>
+      <a href="#leaderboard">Current Leaderboard</a>
+      <a href="#methodology">Methodology</a>
+      <a href="#qa">Q&A</a>
+    </nav>
+  </header>
+
+  <!-- Main hero section -->
+  <main class="pc-main">
+    <section class="pc-hero">
+      <h1>Welcome to the Peoples Champ</h1>
+      <p class="pc-tagline">
+        A daily head-to-head ranking game for NBA stars. You pick the better player. 
+        The crowd decides the champ.
+      </p>
+
+      <button class="pc-cta" id="daily-rank-button">
+        <span class="pc-cta-icon">🏀</span>
+        <span class="pc-cta-text">
+          Do Daily Rank
+          <small>Rank today’s 5 players and see how you stack up.</small>
+        </span>
+      </button>
+    </section>
+
+    <!-- Placeholder sections (can be filled later / linked to other pages) -->
+    <section id="daily" class="pc-section">
+      <h2>Daily Challenge</h2>
+      <p>Come back every day to rank a new set of 5 NBA players in head-to-head matchups.</p>
+    </section>
+
+    <section id="leaderboard" class="pc-section">
+      <h2>Current Leaderboard</h2>
+      <p>Soon this will show the top players by rating and the sharpest users on the site.</p>
+    </section>
+
+    <section id="methodology" class="pc-section">
+      <h2>Methodology</h2>
+      <p>
+        Behind the scenes, we use an Elo-style rating system plus advanced stats 
+        (WS, shooting efficiency & more) to track who the people really believe is best.
+      </p>
+    </section>
+
+    <section id="qa" class="pc-section">
+      <h2>Q&A</h2>
+      <p>Have questions? This section will eventually host FAQs, rules and how scoring works.</p>
+    </section>
+  </main>
+
+  <footer class="pc-footer">
+    <span>© <span id="year"></span> Peoples Champ</span>
+  </footer>
+
+  <script>
+    const API_BASE = "http://127.0.0.1:8000";
+
+    const yearSpan = document.getElementById("year");
+    yearSpan.textContent = new Date().getFullYear();
+
+    const dailyButton = document.getElementById("daily-rank-button");
+    const dailySection = document.getElementById("daily-play");
+    const dailyContent = document.getElementById("daily-play-inner");
+    const dailyStatus = document.getElementById("daily-status");
+
+    const state = {
+      dailySet: null,
+      choices: {}, // matchup_id -> winner_player_id
+    };
+
+    dailyButton.addEventListener("click", () => {
+      loadDailySet();
+    });
+
+    async function loadDailySet() {
+      dailyStatus.textContent = "";
+      dailyButton.disabled = true;
+      dailyButton.querySelector(".pc-cta-text").firstChild.textContent = "Loading… ";
+
+      try {
+        const res = await fetch(`${API_BASE}/daily-set/`);
+        if (!res.ok) {
+          throw new Error(`HTTP ${res.status}`);
+        }
+        const data = await res.json();
+        state.dailySet = data;
+        state.choices = {};
+        renderDailySet(data);
+        dailySection.classList.remove("pc-hidden");
+        document.getElementById("daily").scrollIntoView({ behavior: "smooth" });
+      } catch (err) {
+        console.error(err);
+        dailyStatus.textContent = "Could not load today’s daily set. Try again in a bit.";
+      } finally {
+        dailyButton.disabled = false;
+        dailyButton.querySelector(".pc-cta-text").firstChild.textContent = "Do Daily Rank";
+      }
+    }
+
+    function renderDailySet(data) {
+      // expect shape: { date, players: [...], matchups: [...] }
+
+      const playersById = {};
+      (data.players || []).forEach((p) => {
+        playersById[p.id] = p;
+      });
+
+      const matchups = data.matchups || [];
+      const total = matchups.length;
+
+      dailyContent.innerHTML = `
+        <p class="pc-daily-subtitle">
+          Today’s set • ${data.date || "Unknown date"} • ${matchups.length} matchups
+        </p>
+        <div class="pc-progress" id="daily-progress">
+          0 of ${total} matchups answered
+        </div>
+        <div class="pc-matchups">
+          ${matchups
+            .map((m) => {
+              const p1 = playersById[m.player1_id];
+              const p2 = playersById[m.player2_id];
+              if (!p1 || !p2) return "";
+
+              return `
+                <div class="pc-matchup" data-matchup-id="${m.id}">
+                  <div class="pc-matchup-header">Matchup ${m.order_index + 1}</div>
+                  <div class="pc-matchup-body">
+                    <button class="pc-player-option" data-player-id="${p1.id}">
+                      <span class="pc-player-name">${p1.name}</span>
+                      <span class="pc-player-meta">${p1.team} • ${p1.position}</span>
+                    </button>
+                    <span class="pc-vs">vs</span>
+                    <button class="pc-player-option" data-player-id="${p2.id}">
+                      <span class="pc-player-name">${p2.name}</span>
+                      <span class="pc-player-meta">${p2.team} • ${p2.position}</span>
+                    </button>
+                  </div>
+                </div>
+              `;
+            })
+            .join("")}
+        </div>
+        <button class="pc-finish-button" id="finish-button">See My Ranking</button>
+        <div id="result-block" class="pc-result-block pc-hidden"></div>
+      `;
+
+      const matchupsContainer = dailyContent.querySelector(".pc-matchups");
+      matchupsContainer.addEventListener("click", onMatchupClick);
+
+      const finishButton = document.getElementById("finish-button");
+      finishButton.addEventListener("click", () => {
+        showLocalRanking(playersById, matchups);
+      });
+
+      updateProgress();
+    }
+
+    function onMatchupClick(e) {
+      const btn = e.target.closest(".pc-player-option");
+      if (!btn) return;
+
+      const matchupEl = btn.closest(".pc-matchup");
+      const matchupId = matchupEl.getAttribute("data-matchup-id");
+      const playerId = btn.getAttribute("data-player-id");
+
+      state.choices[matchupId] = playerId;
+
+      // highlight choice
+      matchupEl.querySelectorAll(".pc-player-option").forEach((b) => {
+        b.classList.toggle("pc-player-selected", b === btn);
+      });
+
+      updateProgress();
+    }
+
+    function updateProgress() {
+      const matchups = state.dailySet?.matchups || [];
+      const answered = Object.keys(state.choices).length;
+      const progressEl = document.getElementById("daily-progress");
+      if (progressEl) {
+        progressEl.textContent = `${answered} of ${matchups.length} matchups answered`;
+      }
+    }
+
+    function showLocalRanking(playersById, matchups) {
+      const answered = Object.keys(state.choices).length;
+      if (answered < matchups.length) {
+        alert("Finish all matchups first!");
+        return;
+      }
+
+      const winCounts = {};
+      Object.values(playersById).forEach((p) => {
+        winCounts[p.id] = 0;
+      });
+
+      matchups.forEach((m) => {
+        const winner = state.choices[String(m.id)];
+        if (winner && winCounts[winner] !== undefined) {
+          winCounts[winner] += 1;
+        }
+      });
+
+      const ranking = Object.entries(winCounts)
+        .sort((a, b) => b[1] - a[1])
+        .map(([id, wins]) => ({ player: playersById[id], wins }));
+
+      const resultBlock = document.getElementById("result-block");
+      resultBlock.classList.remove("pc-hidden");
+
+      resultBlock.innerHTML = `
+        <h3>Your Peoples Champ ranking for today</h3>
+        <ol class="pc-ranking-list">
+          ${ranking
+            .map(
+              (r) => `
+            <li>
+              <span class="pc-ranking-name">${r.player.name}</span>
+              <span class="pc-ranking-meta">${r.player.team} • ${r.player.position} • ${r.wins} matchup wins</span>
+            </li>
+          `
+            )
+            .join("")}
+        </ol>
+        <p class="pc-ranking-note">
+          This is your personal ranking based on head-to-head picks. Later we’ll compare this
+          to the global Peoples Champ ratings.
+        </p>
+      `;
+    }
+  </script>
+</body>
+</html>
+

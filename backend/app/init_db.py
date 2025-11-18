@@ -1,11 +1,13 @@
 from .database import engine, Base
-from . import models  # noqa: F401
+from . import models  # this makes sure Player, etc. are registered with Base
 
 
 def init():
+    print("Creating database tables...")
     Base.metadata.create_all(bind=engine)
+    print("Done.")
 
 
 if __name__ == "__main__":
     init()
-    print("Database tables created.")
+
