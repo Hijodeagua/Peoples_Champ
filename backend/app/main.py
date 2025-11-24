@@ -13,4 +13,4 @@ def read_root():
 app.include_router(players.router, prefix="/players", tags=["players"])
 app.include_router(daily_set.router, prefix="/daily-set", tags=["daily-set"])
 app.include_router(auth.router, prefix="/auth", tags=["auth"])
-app.include_router(game.router, prefix="/game", tags=["game"])
+app.include_router(game.router)
