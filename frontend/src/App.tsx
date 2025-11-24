@@ -2,7 +2,7 @@ import { NavLink, Route, Routes } from "react-router-dom";
 import HomePage from "./pages/Home";
 import PlayPage from "./pages/Play";
 import Top100Page from "./pages/Top100";
-import MethodologyPage from "./pages/Methodology";
+import MethodologyPage from "./pages/Methodology.tsx";
 import BuckWildPage from "./pages/BuckWild";
 
 function App() {
