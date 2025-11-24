@@ -9,6 +9,7 @@ from sqlalchemy import (
     DateTime,
     ForeignKey,
     UniqueConstraint,
+    Text,
 )
 from sqlalchemy.orm import relationship
 
@@ -61,6 +62,8 @@ class DailySet(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     date = Column(Date, unique=True, nullable=False)
+
+    true_ranking = Column(Text, nullable=True)
 
     created_at = Column(DateTime, default=datetime.utcnow)
 
@@ -164,3 +167,18 @@ class RatingHistory(Base):
     __table_args__ = (
         UniqueConstraint("player_id", "date", name="uq_player_date"),
     )
+
+
+class Submission(Base):
+    __tablename__ = "submissions"
+
+    id = Column(Integer, primary_key=True, index=True)
+    daily_set_id = Column(Integer, ForeignKey("daily_sets.id"), nullable=False)
+    mode = Column(String, nullable=False)
+
+    answers = Column(Text, nullable=False)
+    final_ranking = Column(Text, nullable=False)
+    score = Column(Integer, nullable=True)
+    share_slug = Column(String, unique=True, index=True, nullable=False)
+
+    created_at = Column(DateTime, default=datetime.utcnow)
