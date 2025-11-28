@@ -137,7 +137,7 @@ export async function loadPlayers(): Promise<Player[]> {
 
   parsed.data
     .filter((row: Record<string, any>) => row && row["Player-additional"])
-    .forEach((row) => {
+    .forEach((row: Record<string, any>) => {
       const player = mapRowToPlayer(row);
       const existing = playerMap.get(player.id);
       
