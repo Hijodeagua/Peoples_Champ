@@ -1,4 +1,5 @@
-import { loadPlayers, Player } from "./loadPlayersFromCSV";
+import { loadPlayers } from "./loadPlayersFromCSV";
+import type { Player } from "./loadPlayersFromCSV";
 
 export type Matchup = {
   id: string;

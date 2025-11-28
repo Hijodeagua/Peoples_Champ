@@ -1,0 +1,81 @@
+{
+  "total_players": 330,
+  "top_10": [
+    {
+      "rank": 1,
+      "Player": "Victor Wembanyama",
+      "Team": "SAS",
+      "final_score": 20.855302084036133
+    },
+    {
+      "rank": 2,
+      "Player": "Shai Gilgeous-Alexander",
+      "Team": "OKC",
+      "final_score": 20.2990001377179
+    },
+    {
+      "rank": 3,
+      "Player": "Paul Reed",
+      "Team": "DET",
+      "final_score": 19.949528239888938
+    },
+    {
+      "rank": 4,
+      "Player": "Giannis Antetokounmpo",
+      "Team": "MIL",
+      "final_score": 19.8826453771736
+    },
+    {
+      "rank": 5,
+      "Player": "Nikola Joki\u0107",
+      "Team": "DEN",
+      "final_score": 19.419136877266652
+    },
+    {
+      "rank": 6,
+      "Player": "Luka Don\u010di\u0107",
+      "Team": "LAL",
+      "final_score": 18.88361703282677
+    },
+    {
+      "rank": 7,
+      "Player": "Scottie Barnes",
+      "Team": "TOR",
+      "final_score": 18.83137383003519
+    },
+    {
+      "rank": 8,
+      "Player": "Isaiah Stewart",
+      "Team": "DET",
+      "final_score": 18.72624616740555
+    },
+    {
+      "rank": 9,
+      "Player": "Robert Williams",
+      "Team": "POR",
+      "final_score": 18.64237517845424
+    },
+    {
+      "rank": 10,
+      "Player": "Kristaps Porzi\u0146\u0123is",
+      "Team": "ATL",
+      "final_score": 18.59053524617888
+    }
+  ],
+  "methodology": {
+    "composite_score_weight": 0.4,
+    "elo_rating_weight": 0.35,
+    "h2h_win_rate_weight": 0.2,
+    "trajectory_weight": 0.05
+  },
+  "metric_weights": {
+    "PER": 0.15,
+    "BPM": 0.2,
+    "VORP": 0.2,
+    "WS/48": 0.15,
+    "TS%": 0.1,
+    "USG%": 0.05,
+    "OBPM": 0.075,
+    "DBPM": 0.075
+  }
+}

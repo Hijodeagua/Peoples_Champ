@@ -1,0 +1,64 @@
+{
+  "userRankings": [
+    {
+      "rank": 1,
+      "player": "Nikola Joki\u0107",
+      "team": "DEN",
+      "score": 100.0,
+      "eloRank": 1,
+      "eloScore": 7.339905827612441,
+      "ringerRank": null,
+      "bpm": 13.58261613971008,
+      "per": 32.56523227942016,
+      "vorp": 9.800000000000002
+    },
+    {
+      "rank": 2,
+      "player": "Shai Gilgeous-Alexander",
+      "team": "OKC",
+      "score": 75.0,
+      "eloRank": 3,
+      "eloScore": 4.881462826613786,
+      "ringerRank": 2,
+      "bpm": 6.2235341473232255,
+      "per": 24.316127733798467,
+      "vorp": 4.861223668321481
+    },
+    {
+      "rank": 3,
+      "player": "Giannis Antetokounmpo",
+      "team": "MIL",
+      "score": 50.0,
+      "eloRank": 2,
+      "eloScore": 5.849025269434096,
+      "ringerRank": 3,
+      "bpm": 10.701051416848314,
+      "per": 31.63040133350429,
+      "vorp": 7.165200666752148
+    },
+    {
+      "rank": 4,
+      "player": "Stephen Curry",
+      "team": "GSW",
+      "score": 25.0,
+      "eloRank": 11,
+      "eloScore": 3.3525515062757845,
+      "ringerRank": 7,
+      "bpm": 5.944739379137476,
+      "per": 21.428947875827497,
+      "vorp": 4.515791503309982
+    },
+    {
+      "rank": 5,
+      "player": "Luka Don\u010di\u0107",
+      "team": "2TM",
+      "score": 0.0,
+      "eloRank": 9,
+      "eloScore": 3.4442327878914174,
+      "ringerRank": null,
+      "bpm": 7.847211327527753,
+      "per": 24.864807551685168,
+      "vorp": 5.429615103370338
+    }
+  ]
+}

@@ -1,0 +1,1883 @@
+{
+  "metadata": {
+    "generated_at": "2025-11-26T12:15:22.007588",
+    "start_date": "2025-11-21",
+    "num_days": 50,
+    "players_per_day": 5,
+    "total_slots": 250
+  },
+  "constraints": {
+    "top_10": {
+      "min": 3,
+      "max": 5,
+      "ranks": "1-10"
+    },
+    "tier_2": {
+      "min": 2,
+      "max": 4,
+      "ranks": "11-30"
+    },
+    "tier_3": {
+      "min": 1,
+      "max": 3,
+      "ranks": "31-75"
+    }
+  },
+  "schedule": [
+    {
+      "day": 1,
+      "date": "2025-11-21",
+      "day_of_week": "Friday",
+      "players": [
+        {
+          "rank": 1,
+          "name": "Victor Wembanyama",
+          "team": "SAS",
+          "score": 20.855302084036133
+        },
+        {
+          "rank": 3,
+          "name": "Paul Reed",
+          "team": "DET",
+          "score": 19.949528239888934
+        },
+        {
+          "rank": 10,
+          "name": "Kristaps Porzi\u0146\u0123is",
+          "team": "ATL",
+          "score": 18.59053524617888
+        },
+        {
+          "rank": 5,
+          "name": "Nikola Joki\u0107",
+          "team": "DEN",
+          "score": 19.41913687726665
+        },
+        {
+          "rank": 17,
+          "name": "Tyrese Maxey",
+          "team": "PHI",
+          "score": 16.96123774679348
+        }
+      ]
+    },
+    {
+      "day": 2,
+      "date": "2025-11-22",
+      "day_of_week": "Saturday",
+      "players": [
+        {
+          "rank": 9,
+          "name": "Robert Williams",
+          "team": "POR",
+          "score": 18.64237517845424
+        },
+        {
+          "rank": 8,
+          "name": "Isaiah Stewart",
+          "team": "DET",
+          "score": 18.72624616740555
+        },
+        {
+          "rank": 16,
+          "name": "Derrick White",
+          "team": "BOS",
+          "score": 17.01403249496697
+        },
+        {
+          "rank": 1,
+          "name": "Victor Wembanyama",
+          "team": "SAS",
+          "score": 20.855302084036133
+        },
+        {
+          "rank": 6,
+          "name": "Luka Don\u010di\u0107",
+          "team": "LAL",
+          "score": 18.88361703282677
+        }
+      ]
+    },
+    {
+      "day": 3,
+      "date": "2025-11-23",
+      "day_of_week": "Sunday",
+      "players": [
+        {
+          "rank": 2,
+          "name": "Shai Gilgeous-Alexander",
+          "team": "OKC",
+          "score": 20.2990001377179
+        },
+        {
+          "rank": 12,
+          "name": "Branden Carlson",
+          "team": "OKC",
+          "score": 17.985146088630653
+        },
+        {
+          "rank": 9,
+          "name": "Robert Williams",
+          "team": "POR",
+          "score": 18.64237517845424
+        },
+        {
+          "rank": 7,
+          "name": "Scottie Barnes",
+          "team": "TOR",
+          "score": 18.83137383003519
+        },
+        {
+          "rank": 4,
+          "name": "Giannis Antetokounmpo",
+          "team": "MIL",
+          "score": 19.8826453771736
+        }
+      ]
+    },
+    {
+      "day": 4,
+      "date": "2025-11-24",
+      "day_of_week": "Monday",
+      "players": [
+        {
+          "rank": 15,
+          "name": "Stephen Curry",
+          "team": "GSW",
+          "score": 17.266663146952833
+        },
+        {
+          "rank": 25,
+          "name": "Daniel Gafford",
+          "team": "DAL",
+          "score": 15.982554148476463
+        },
+        {
+          "rank": 23,
+          "name": "Cade Cunningham",
+          "team": "DET",
+          "score": 16.12545893379315
+        },
+        {
+          "rank": 28,
+          "name": "Donovan Mitchell",
+          "team": "CLE",
+          "score": 15.594985171410332
+        },
+        {
+          "rank": 3,
+          "name": "Paul Reed",
+          "team": "DET",
+          "score": 19.949528239888934
+        }
+      ]
+    },
+    {
+      "day": 5,
+      "date": "2025-11-25",
+      "day_of_week": "Tuesday",
+      "players": [
+        {
+          "rank": 24,
+          "name": "Jonas Valan\u010di\u016bnas",
+          "team": "DEN",
+          "score": 16.0481349433251
+        },
+        {
+          "rank": 11,
+          "name": "Alex Sarr",
+          "team": "WAS",
+          "score": 18.46827693830453
+        },
+        {
+          "rank": 29,
+          "name": "Jalen Duren",
+          "team": "DET",
+          "score": 15.46597467248986
+        },
+        {
+          "rank": 21,
+          "name": "Ryan Kalkbrenner",
+          "team": "CHO",
+          "score": 16.46840704676936
+        },
+        {
+          "rank": 7,
+          "name": "Scottie Barnes",
+          "team": "TOR",
+          "score": 18.83137383003519
+        }
+      ]
+    },
+    {
+      "day": 6,
+      "date": "2025-11-26",
+      "day_of_week": "Wednesday",
+      "players": [
+        {
+          "rank": 30,
+          "name": "Jalen Suggs",
+          "team": "ORL",
+          "score": 15.293581373786742
+        },
+        {
+          "rank": 6,
+          "name": "Luka Don\u010di\u0107",
+          "team": "LAL",
+          "score": 18.88361703282677
+        },
+        {
+          "rank": 18,
+          "name": "Goga Bitadze",
+          "team": "ORL",
+          "score": 16.758229551842177
+        },
+        {
+          "rank": 14,
+          "name": "Chet Holmgren",
+          "team": "OKC",
+          "score": 17.59182005848814
+        },
+        {
+          "rank": 5,
+          "name": "Nikola Joki\u0107",
+          "team": "DEN",
+          "score": 19.41913687726665
+        }
+      ]
+    },
+    {
+      "day": 7,
+      "date": "2025-11-27",
+      "day_of_week": "Thursday",
+      "players": [
+        {
+          "rank": 19,
+          "name": "Myles Turner",
+          "team": "MIL",
+          "score": 16.6961827181324
+        },
+        {
+          "rank": 22,
+          "name": "Evan Mobley",
+          "team": "CLE",
+          "score": 16.28042764591673
+        },
+        {
+          "rank": 2,
+          "name": "Shai Gilgeous-Alexander",
+          "team": "OKC",
+          "score": 20.2990001377179
+        },
+        {
+          "rank": 13,
+          "name": "Anthony Edwards",
+          "team": "MIN",
+          "score": 17.745369218646264
+        },
+        {
+          "rank": 8,
+          "name": "Isaiah Stewart",
+          "team": "DET",
+          "score": 18.72624616740555
+        }
+      ]
+    },
+    {
+      "day": 8,
+      "date": "2025-11-28",
+      "day_of_week": "Friday",
+      "players": [
+        {
+          "rank": 10,
+          "name": "Kristaps Porzi\u0146\u0123is",
+          "team": "ATL",
+          "score": 18.59053524617888
+        },
+        {
+          "rank": 3,
+          "name": "Paul Reed",
+          "team": "DET",
+          "score": 19.949528239888934
+        },
+        {
+          "rank": 21,
+          "name": "Ryan Kalkbrenner",
+          "team": "CHO",
+          "score": 16.46840704676936
+        },
+        {
+          "rank": 31,
+          "name": "Donovan Clingan",
+          "team": "POR",
+          "score": 15.248145541471892
+        },
+        {
+          "rank": 9,
+          "name": "Robert Williams",
+          "team": "POR",
+          "score": 18.64237517845424
+        }
+      ]
+    },
+    {
+      "day": 9,
+      "date": "2025-11-29",
+      "day_of_week": "Saturday",
+      "players": [
+        {
+          "rank": 10,
+          "name": "Kristaps Porzi\u0146\u0123is",
+          "team": "ATL",
+          "score": 18.59053524617888
+        },
+        {
+          "rank": 19,
+          "name": "Myles Turner",
+          "team": "MIL",
+          "score": 16.6961827181324
+        },
+        {
+          "rank": 4,
+          "name": "Giannis Antetokounmpo",
+          "team": "MIL",
+          "score": 19.8826453771736
+        },
+        {
+          "rank": 27,
+          "name": "Mikal Bridges",
+          "team": "NYK",
+          "score": 15.614469909348534
+        },
+        {
+          "rank": 22,
+          "name": "Evan Mobley",
+          "team": "CLE",
+          "score": 16.28042764591673
+        }
+      ]
+    },
+    {
+      "day": 10,
+      "date": "2025-11-30",
+      "day_of_week": "Sunday",
+      "players": [
+        {
+          "rank": 20,
+          "name": "Kel'el Ware",
+          "team": "MIA",
+          "score": 16.586578064671002
+        },
+        {
+          "rank": 39,
+          "name": "Ausar Thompson",
+          "team": "DET",
+          "score": 14.12010847642466
+        },
+        {
+          "rank": 28,
+          "name": "Donovan Mitchell",
+          "team": "CLE",
+          "score": 15.594985171410332
+        },
+        {
+          "rank": 17,
+          "name": "Tyrese Maxey",
+          "team": "PHI",
+          "score": 16.96123774679348
+        },
+        {
+          "rank": 1,
+          "name": "Victor Wembanyama",
+          "team": "SAS",
+          "score": 20.855302084036133
+        }
+      ]
+    },
+    {
+      "day": 11,
+      "date": "2025-12-01",
+      "day_of_week": "Monday",
+      "players": [
+        {
+          "rank": 4,
+          "name": "Giannis Antetokounmpo",
+          "team": "MIL",
+          "score": 19.8826453771736
+        },
+        {
+          "rank": 25,
+          "name": "Daniel Gafford",
+          "team": "DAL",
+          "score": 15.982554148476463
+        },
+        {
+          "rank": 6,
+          "name": "Luka Don\u010di\u0107",
+          "team": "LAL",
+          "score": 18.88361703282677
+        },
+        {
+          "rank": 49,
+          "name": "Dillon Brooks",
+          "team": "PHO",
+          "score": 13.419430251690171
+        },
+        {
+          "rank": 13,
+          "name": "Anthony Edwards",
+          "team": "MIN",
+          "score": 17.745369218646264
+        }
+      ]
+    },
+    {
+      "day": 12,
+      "date": "2025-12-02",
+      "day_of_week": "Tuesday",
+      "players": [
+        {
+          "rank": 23,
+          "name": "Cade Cunningham",
+          "team": "DET",
+          "score": 16.12545893379315
+        },
+        {
+          "rank": 7,
+          "name": "Scottie Barnes",
+          "team": "TOR",
+          "score": 18.83137383003519
+        },
+        {
+          "rank": 24,
+          "name": "Jonas Valan\u010di\u016bnas",
+          "team": "DEN",
+          "score": 16.0481349433251
+        },
+        {
+          "rank": 33,
+          "name": "Alperen \u015eeng\u00fcn",
+          "team": "HOU",
+          "score": 14.876654699302646
+        },
+        {
+          "rank": 64,
+          "name": "Jalen Smith",
+          "team": "CHI",
+          "score": 12.09417581144434
+        }
+      ]
+    },
+    {
+      "day": 13,
+      "date": "2025-12-03",
+      "day_of_week": "Wednesday",
+      "players": [
+        {
+          "rank": 16,
+          "name": "Derrick White",
+          "team": "BOS",
+          "score": 17.01403249496697
+        },
+        {
+          "rank": 29,
+          "name": "Jalen Duren",
+          "team": "DET",
+          "score": 15.46597467248986
+        },
+        {
+          "rank": 38,
+          "name": "Nic Claxton",
+          "team": "BRK",
+          "score": 14.260940250658692
+        },
+        {
+          "rank": 65,
+          "name": "Deni Avdija",
+          "team": "POR",
+          "score": 12.024561421808032
+        },
+        {
+          "rank": 56,
+          "name": "Peyton Watson",
+          "team": "DEN",
+          "score": 12.575402261311496
+        }
+      ]
+    },
+    {
+      "day": 14,
+      "date": "2025-12-04",
+      "day_of_week": "Thursday",
+      "players": [
+        {
+          "rank": 46,
+          "name": "Paolo Banchero",
+          "team": "ORL",
+          "score": 13.654644489304928
+        },
+        {
+          "rank": 26,
+          "name": "Neemias Queta",
+          "team": "BOS",
+          "score": 15.793403919551633
+        },
+        {
+          "rank": 11,
+          "name": "Alex Sarr",
+          "team": "WAS",
+          "score": 18.46827693830453
+        },
+        {
+          "rank": 20,
+          "name": "Kel'el Ware",
+          "team": "MIA",
+          "score": 16.586578064671002
+        },
+        {
+          "rank": 8,
+          "name": "Isaiah Stewart",
+          "team": "DET",
+          "score": 18.72624616740555
+        }
+      ]
+    },
+    {
+      "day": 15,
+      "date": "2025-12-05",
+      "day_of_week": "Friday",
+      "players": [
+        {
+          "rank": 27,
+          "name": "Mikal Bridges",
+          "team": "NYK",
+          "score": 15.614469909348534
+        },
+        {
+          "rank": 5,
+          "name": "Nikola Joki\u0107",
+          "team": "DEN",
+          "score": 19.41913687726665
+        },
+        {
+          "rank": 70,
+          "name": "Devin Booker",
+          "team": "PHO",
+          "score": 11.819089202745657
+        },
+        {
+          "rank": 42,
+          "name": "Mark Williams",
+          "team": "PHO",
+          "score": 13.985073135855735
+        },
+        {
+          "rank": 57,
+          "name": "Moussa Diabat\u00e9",
+          "team": "CHO",
+          "score": 12.551416683862708
+        }
+      ]
+    },
+    {
+      "day": 16,
+      "date": "2025-12-06",
+      "day_of_week": "Saturday",
+      "players": [
+        {
+          "rank": 26,
+          "name": "Neemias Queta",
+          "team": "BOS",
+          "score": 15.793403919551633
+        },
+        {
+          "rank": 68,
+          "name": "Kevin Durant",
+          "team": "HOU",
+          "score": 11.9668154548967
+        },
+        {
+          "rank": 30,
+          "name": "Jalen Suggs",
+          "team": "ORL",
+          "score": 15.293581373786742
+        },
+        {
+          "rank": 18,
+          "name": "Goga Bitadze",
+          "team": "ORL",
+          "score": 16.758229551842177
+        },
+        {
+          "rank": 40,
+          "name": "Nae'Qwan Tomlin",
+          "team": "CLE",
+          "score": 14.10127927113763
+        }
+      ]
+    },
+    {
+      "day": 17,
+      "date": "2025-12-07",
+      "day_of_week": "Sunday",
+      "players": [
+        {
+          "rank": 14,
+          "name": "Chet Holmgren",
+          "team": "OKC",
+          "score": 17.59182005848814
+        },
+        {
+          "rank": 44,
+          "name": "OG Anunoby",
+          "team": "NYK",
+          "score": 13.694725707080856
+        },
+        {
+          "rank": 47,
+          "name": "Alex Caruso",
+          "team": "OKC",
+          "score": 13.626844662842023
+        },
+        {
+          "rank": 72,
+          "name": "Ryan Dunn",
+          "team": "PHO",
+          "score": 11.196831344043204
+        },
+        {
+          "rank": 66,
+          "name": "Norman Powell",
+          "team": "MIA",
+          "score": 12.010869026867288
+        }
+      ]
+    },
+    {
+      "day": 18,
+      "date": "2025-12-08",
+      "day_of_week": "Monday",
+      "players": [
+        {
+          "rank": 50,
+          "name": "Santi Aldama",
+          "team": "MEM",
+          "score": 13.27593447076956
+        },
+        {
+          "rank": 53,
+          "name": "Isaiah Hartenstein",
+          "team": "OKC",
+          "score": 12.801726036159463
+        },
+        {
+          "rank": 61,
+          "name": "Pascal Siakam",
+          "team": "IND",
+          "score": 12.203317160574596
+        },
+        {
+          "rank": 55,
+          "name": "Bam Adebayo",
+          "team": "MIA",
+          "score": 12.594119837773642
+        },
+        {
+          "rank": 32,
+          "name": "Naz Reid",
+          "team": "MIN",
+          "score": 14.895915257148742
+        }
+      ]
+    },
+    {
+      "day": 19,
+      "date": "2025-12-09",
+      "day_of_week": "Tuesday",
+      "players": [
+        {
+          "rank": 41,
+          "name": "Jarrett Allen",
+          "team": "CLE",
+          "score": 14.005821221229615
+        },
+        {
+          "rank": 2,
+          "name": "Shai Gilgeous-Alexander",
+          "team": "OKC",
+          "score": 20.2990001377179
+        },
+        {
+          "rank": 12,
+          "name": "Branden Carlson",
+          "team": "OKC",
+          "score": 17.985146088630653
+        },
+        {
+          "rank": 15,
+          "name": "Stephen Curry",
+          "team": "GSW",
+          "score": 17.266663146952833
+        },
+        {
+          "rank": 69,
+          "name": "Lauri Markkanen",
+          "team": "UTA",
+          "score": 11.893360191139584
+        }
+      ]
+    },
+    {
+      "day": 20,
+      "date": "2025-12-10",
+      "day_of_week": "Wednesday",
+      "players": [
+        {
+          "rank": 43,
+          "name": "Ajay Mitchell",
+          "team": "OKC",
+          "score": 13.940403774925969
+        },
+        {
+          "rank": 63,
+          "name": "Jimmy Butler",
+          "team": "GSW",
+          "score": 12.128440537046185
+        },
+        {
+          "rank": 36,
+          "name": "James Harden",
+          "team": "LAC",
+          "score": 14.59146918963121
+        },
+        {
+          "rank": 37,
+          "name": "Clint Capela",
+          "team": "HOU",
+          "score": 14.51685660214926
+        },
+        {
+          "rank": 60,
+          "name": "Stephon Castle",
+          "team": "SAS",
+          "score": 12.231408124087464
+        }
+      ]
+    },
+    {
+      "day": 21,
+      "date": "2025-12-11",
+      "day_of_week": "Thursday",
+      "players": [
+        {
+          "rank": 54,
+          "name": "Jaden McDaniels",
+          "team": "MIN",
+          "score": 12.756593951797193
+        },
+        {
+          "rank": 35,
+          "name": "Jaylen Brown",
+          "team": "BOS",
+          "score": 14.663179173614845
+        },
+        {
+          "rank": 75,
+          "name": "Ryan Rollins",
+          "team": "MIL",
+          "score": 10.907604170638004
+        },
+        {
+          "rank": 74,
+          "name": "Dru Smith",
+          "team": "MIA",
+          "score": 10.931288960921142
+        },
+        {
+          "rank": 58,
+          "name": "Brandon Ingram",
+          "team": "TOR",
+          "score": 12.50288776681288
+        }
+      ]
+    },
+    {
+      "day": 22,
+      "date": "2025-12-12",
+      "day_of_week": "Friday",
+      "players": [
+        {
+          "rank": 48,
+          "name": "Derrick Jones Jr.",
+          "team": "LAC",
+          "score": 13.612563643423584
+        },
+        {
+          "rank": 73,
+          "name": "Austin Reaves",
+          "team": "LAL",
+          "score": 11.059309816182452
+        },
+        {
+          "rank": 51,
+          "name": "Jalen Johnson",
+          "team": "ATL",
+          "score": 12.98263193114096
+        },
+        {
+          "rank": 59,
+          "name": "LaMelo Ball",
+          "team": "CHO",
+          "score": 12.267352076356628
+        },
+        {
+          "rank": 45,
+          "name": "Reed Sheppard",
+          "team": "HOU",
+          "score": 13.655531913730448
+        }
+      ]
+    },
+    {
+      "day": 23,
+      "date": "2025-12-13",
+      "day_of_week": "Saturday",
+      "players": [
+        {
+          "rank": 62,
+          "name": "Craig Porter Jr.",
+          "team": "CLE",
+          "score": 12.187539162295428
+        },
+        {
+          "rank": 2,
+          "name": "Shai Gilgeous-Alexander",
+          "team": "OKC",
+          "score": 20.2990001377179
+        },
+        {
+          "rank": 71,
+          "name": "Marvin Bagley III",
+          "team": "WAS",
+          "score": 11.679061601053355
+        },
+        {
+          "rank": 52,
+          "name": "Nickeil Alexander-Walker",
+          "team": "ATL",
+          "score": 12.843748178506832
+        },
+        {
+          "rank": 1,
+          "name": "Victor Wembanyama",
+          "team": "SAS",
+          "score": 20.855302084036133
+        }
+      ]
+    },
+    {
+      "day": 24,
+      "date": "2025-12-14",
+      "day_of_week": "Sunday",
+      "players": [
+        {
+          "rank": 12,
+          "name": "Branden Carlson",
+          "team": "OKC",
+          "score": 17.985146088630653
+        },
+        {
+          "rank": 34,
+          "name": "Karl-Anthony Towns",
+          "team": "NYK",
+          "score": 14.766728314238636
+        },
+        {
+          "rank": 3,
+          "name": "Paul Reed",
+          "team": "DET",
+          "score": 19.949528239888934
+        },
+        {
+          "rank": 2,
+          "name": "Shai Gilgeous-Alexander",
+          "team": "OKC",
+          "score": 20.2990001377179
+        },
+        {
+          "rank": 26,
+          "name": "Neemias Queta",
+          "team": "BOS",
+          "score": 15.793403919551633
+        }
+      ]
+    },
+    {
+      "day": 25,
+      "date": "2025-12-15",
+      "day_of_week": "Monday",
+      "players": [
+        {
+          "rank": 22,
+          "name": "Evan Mobley",
+          "team": "CLE",
+          "score": 16.28042764591673
+        },
+        {
+          "rank": 7,
+          "name": "Scottie Barnes",
+          "team": "TOR",
+          "score": 18.83137383003519
+        },
+        {
+          "rank": 30,
+          "name": "Jalen Suggs",
+          "team": "ORL",
+          "score": 15.293581373786742
+        },
+        {
+          "rank": 1,
+          "name": "Victor Wembanyama",
+          "team": "SAS",
+          "score": 20.855302084036133
+        },
+        {
+          "rank": 14,
+          "name": "Chet Holmgren",
+          "team": "OKC",
+          "score": 17.59182005848814
+        }
+      ]
+    },
+    {
+      "day": 26,
+      "date": "2025-12-16",
+      "day_of_week": "Tuesday",
+      "players": [
+        {
+          "rank": 32,
+          "name": "Naz Reid",
+          "team": "MIN",
+          "score": 14.895915257148742
+        },
+        {
+          "rank": 3,
+          "name": "Paul Reed",
+          "team": "DET",
+          "score": 19.949528239888934
+        },
+        {
+          "rank": 67,
+          "name": "Onyeka Okongwu",
+          "team": "ATL",
+          "score": 11.98586603848172
+        },
+        {
+          "rank": 4,
+          "name": "Giannis Antetokounmpo",
+          "team": "MIL",
+          "score": 19.8826453771736
+        },
+        {
+          "rank": 39,
+          "name": "Ausar Thompson",
+          "team": "DET",
+          "score": 14.12010847642466
+        }
+      ]
+    },
+    {
+      "day": 27,
+      "date": "2025-12-17",
+      "day_of_week": "Wednesday",
+      "players": [
+        {
+          "rank": 26,
+          "name": "Neemias Queta",
+          "team": "BOS",
+          "score": 15.793403919551633
+        },
+        {
+          "rank": 20,
+          "name": "Kel'el Ware",
+          "team": "MIA",
+          "score": 16.586578064671002
+        },
+        {
+          "rank": 31,
+          "name": "Donovan Clingan",
+          "team": "POR",
+          "score": 15.248145541471892
+        },
+        {
+          "rank": 25,
+          "name": "Daniel Gafford",
+          "team": "DAL",
+          "score": 15.982554148476463
+        },
+        {
+          "rank": 23,
+          "name": "Cade Cunningham",
+          "team": "DET",
+          "score": 16.12545893379315
+        }
+      ]
+    },
+    {
+      "day": 28,
+      "date": "2025-12-18",
+      "day_of_week": "Thursday",
+      "players": [
+        {
+          "rank": 6,
+          "name": "Luka Don\u010di\u0107",
+          "team": "LAL",
+          "score": 18.88361703282677
+        },
+        {
+          "rank": 13,
+          "name": "Anthony Edwards",
+          "team": "MIN",
+          "score": 17.745369218646264
+        },
+        {
+          "rank": 23,
+          "name": "Cade Cunningham",
+          "team": "DET",
+          "score": 16.12545893379315
+        },
+        {
+          "rank": 15,
+          "name": "Stephen Curry",
+          "team": "GSW",
+          "score": 17.266663146952833
+        },
+        {
+          "rank": 25,
+          "name": "Daniel Gafford",
+          "team": "DAL",
+          "score": 15.982554148476463
+        }
+      ]
+    },
+    {
+      "day": 29,
+      "date": "2025-12-19",
+      "day_of_week": "Friday",
+      "players": [
+        {
+          "rank": 19,
+          "name": "Myles Turner",
+          "team": "MIL",
+          "score": 16.6961827181324
+        },
+        {
+          "rank": 12,
+          "name": "Branden Carlson",
+          "team": "OKC",
+          "score": 17.985146088630653
+        },
+        {
+          "rank": 22,
+          "name": "Evan Mobley",
+          "team": "CLE",
+          "score": 16.28042764591673
+        },
+        {
+          "rank": 29,
+          "name": "Jalen Duren",
+          "team": "DET",
+          "score": 15.46597467248986
+        },
+        {
+          "rank": 7,
+          "name": "Scottie Barnes",
+          "team": "TOR",
+          "score": 18.83137383003519
+        }
+      ]
+    },
+    {
+      "day": 30,
+      "date": "2025-12-20",
+      "day_of_week": "Saturday",
+      "players": [
+        {
+          "rank": 48,
+          "name": "Derrick Jones Jr.",
+          "team": "LAC",
+          "score": 13.612563643423584
+        },
+        {
+          "rank": 43,
+          "name": "Ajay Mitchell",
+          "team": "OKC",
+          "score": 13.940403774925969
+        },
+        {
+          "rank": 8,
+          "name": "Isaiah Stewart",
+          "team": "DET",
+          "score": 18.72624616740555
+        },
+        {
+          "rank": 9,
+          "name": "Robert Williams",
+          "team": "POR",
+          "score": 18.64237517845424
+        },
+        {
+          "rank": 42,
+          "name": "Mark Williams",
+          "team": "PHO",
+          "score": 13.985073135855735
+        }
+      ]
+    },
+    {
+      "day": 31,
+      "date": "2025-12-21",
+      "day_of_week": "Sunday",
+      "players": [
+        {
+          "rank": 9,
+          "name": "Robert Williams",
+          "team": "POR",
+          "score": 18.64237517845424
+        },
+        {
+          "rank": 36,
+          "name": "James Harden",
+          "team": "LAC",
+          "score": 14.59146918963121
+        },
+        {
+          "rank": 33,
+          "name": "Alperen \u015eeng\u00fcn",
+          "team": "HOU",
+          "score": 14.876654699302646
+        },
+        {
+          "rank": 19,
+          "name": "Myles Turner",
+          "team": "MIL",
+          "score": 16.6961827181324
+        },
+        {
+          "rank": 13,
+          "name": "Anthony Edwards",
+          "team": "MIN",
+          "score": 17.745369218646264
+        }
+      ]
+    },
+    {
+      "day": 32,
+      "date": "2025-12-22",
+      "day_of_week": "Monday",
+      "players": [
+        {
+          "rank": 11,
+          "name": "Alex Sarr",
+          "team": "WAS",
+          "score": 18.46827693830453
+        },
+        {
+          "rank": 10,
+          "name": "Kristaps Porzi\u0146\u0123is",
+          "team": "ATL",
+          "score": 18.59053524617888
+        },
+        {
+          "rank": 21,
+          "name": "Ryan Kalkbrenner",
+          "team": "CHO",
+          "score": 16.46840704676936
+        },
+        {
+          "rank": 32,
+          "name": "Naz Reid",
+          "team": "MIN",
+          "score": 14.895915257148742
+        },
+        {
+          "rank": 20,
+          "name": "Kel'el Ware",
+          "team": "MIA",
+          "score": 16.586578064671002
+        }
+      ]
+    },
+    {
+      "day": 33,
+      "date": "2025-12-23",
+      "day_of_week": "Tuesday",
+      "players": [
+        {
+          "rank": 34,
+          "name": "Karl-Anthony Towns",
+          "team": "NYK",
+          "score": 14.766728314238636
+        },
+        {
+          "rank": 21,
+          "name": "Ryan Kalkbrenner",
+          "team": "CHO",
+          "score": 16.46840704676936
+        },
+        {
+          "rank": 18,
+          "name": "Goga Bitadze",
+          "team": "ORL",
+          "score": 16.758229551842177
+        },
+        {
+          "rank": 48,
+          "name": "Derrick Jones Jr.",
+          "team": "LAC",
+          "score": 13.612563643423584
+        },
+        {
+          "rank": 52,
+          "name": "Nickeil Alexander-Walker",
+          "team": "ATL",
+          "score": 12.843748178506832
+        }
+      ]
+    },
+    {
+      "day": 34,
+      "date": "2025-12-24",
+      "day_of_week": "Wednesday",
+      "players": [
+        {
+          "rank": 8,
+          "name": "Isaiah Stewart",
+          "team": "DET",
+          "score": 18.72624616740555
+        },
+        {
+          "rank": 5,
+          "name": "Nikola Joki\u0107",
+          "team": "DEN",
+          "score": 19.41913687726665
+        },
+        {
+          "rank": 10,
+          "name": "Kristaps Porzi\u0146\u0123is",
+          "team": "ATL",
+          "score": 18.59053524617888
+        },
+        {
+          "rank": 47,
+          "name": "Alex Caruso",
+          "team": "OKC",
+          "score": 13.626844662842023
+        },
+        {
+          "rank": 28,
+          "name": "Donovan Mitchell",
+          "team": "CLE",
+          "score": 15.594985171410332
+        }
+      ]
+    },
+    {
+      "day": 35,
+      "date": "2025-12-25",
+      "day_of_week": "Thursday",
+      "players": [
+        {
+          "rank": 36,
+          "name": "James Harden",
+          "team": "LAC",
+          "score": 14.59146918963121
+        },
+        {
+          "rank": 14,
+          "name": "Chet Holmgren",
+          "team": "OKC",
+          "score": 17.59182005848814
+        },
+        {
+          "rank": 50,
+          "name": "Santi Aldama",
+          "team": "MEM",
+          "score": 13.27593447076956
+        },
+        {
+          "rank": 16,
+          "name": "Derrick White",
+          "team": "BOS",
+          "score": 17.01403249496697
+        },
+        {
+          "rank": 4,
+          "name": "Giannis Antetokounmpo",
+          "team": "MIL",
+          "score": 19.8826453771736
+        }
+      ]
+    },
+    {
+      "day": 36,
+      "date": "2025-12-26",
+      "day_of_week": "Friday",
+      "players": [
+        {
+          "rank": 40,
+          "name": "Nae'Qwan Tomlin",
+          "team": "CLE",
+          "score": 14.10127927113763
+        },
+        {
+          "rank": 46,
+          "name": "Paolo Banchero",
+          "team": "ORL",
+          "score": 13.654644489304928
+        },
+        {
+          "rank": 27,
+          "name": "Mikal Bridges",
+          "team": "NYK",
+          "score": 15.614469909348534
+        },
+        {
+          "rank": 39,
+          "name": "Ausar Thompson",
+          "team": "DET",
+          "score": 14.12010847642466
+        },
+        {
+          "rank": 18,
+          "name": "Goga Bitadze",
+          "team": "ORL",
+          "score": 16.758229551842177
+        }
+      ]
+    },
+    {
+      "day": 37,
+      "date": "2025-12-27",
+      "day_of_week": "Saturday",
+      "players": [
+        {
+          "rank": 30,
+          "name": "Jalen Suggs",
+          "team": "ORL",
+          "score": 15.293581373786742
+        },
+        {
+          "rank": 27,
+          "name": "Mikal Bridges",
+          "team": "NYK",
+          "score": 15.614469909348534
+        },
+        {
+          "rank": 15,
+          "name": "Stephen Curry",
+          "team": "GSW",
+          "score": 17.266663146952833
+        },
+        {
+          "rank": 60,
+          "name": "Stephon Castle",
+          "team": "SAS",
+          "score": 12.231408124087464
+        },
+        {
+          "rank": 29,
+          "name": "Jalen Duren",
+          "team": "DET",
+          "score": 15.46597467248986
+        }
+      ]
+    },
+    {
+      "day": 38,
+      "date": "2025-12-28",
+      "day_of_week": "Sunday",
+      "players": [
+        {
+          "rank": 34,
+          "name": "Karl-Anthony Towns",
+          "team": "NYK",
+          "score": 14.766728314238636
+        },
+        {
+          "rank": 52,
+          "name": "Nickeil Alexander-Walker",
+          "team": "ATL",
+          "score": 12.843748178506832
+        },
+        {
+          "rank": 54,
+          "name": "Jaden McDaniels",
+          "team": "MIN",
+          "score": 12.756593951797193
+        },
+        {
+          "rank": 43,
+          "name": "Ajay Mitchell",
+          "team": "OKC",
+          "score": 13.940403774925969
+        },
+        {
+          "rank": 28,
+          "name": "Donovan Mitchell",
+          "team": "CLE",
+          "score": 15.594985171410332
+        }
+      ]
+    },
+    {
+      "day": 39,
+      "date": "2025-12-29",
+      "day_of_week": "Monday",
+      "players": [
+        {
+          "rank": 38,
+          "name": "Nic Claxton",
+          "team": "BRK",
+          "score": 14.260940250658692
+        },
+        {
+          "rank": 16,
+          "name": "Derrick White",
+          "team": "BOS",
+          "score": 17.01403249496697
+        },
+        {
+          "rank": 60,
+          "name": "Stephon Castle",
+          "team": "SAS",
+          "score": 12.231408124087464
+        },
+        {
+          "rank": 37,
+          "name": "Clint Capela",
+          "team": "HOU",
+          "score": 14.51685660214926
+        },
+        {
+          "rank": 44,
+          "name": "OG Anunoby",
+          "team": "NYK",
+          "score": 13.694725707080856
+        }
+      ]
+    },
+    {
+      "day": 40,
+      "date": "2025-12-30",
+      "day_of_week": "Tuesday",
+      "players": [
+        {
+          "rank": 41,
+          "name": "Jarrett Allen",
+          "team": "CLE",
+          "score": 14.005821221229615
+        },
+        {
+          "rank": 65,
+          "name": "Deni Avdija",
+          "team": "POR",
+          "score": 12.024561421808032
+        },
+        {
+          "rank": 51,
+          "name": "Jalen Johnson",
+          "team": "ATL",
+          "score": 12.98263193114096
+        },
+        {
+          "rank": 50,
+          "name": "Santi Aldama",
+          "team": "MEM",
+          "score": 13.27593447076956
+        },
+        {
+          "rank": 49,
+          "name": "Dillon Brooks",
+          "team": "PHO",
+          "score": 13.419430251690171
+        }
+      ]
+    },
+    {
+      "day": 41,
+      "date": "2025-12-31",
+      "day_of_week": "Wednesday",
+      "players": [
+        {
+          "rank": 31,
+          "name": "Donovan Clingan",
+          "team": "POR",
+          "score": 15.248145541471892
+        },
+        {
+          "rank": 37,
+          "name": "Clint Capela",
+          "team": "HOU",
+          "score": 14.51685660214926
+        },
+        {
+          "rank": 17,
+          "name": "Tyrese Maxey",
+          "team": "PHI",
+          "score": 16.96123774679348
+        },
+        {
+          "rank": 41,
+          "name": "Jarrett Allen",
+          "team": "CLE",
+          "score": 14.005821221229615
+        },
+        {
+          "rank": 11,
+          "name": "Alex Sarr",
+          "team": "WAS",
+          "score": 18.46827693830453
+        }
+      ]
+    },
+    {
+      "day": 42,
+      "date": "2026-01-01",
+      "day_of_week": "Thursday",
+      "players": [
+        {
+          "rank": 17,
+          "name": "Tyrese Maxey",
+          "team": "PHI",
+          "score": 16.96123774679348
+        },
+        {
+          "rank": 47,
+          "name": "Alex Caruso",
+          "team": "OKC",
+          "score": 13.626844662842023
+        },
+        {
+          "rank": 55,
+          "name": "Bam Adebayo",
+          "team": "MIA",
+          "score": 12.594119837773642
+        },
+        {
+          "rank": 53,
+          "name": "Isaiah Hartenstein",
+          "team": "OKC",
+          "score": 12.801726036159463
+        },
+        {
+          "rank": 40,
+          "name": "Nae'Qwan Tomlin",
+          "team": "CLE",
+          "score": 14.10127927113763
+        }
+      ]
+    },
+    {
+      "day": 43,
+      "date": "2026-01-02",
+      "day_of_week": "Friday",
+      "players": [
+        {
+          "rank": 5,
+          "name": "Nikola Joki\u0107",
+          "team": "DEN",
+          "score": 19.41913687726665
+        },
+        {
+          "rank": 53,
+          "name": "Isaiah Hartenstein",
+          "team": "OKC",
+          "score": 12.801726036159463
+        },
+        {
+          "rank": 33,
+          "name": "Alperen \u015eeng\u00fcn",
+          "team": "HOU",
+          "score": 14.876654699302646
+        },
+        {
+          "rank": 51,
+          "name": "Jalen Johnson",
+          "team": "ATL",
+          "score": 12.98263193114096
+        },
+        {
+          "rank": 42,
+          "name": "Mark Williams",
+          "team": "PHO",
+          "score": 13.985073135855735
+        }
+      ]
+    },
+    {
+      "day": 44,
+      "date": "2026-01-03",
+      "day_of_week": "Saturday",
+      "players": [
+        {
+          "rank": 6,
+          "name": "Luka Don\u010di\u0107",
+          "team": "LAL",
+          "score": 18.88361703282677
+        },
+        {
+          "rank": 67,
+          "name": "Onyeka Okongwu",
+          "team": "ATL",
+          "score": 11.98586603848172
+        },
+        {
+          "rank": 24,
+          "name": "Jonas Valan\u010di\u016bnas",
+          "team": "DEN",
+          "score": 16.0481349433251
+        },
+        {
+          "rank": 58,
+          "name": "Brandon Ingram",
+          "team": "TOR",
+          "score": 12.50288776681288
+        },
+        {
+          "rank": 62,
+          "name": "Craig Porter Jr.",
+          "team": "CLE",
+          "score": 12.187539162295428
+        }
+      ]
+    },
+    {
+      "day": 45,
+      "date": "2026-01-04",
+      "day_of_week": "Sunday",
+      "players": [
+        {
+          "rank": 35,
+          "name": "Jaylen Brown",
+          "team": "BOS",
+          "score": 14.663179173614845
+        },
+        {
+          "rank": 64,
+          "name": "Jalen Smith",
+          "team": "CHI",
+          "score": 12.09417581144434
+        },
+        {
+          "rank": 38,
+          "name": "Nic Claxton",
+          "team": "BRK",
+          "score": 14.260940250658692
+        },
+        {
+          "rank": 45,
+          "name": "Reed Sheppard",
+          "team": "HOU",
+          "score": 13.655531913730448
+        },
+        {
+          "rank": 49,
+          "name": "Dillon Brooks",
+          "team": "PHO",
+          "score": 13.419430251690171
+        }
+      ]
+    },
+    {
+      "day": 46,
+      "date": "2026-01-05",
+      "day_of_week": "Monday",
+      "players": [
+        {
+          "rank": 35,
+          "name": "Jaylen Brown",
+          "team": "BOS",
+          "score": 14.663179173614845
+        },
+        {
+          "rank": 45,
+          "name": "Reed Sheppard",
+          "team": "HOU",
+          "score": 13.655531913730448
+        },
+        {
+          "rank": 61,
+          "name": "Pascal Siakam",
+          "team": "IND",
+          "score": 12.203317160574596
+        },
+        {
+          "rank": 73,
+          "name": "Austin Reaves",
+          "team": "LAL",
+          "score": 11.059309816182452
+        },
+        {
+          "rank": 70,
+          "name": "Devin Booker",
+          "team": "PHO",
+          "score": 11.819089202745657
+        }
+      ]
+    },
+    {
+      "day": 47,
+      "date": "2026-01-06",
+      "day_of_week": "Tuesday",
+      "players": [
+        {
+          "rank": 68,
+          "name": "Kevin Durant",
+          "team": "HOU",
+          "score": 11.9668154548967
+        },
+        {
+          "rank": 44,
+          "name": "OG Anunoby",
+          "team": "NYK",
+          "score": 13.694725707080856
+        },
+        {
+          "rank": 63,
+          "name": "Jimmy Butler",
+          "team": "GSW",
+          "score": 12.128440537046185
+        },
+        {
+          "rank": 71,
+          "name": "Marvin Bagley III",
+          "team": "WAS",
+          "score": 11.679061601053355
+        },
+        {
+          "rank": 73,
+          "name": "Austin Reaves",
+          "team": "LAL",
+          "score": 11.059309816182452
+        }
+      ]
+    },
+    {
+      "day": 48,
+      "date": "2026-01-07",
+      "day_of_week": "Wednesday",
+      "players": [
+        {
+          "rank": 68,
+          "name": "Kevin Durant",
+          "team": "HOU",
+          "score": 11.9668154548967
+        },
+        {
+          "rank": 71,
+          "name": "Marvin Bagley III",
+          "team": "WAS",
+          "score": 11.679061601053355
+        },
+        {
+          "rank": 56,
+          "name": "Peyton Watson",
+          "team": "DEN",
+          "score": 12.575402261311496
+        },
+        {
+          "rank": 58,
+          "name": "Brandon Ingram",
+          "team": "TOR",
+          "score": 12.50288776681288
+        },
+        {
+          "rank": 57,
+          "name": "Moussa Diabat\u00e9",
+          "team": "CHO",
+          "score": 12.551416683862708
+        }
+      ]
+    },
+    {
+      "day": 49,
+      "date": "2026-01-08",
+      "day_of_week": "Thursday",
+      "players": [
+        {
+          "rank": 55,
+          "name": "Bam Adebayo",
+          "team": "MIA",
+          "score": 12.594119837773642
+        },
+        {
+          "rank": 66,
+          "name": "Norman Powell",
+          "team": "MIA",
+          "score": 12.010869026867288
+        },
+        {
+          "rank": 61,
+          "name": "Pascal Siakam",
+          "team": "IND",
+          "score": 12.203317160574596
+        },
+        {
+          "rank": 62,
+          "name": "Craig Porter Jr.",
+          "team": "CLE",
+          "score": 12.187539162295428
+        },
+        {
+          "rank": 24,
+          "name": "Jonas Valan\u010di\u016bnas",
+          "team": "DEN",
+          "score": 16.0481349433251
+        }
+      ]
+    },
+    {
+      "day": 50,
+      "date": "2026-01-09",
+      "day_of_week": "Friday",
+      "players": [
+        {
+          "rank": 56,
+          "name": "Peyton Watson",
+          "team": "DEN",
+          "score": 12.575402261311496
+        },
+        {
+          "rank": 57,
+          "name": "Moussa Diabat\u00e9",
+          "team": "CHO",
+          "score": 12.551416683862708
+        },
+        {
+          "rank": 69,
+          "name": "Lauri Markkanen",
+          "team": "UTA",
+          "score": 11.893360191139584
+        },
+        {
+          "rank": 66,
+          "name": "Norman Powell",
+          "team": "MIA",
+          "score": 12.010869026867288
+        },
+        {
+          "rank": 46,
+          "name": "Paolo Banchero",
+          "team": "ORL",
+          "score": 13.654644489304928
+        }
+      ]
+    }
+  ],
+  "statistics": {
+    "unique_players": 75,
+    "unique_trios": 15402,
+    "max_trio_appearances": 2
+  }
+}
