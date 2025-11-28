@@ -13,7 +13,7 @@ from sqlalchemy import (
 )
 from sqlalchemy.orm import relationship
 
-from .database import Base
+from .db.session import Base
 
 
 class Player(Base):

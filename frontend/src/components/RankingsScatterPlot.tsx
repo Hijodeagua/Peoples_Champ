@@ -9,8 +9,8 @@ export function RankingsScatterPlot({ rankings }: Props) {
   const [hoveredPlayer, setHoveredPlayer] = useState<PlayerRanking | null>(null);
   const [hoverPos, setHoverPos] = useState<{ x: number; y: number } | null>(null);
 
-  // Filter to only players who have a Ringer rank for comparison
-  const data = rankings.filter(r => r.ringerRank !== null);
+  // Filter to only players who have a Ringer rank for comparison (i.e., in Ringer top 100)
+  const data = rankings.filter(r => r.ringerRank !== null && r.ringerRank <= 100);
   
   // Chart dimensions
   const width = 600;

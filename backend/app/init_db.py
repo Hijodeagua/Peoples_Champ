@@ -1,4 +1,5 @@
-from .database import engine, Base
+from .db.session import engine
+from .db.base import Base
 from . import models  # this makes sure Player, etc. are registered with Base
 
 

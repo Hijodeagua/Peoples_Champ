@@ -7,6 +7,7 @@ export type Player = {
   age: number;
   team: string;
   games: number;
+  games_started: number;
   minutes: number;
   pos: string;
   ws: number;
@@ -64,6 +65,7 @@ function mapRowToPlayer(row: Record<string, any>): Player {
     age: toNumber(row.Age),
     team: String(row.Team ?? ""),
     games: toNumber(row.G),
+    games_started: toNumber(row.GS),
     minutes: toNumber(row.MP),
     pos: String(row.Pos ?? ""),
     ws: toNumber(row.WS),

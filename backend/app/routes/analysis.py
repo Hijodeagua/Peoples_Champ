@@ -2,7 +2,7 @@ import os
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
-from ..database import get_db
+from ..db.session import get_db
 from .. import models
 
 router = APIRouter()
@@ -12,10 +12,6 @@ class AnalysisRequest(BaseModel):
     rankings: list[dict] # Simplified; we'll pass a summary of the data
     
 # Request model for feedback
-class FeedbackRequest(BaseModel):
-    analysis_text: string
-    rating: int
-
 class FeedbackCreate(BaseModel):
     analysis_text: str
     rating: int
@@ -23,6 +19,9 @@ class FeedbackCreate(BaseModel):
 @router.post("/generate")
 async def generate_analysis(request: AnalysisRequest):
     api_key = os.getenv("OPENAI_API_KEY")
+    print(f"API Key present: {bool(api_key)}")
+    print(f"Number of rankings received: {len(request.rankings)}")
+    
     if not api_key:
         return {
             "analysis": "OpenAI API Key not found. Unable to generate AI analysis. (Mock Analysis: The model shows significant divergence from consensus on several defensive specialists...)"
@@ -38,6 +37,7 @@ async def generate_analysis(request: AnalysisRequest):
         # 2. General trends
         
         rankings = request.rankings
+        print(f"Processing {len(rankings)} rankings for analysis")
         
         # Identify outliers
         # Sort by difference (assuming difference is in the dict)
@@ -48,37 +48,48 @@ async def generate_analysis(request: AnalysisRequest):
         # "rankings" is expected to be a list of objects with { name, rank, ringerRank, diff, stats: {...} }
         
         prompt = """
-        You are a basketball analyst. Analyze the following data comparing "Peoples Champ" model rankings vs "The Ringer" rankings for the 2025-26 NBA season.
-        The "Peoples Champ" model heavily weights advanced stats like BPM, VORP, and WS/48.
+        Analyze this basketball ranking data. Respond ONLY in this exact format:
+
+        • Biggest overvaluation: [Player Name] - [One short reason why we rank them higher]
+        • Biggest undervaluation: [Player Name] - [One short reason why we rank them lower]  
+        • Model bias: [What type of players our model favors in 1 sentence]
+        • Key insight: [One sentence about analytics vs expert opinion]
+
+        Keep each bullet to ONE sentence maximum. Be concise.
         
-        Identify:
-        1. Players we rate significantly higher than the consensus (Underrated by consensus). Look at their advanced stats to explain why.
-        2. Players we rate significantly lower (Overrated by consensus).
-        3. Any systematic bias (e.g. do we overvalue big men?).
-        
-        Keep the analysis concise, fun, and insightful. Max 3 paragraphs.
-        
-        Data (Sample of notable differences):
+        Data:
         """
         
         for p in rankings[:15]: # process first 15 passed (assuming sorted by interest or just top players)
              prompt += f"\n- {p['name']}: Our Rank #{p['rank']}, Ringer #{p['ringerRank']} (Diff: {p['diff']}). Stats: {p.get('stats_summary', 'N/A')}"
 
+        print(f"Prompt length: {len(prompt)} characters")
+        print("Making OpenAI API call...")
+
         response = client.chat.completions.create(
             model="gpt-4o",
             messages=[
-                {"role": "system", "content": "You are a sharp, analytical basketball expert."},
+                {"role": "system", "content": "You are a concise basketball analyst. Follow the exact format requested. Keep responses short and punchy. Maximum 4 bullet points, one sentence each."},
                 {"role": "user", "content": prompt}
             ],
-            max_tokens=400
+            max_tokens=200,
+            temperature=0.3
         )
         
         analysis = response.choices[0].message.content
+        print(f"Received analysis length: {len(analysis) if analysis else 0} characters")
         return {"analysis": analysis}
 
     except Exception as e:
         print(f"Error generating analysis: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        # Provide a short fallback analysis
+        fallback_analysis = """
+        • Biggest overvaluation: Player X - Strong advanced metrics but low traditional recognition
+        • Biggest undervaluation: Player Y - High profile but concerning efficiency numbers  
+        • Model bias: Our model favors statistical efficiency over reputation and narrative
+        • Key insight: Analytics capture per-minute impact while experts weigh intangibles and leadership
+        """
+        return {"analysis": fallback_analysis}
 
 @router.post("/feedback")
 def save_feedback(feedback: FeedbackCreate, db: Session = Depends(get_db)):

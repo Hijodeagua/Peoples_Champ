@@ -10,7 +10,7 @@ from pydantic import BaseModel
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
-from ..database import get_db
+from ..db.session import get_db
 from .. import models
 
 

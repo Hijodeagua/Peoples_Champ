@@ -36,12 +36,15 @@ export type PlayerRanking = {
  * Total should sum to 1.0
  */
 const METRIC_WEIGHTS = {
-  bpm: 0.25,    // Box Plus Minus - most comprehensive single metric
-  vorp: 0.20,   // Value Over Replacement - accounts for playing time
-  ws48: 0.20,   // Win Shares per 48 - efficiency metric
-  per: 0.15,    // Player Efficiency Rating - traditional advanced stat
-  obpm: 0.10,   // Offensive impact
-  dbpm: 0.10,   // Defensive impact
+  bpm: 0.20,    // Box Plus Minus - most comprehensive single metric
+  vorp: 0.18,   // Value Over Replacement - accounts for playing time
+  ws48: 0.18,   // Win Shares per 48 - efficiency metric
+  per: 0.12,    // Player Efficiency Rating - traditional advanced stat
+  obpm: 0.08,   // Offensive impact
+  dbpm: 0.08,   // Defensive impact
+  // New weights for role/usage
+  starter_bonus: 0.08,  // Bonus for being a starter
+  minutes_weight: 0.08, // Weight by minutes played
 };
 
 /**
@@ -74,9 +77,12 @@ function calculateCompositeScore(
   let compositeScore = 0;
   let totalWeight = 0;
 
-  // Iterate through defined weights
-  (Object.keys(METRIC_WEIGHTS) as Array<keyof typeof METRIC_WEIGHTS>).forEach((key) => {
-    const weight = METRIC_WEIGHTS[key];
+  // Iterate through defined weights for advanced metrics
+  const advancedMetrics = ['bpm', 'vorp', 'ws48', 'per', 'obpm', 'dbpm'];
+  advancedMetrics.forEach((key) => {
+    if (!(key in METRIC_WEIGHTS)) return;
+    
+    const weight = METRIC_WEIGHTS[key as keyof typeof METRIC_WEIGHTS];
     
     // Get values for this metric across all players to normalize
     const values = allPlayers.map(p => {
@@ -107,6 +113,20 @@ function calculateCompositeScore(
       totalWeight += weight;
     }
   });
+
+  // Add starter bonus
+  const starterRatio = player.games > 0 ? player.games_started / player.games : 0;
+  const starterBonus = starterRatio * 100; // 0-100 based on % of games started
+  compositeScore += starterBonus * METRIC_WEIGHTS.starter_bonus;
+  totalWeight += METRIC_WEIGHTS.starter_bonus;
+
+  // Add minutes weighting (normalize minutes across all players)
+  const allMinutes = allPlayers.map(p => p.minutes).filter(v => Number.isFinite(v));
+  const minMinutes = Math.min(...allMinutes);
+  const maxMinutes = Math.max(...allMinutes);
+  const normalizedMinutes = normalize(player.minutes, minMinutes, maxMinutes);
+  compositeScore += normalizedMinutes * METRIC_WEIGHTS.minutes_weight;
+  totalWeight += METRIC_WEIGHTS.minutes_weight;
 
   // Normalize by actual weights used
   if (totalWeight > 0) {
