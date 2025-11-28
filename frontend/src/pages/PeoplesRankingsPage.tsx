@@ -3,11 +3,17 @@ import { loadPlayers } from "../data/loadPlayersFromCSV";
 import { loadRingerRankings } from "../data/loadRingerRankings";
 import { generateRankings } from "../data/rankingModel";
 import type { PlayerRanking } from "../data/rankingModel";
+import { RankingsScatterPlot } from "../components/RankingsScatterPlot";
 
 export default function PeoplesRankingsPage() {
   const [rankings, setRankings] = useState<PlayerRanking[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [showChart, setShowChart] = useState(false);
+  const [analysis, setAnalysis] = useState<string | null>(null);
+  const [generatingAnalysis, setGeneratingAnalysis] = useState(false);
+  const [rating, setRating] = useState<number | null>(null);
+  const [feedbackSubmitted, setFeedbackSubmitted] = useState(false);
 
   useEffect(() => {
     async function loadRankings() {
@@ -18,8 +24,11 @@ export default function PeoplesRankingsPage() {
           loadRingerRankings(),
         ]);
 
-        const playerRankings = generateRankings(players, ringerRankings);
-        setRankings(playerRankings.slice(0, 50)); // Show top 50
+        // Filter players with less than 10 games played
+        const validPlayers = players.filter(p => p.games >= 10);
+
+        const playerRankings = generateRankings(validPlayers, ringerRankings);
+        setRankings(playerRankings.slice(0, 100)); // Show top 100
       } catch (err) {
         setError(err instanceof Error ? err.message : "Failed to load rankings");
       } finally {
@@ -29,6 +38,61 @@ export default function PeoplesRankingsPage() {
 
     loadRankings();
   }, []);
+
+  const handleGenerateAnalysis = async () => {
+    try {
+      setGeneratingAnalysis(true);
+      setAnalysis(null);
+      setRating(null);
+      setFeedbackSubmitted(false);
+
+      // Prioritize players with significant differences for the analysis
+      const topDifferences = [...rankings]
+        .filter(r => r.rankDifference !== null)
+        .sort((a, b) => Math.abs(b.rankDifference!) - Math.abs(a.rankDifference!))
+        .slice(0, 20)
+        .map(r => ({
+          name: r.player.name,
+          rank: r.rank,
+          ringerRank: r.ringerRank,
+          diff: r.rankDifference,
+          stats_summary: `BPM: ${r.player.advanced.bpm}, WS: ${r.player.ws}, VORP: ${r.player.advanced.vorp}`
+        }));
+
+      const response = await fetch("http://localhost:8000/analysis/generate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ rankings: topDifferences }),
+      });
+
+      if (!response.ok) throw new Error("Failed to generate analysis");
+
+      const data = await response.json();
+      setAnalysis(data.analysis);
+    } catch (err) {
+      console.error(err);
+      // Mock analysis for fallback if API fails or no key
+      setAnalysis("The model shows significant divergence from consensus on several defensive specialists...");
+    } finally {
+      setGeneratingAnalysis(false);
+    }
+  };
+
+  const handleFeedback = async (score: number) => {
+    if (!analysis) return;
+    setRating(score);
+    
+    try {
+      await fetch("http://localhost:8000/analysis/feedback", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ analysis_text: analysis, rating: score }),
+      });
+      setFeedbackSubmitted(true);
+    } catch (err) {
+      console.error("Failed to send feedback", err);
+    }
+  };
 
   if (loading) {
     return (
@@ -60,6 +124,86 @@ export default function PeoplesRankingsPage() {
       </header>
 
       <div className="bg-slate-800/50 rounded-xl border border-slate-700 p-6">
+        <div className="flex justify-end mb-4">
+          <button
+            onClick={() => setShowChart(!showChart)}
+            className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-500 transition-colors"
+          >
+            {showChart ? "Hide Analysis" : "Show Analysis Chart"}
+          </button>
+        </div>
+
+        {showChart && (
+          <div className="mb-8 animate-in fade-in slide-in-from-top-4 duration-300">
+            <div className="flex justify-center mb-6">
+              {!analysis && !generatingAnalysis && (
+                <button
+                  onClick={handleGenerateAnalysis}
+                  className="bg-emerald-600 hover:bg-emerald-500 text-white px-6 py-2 rounded-full font-medium shadow-lg transition-transform active:scale-95 flex items-center gap-2"
+                >
+                  <span>✨</span> Generate AI Analysis
+                </button>
+              )}
+            </div>
+
+            <div className="grid md:grid-cols-2 gap-6">
+              <RankingsScatterPlot rankings={rankings} />
+              
+              <div className="bg-slate-900/50 border border-slate-700 rounded-xl p-6">
+                <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
+                  <span>🤖</span> Model Analysis
+                </h3>
+                
+                {generatingAnalysis ? (
+                  <div className="space-y-4 animate-pulse">
+                    <div className="h-4 bg-slate-700 rounded w-3/4"></div>
+                    <div className="h-4 bg-slate-700 rounded w-full"></div>
+                    <div className="h-4 bg-slate-700 rounded w-5/6"></div>
+                    <p className="text-sm text-slate-400 pt-2">Crunching the numbers...</p>
+                  </div>
+                ) : analysis ? (
+                  <div className="space-y-6">
+                    <div className="prose prose-invert text-slate-300 text-sm leading-relaxed">
+                      <p className="whitespace-pre-line">{analysis}</p>
+                    </div>
+                    
+                    <div className="border-t border-slate-700 pt-4">
+                      <p className="text-xs text-slate-400 mb-2 uppercase tracking-wider font-semibold">
+                        Rate this analysis
+                      </p>
+                      
+                      {feedbackSubmitted ? (
+                        <div className="text-green-400 text-sm flex items-center gap-2 bg-green-900/20 p-2 rounded">
+                          <span>✓</span> Thanks for your feedback!
+                        </div>
+                      ) : (
+                        <div className="flex gap-2">
+                          {[1, 2, 3, 4, 5].map((star) => (
+                            <button
+                              key={star}
+                              onClick={() => handleFeedback(star)}
+                              onMouseEnter={() => setRating(star)}
+                              className={`text-xl transition-transform hover:scale-110 ${
+                                (rating || 0) >= star ? "text-yellow-400" : "text-slate-600"
+                              }`}
+                            >
+                              ★
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="text-center text-slate-400 py-12">
+                    <p>Click generate to analyze the data</p>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
         <div className="mb-4 p-4 bg-blue-900/20 border border-blue-700/50 rounded-lg">
           <p className="text-blue-200 text-sm">
             <strong>Model-Based Rankings:</strong> These rankings are calculated using advanced

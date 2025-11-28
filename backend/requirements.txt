@@ -6,3 +6,5 @@ python-jose
 passlib[bcrypt]
 alembic
 psycopg2-binary  # if postgres
+openai
+

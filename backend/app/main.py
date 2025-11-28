@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from .routes import auth, daily_set, game, players
+from .routes import auth, daily_set, game, players, analysis
 
 app = FastAPI(title="Peoples Champ API")
 
@@ -29,4 +29,5 @@ def read_root():
 app.include_router(players.router, prefix="/players", tags=["players"])
 app.include_router(daily_set.router, prefix="/daily-set", tags=["daily-set"])
 app.include_router(auth.router, prefix="/auth", tags=["auth"])
+app.include_router(analysis.router, prefix="/analysis", tags=["analysis"])
 app.include_router(game.router)

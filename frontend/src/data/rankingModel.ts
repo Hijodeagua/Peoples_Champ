@@ -59,29 +59,54 @@ function calculateCompositeScore(
   player: Player,
   allPlayers: Player[]
 ): { score: number; metrics: PlayerRanking["metrics"] } {
-  // Extract metrics from player stats (these would come from advanced stats CSV)
-  // For now, we'll use WS as a proxy and calculate others from basic stats
-  
+  // Extract metrics from player stats
   const metrics: PlayerRanking["metrics"] = {
     ws: player.ws,
-    // These would ideally come from the advanced stats CSV
-    // For now, we'll use placeholder calculations
+    bpm: player.advanced.bpm,
+    obpm: player.advanced.obpm,
+    dbpm: player.advanced.dbpm,
+    per: player.advanced.per,
+    ws48: player.advanced.ws48,
+    vorp: player.advanced.vorp,
   };
 
-  // Calculate min/max for each metric across all players
-  const wsValues = allPlayers.map(p => p.ws).filter(v => Number.isFinite(v));
-  const wsMin = Math.min(...wsValues);
-  const wsMax = Math.max(...wsValues);
-
-  // Normalize and weight metrics
+  // Calculate composite score using defined weights
   let compositeScore = 0;
   let totalWeight = 0;
 
-  if (metrics.ws !== undefined && Number.isFinite(metrics.ws)) {
-    const normalizedWS = normalize(metrics.ws, wsMin, wsMax);
-    compositeScore += normalizedWS * 0.5; // Give WS 50% weight for now
-    totalWeight += 0.5;
-  }
+  // Iterate through defined weights
+  (Object.keys(METRIC_WEIGHTS) as Array<keyof typeof METRIC_WEIGHTS>).forEach((key) => {
+    const weight = METRIC_WEIGHTS[key];
+    
+    // Get values for this metric across all players to normalize
+    const values = allPlayers.map(p => {
+      if (key === 'ws48') return p.advanced.ws48;
+      if (key === 'bpm') return p.advanced.bpm;
+      if (key === 'obpm') return p.advanced.obpm;
+      if (key === 'dbpm') return p.advanced.dbpm;
+      if (key === 'per') return p.advanced.per;
+      if (key === 'vorp') return p.advanced.vorp;
+      return 0;
+    }).filter(v => Number.isFinite(v));
+
+    const min = Math.min(...values);
+    const max = Math.max(...values);
+    
+    // Get player's value
+    let val: number | undefined;
+    if (key === 'ws48') val = metrics.ws48;
+    else if (key === 'bpm') val = metrics.bpm;
+    else if (key === 'obpm') val = metrics.obpm;
+    else if (key === 'dbpm') val = metrics.dbpm;
+    else if (key === 'per') val = metrics.per;
+    else if (key === 'vorp') val = metrics.vorp;
+
+    if (val !== undefined && Number.isFinite(val)) {
+      const normalized = normalize(val, min, max);
+      compositeScore += normalized * weight;
+      totalWeight += weight;
+    }
+  });
 
   // Normalize by actual weights used
   if (totalWeight > 0) {

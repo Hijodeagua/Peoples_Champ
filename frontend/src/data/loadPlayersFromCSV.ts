@@ -23,6 +23,14 @@ export type Player = {
     ts_pct: number;
     efg_pct: number;
   };
+  advanced: {
+    bpm: number;
+    obpm: number;
+    dbpm: number;
+    per: number;
+    ws48: number;
+    vorp: number;
+  };
   percentiles?: {
     pts: number;
     ast: number;
@@ -45,31 +53,40 @@ function toNumber(value: unknown): number {
 }
 
 function mapRowToPlayer(row: Record<string, any>): Player {
-  const games = toNumber(row.G);
-  const divisor = games > 0 ? games : 1;
+  // Basic stats are missing in the advanced CSV, so we default to 0 or try to read if present
+  // The divisor is 1 because the advanced CSV doesn't have per-game totals usually, but if it did we'd use G
+  // Actually, advanced CSV usually doesn't have PTS/AST totals either.
   
   return {
     id: String(row["Player-additional"] ?? row.id ?? ""),
     name: String(row.Player ?? ""),
-    season: String(row.Season ?? ""),
+    season: "2025-26", // Default to current season as requested
     age: toNumber(row.Age),
     team: String(row.Team ?? ""),
-    games: games,
+    games: toNumber(row.G),
     minutes: toNumber(row.MP),
     pos: String(row.Pos ?? ""),
     ws: toNumber(row.WS),
     stats: {
-      pts: toNumber(row.PTS) / divisor,
-      ast: toNumber(row.AST) / divisor,
-      trb: toNumber(row.TRB) / divisor,
-      stl: toNumber(row.STL) / divisor,
-      blk: toNumber(row.BLK) / divisor,
+      pts: toNumber(row.PTS), // Likely 0/undefined in advanced CSV
+      ast: toNumber(row.AST),
+      trb: toNumber(row.TRB),
+      stl: toNumber(row.STL),
+      blk: toNumber(row.BLK),
       fg_pct: toNumber(row["FG%"]),
       three_pct: toNumber(row["3P%"]),
       two_pct: toNumber(row["2P%"]),
       ft_pct: toNumber(row["FT%"]),
       ts_pct: toNumber(row["TS%"]),
-      efg_pct: toNumber(row["eFG%"]),
+      efg_pct: toNumber(row["eFG%"]), // This might be empty in advanced CSV? No, headers didn't show it.
+    },
+    advanced: {
+      bpm: toNumber(row.BPM),
+      obpm: toNumber(row.OBPM),
+      dbpm: toNumber(row.DBPM),
+      per: toNumber(row.PER),
+      ws48: toNumber(row["WS/48"]),
+      vorp: toNumber(row.VORP),
     },
     raw: row,
   };
@@ -84,7 +101,7 @@ function calculatePercentile(value: number, allValues: number[]): number {
 }
 
 export async function loadPlayers(): Promise<Player[]> {
-  const url = "/data/past_3_11-17.csv";
+  const url = "/data/Bbref_Adv_25-26.csv";
   console.log("Fetching CSV from:", url);
   
   const response = await fetch(url);
@@ -114,11 +131,30 @@ export async function loadPlayers(): Promise<Player[]> {
     console.warn("CSV parse errors:", parsed.errors);
   }
 
-  const players = parsed.data
-    .filter((row: Record<string, any>) => row && row["Player-additional"])
-    .map(mapRowToPlayer);
+  const playerMap = new Map<string, Player>();
 
-  console.log("Total players loaded:", players.length);
+  parsed.data
+    .filter((row: Record<string, any>) => row && row["Player-additional"])
+    .forEach((row) => {
+      const player = mapRowToPlayer(row);
+      const existing = playerMap.get(player.id);
+      
+      if (!existing) {
+        playerMap.set(player.id, player);
+      } else {
+        // If player exists, keep the one with more games played
+        // or if games equal, maybe total minutes?
+        if (player.games > existing.games) {
+          playerMap.set(player.id, player);
+        } else if (player.games === existing.games && player.minutes > existing.minutes) {
+          playerMap.set(player.id, player);
+        }
+      }
+    });
+
+  const players = Array.from(playerMap.values());
+
+  console.log("Total unique players loaded:", players.length);
   
   // Calculate percentiles for all players
   if (players.length > 0) {

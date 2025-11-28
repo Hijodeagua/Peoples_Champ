@@ -182,3 +182,12 @@ class Submission(Base):
     share_slug = Column(String, unique=True, index=True, nullable=False)
 
     created_at = Column(DateTime, default=datetime.utcnow)
+
+
+class AnalysisFeedback(Base):
+    __tablename__ = "analysis_feedback"
+
+    id = Column(Integer, primary_key=True, index=True)
+    analysis_text = Column(Text, nullable=False)
+    rating = Column(Integer, nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
