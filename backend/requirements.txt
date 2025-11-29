@@ -2,10 +2,11 @@ fastapi
 uvicorn
 sqlalchemy
 pydantic
+pydantic-settings
 python-jose
 passlib[bcrypt]
 alembic
-psycopg2-binary  # if postgres
+psycopg2-binary
 openai
 python-dotenv
 
