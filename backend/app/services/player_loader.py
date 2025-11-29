@@ -5,59 +5,82 @@ from sqlalchemy.orm import Session
 from ..models import Player
 from ..db.session import get_db
 
+def safe_int(value: str) -> int:
+    try:
+        return int(value)
+    except ValueError:
+        return None
+
+def safe_float(value: str) -> float:
+    try:
+        return float(value)
+    except ValueError:
+        return None
+
 def load_players_from_csv(db: Session, csv_path: str) -> List[Player]:
     """Load players from CSV file into database"""
     players = []
     
     if not os.path.exists(csv_path):
-        print(f"CSV file not found: {csv_path}")
-        return players
+        raise FileNotFoundError(f"CSV file not found: {csv_path}")
     
     with open(csv_path, 'r', encoding='utf-8') as file:
         reader = csv.DictReader(file)
         
         for row in reader:
-            # Skip rows without player ID
-            if not row.get('Player-additional'):
+            # Skip empty rows
+            if not row.get('Player'):
                 continue
                 
-            player_id = row['Player-additional']
+            player_data = {
+                'id': row.get('bbref_id', '').strip(),
+                'name': row.get('Player', '').strip(),
+                'team': row.get('Tm', '').strip() or None,
+                'position': row.get('Pos', '').strip() or None,
+                'seasons': safe_int(row.get('Seasons', 1)),
+                'current_age': safe_int(row.get('Age')),
+                'total_ws': safe_float(row.get('WS', 0)),
+                'ws_per_game': safe_float(row.get('WS/48', 0)) / 48 if safe_float(row.get('WS/48', 0)) else 0,
+                'threes_per_game': safe_float(row.get('3PA', 0)),
+                'ast_per_game': safe_float(row.get('AST', 0)),
+                'stl_per_game': safe_float(row.get('STL', 0)),
+                'trb_per_game': safe_float(row.get('TRB', 0)),
+                'blk_per_game': safe_float(row.get('BLK', 0)),
+                'pts_per_game': safe_float(row.get('PTS', 0)),
+                'three_pct': safe_float(row.get('3P%')) if row.get('3P%') else None,
+                'ft_pct': safe_float(row.get('FT%')) if row.get('FT%') else None,
+                'ts_pct': safe_float(row.get('TS%', 0)),
+                'efg_pct': safe_float(row.get('eFG%')) if row.get('eFG%') else None,
+                'initial_rating': 1500.0,
+                'current_rating': 1500.0
+            }
             
-            # Check if player already exists
-            existing = db.query(Player).filter(Player.id == player_id).first()
-            if existing:
+            # Skip if no ID
+            if not player_data['id']:
                 continue
             
-            # Create new player
-            player = Player(
-                id=player_id,
-                name=row.get('Player', ''),
-                team=row.get('Team', ''),
-                position=row.get('Pos', ''),
-                seasons=1,  # Default
-                current_age=int(float(row.get('Age', 0))) if row.get('Age') else None,
-                total_ws=float(row.get('WS', 0)) if row.get('WS') else 0,
-                ws_per_game=float(row.get('WS', 0)) / max(float(row.get('G', 1)), 1) if row.get('WS') and row.get('G') else 0,
-                threes_per_game=float(row.get('3P', 0)) / max(float(row.get('G', 1)), 1) if row.get('3P') and row.get('G') else 0,
-                ast_per_game=float(row.get('AST', 0)) / max(float(row.get('G', 1)), 1) if row.get('AST') and row.get('G') else 0,
-                stl_per_game=float(row.get('STL', 0)) / max(float(row.get('G', 1)), 1) if row.get('STL') and row.get('G') else 0,
-                trb_per_game=float(row.get('TRB', 0)) / max(float(row.get('G', 1)), 1) if row.get('TRB') and row.get('G') else 0,
-                blk_per_game=float(row.get('BLK', 0)) / max(float(row.get('G', 1)), 1) if row.get('BLK') and row.get('G') else 0,
-                pts_per_game=float(row.get('PTS', 0)) / max(float(row.get('G', 1)), 1) if row.get('PTS') and row.get('G') else 0,
-                three_pct=float(row.get('3P%', 0)) if row.get('3P%') else None,
-                ft_pct=float(row.get('FT%', 0)) if row.get('FT%') else None,
-                ts_pct=float(row.get('TS%', 0)) if row.get('TS%') else None,
-                efg_pct=float(row.get('eFG%', 0)) if row.get('eFG%') else None,
-                initial_rating=1500.0,  # Default ELO rating
-                current_rating=1500.0
-            )
-            
-            db.add(player)
+            # Check if player already exists
+            existing_player = db.query(Player).filter(Player.id == player_data['id']).first()
+            if existing_player:
+                continue  # Skip duplicates
+                
+            player = Player(**player_data)
             players.append(player)
     
-    db.commit()
-    print(f"Loaded {len(players)} players into database")
-    return players
+    # Insert players one by one to handle duplicates gracefully
+    inserted_count = 0
+    for player in players:
+        try:
+            db.add(player)
+            db.commit()
+            inserted_count += 1
+        except Exception as e:
+            db.rollback()
+            # Skip this player and continue
+            continue
+        
+    print(f"Loaded {inserted_count} players into database")
+    return players[:inserted_count]
 
 def get_top_players_by_ranking(db: Session, limit: int = 100) -> List[Player]:
     """Get top players ordered by total win shares (proxy for ranking)"""
