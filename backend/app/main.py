@@ -48,7 +48,14 @@ def initialize_data():
     db = SessionLocal()
     try:
         # Check if players already exist
-        player_count = db.query(Player).count()
+        try:
+            player_count = db.query(Player).count()
+            print(f"Found {player_count} players in database")
+        except Exception as e:
+            print(f"Error checking player count: {e}")
+            db.rollback()
+            player_count = 0
+        
         if player_count == 0:
             print("No players found. Attempting to load from CSV...")
             
@@ -72,26 +79,35 @@ def initialize_data():
                     print(f"Loaded {len(players)} players from {csv_path}")
                 except Exception as e:
                     print(f"Failed to load players: {e}")
+                    db.rollback()
             else:
                 print("No CSV file found for player data")
         
-        # Check if schedule needs to be generated
-        batch_scheduler = BatchScheduler(db)
-        status = batch_scheduler.get_schedule_status()
-        
-        if status["total_daily_sets"] == 0:
-            print("No schedule found. Generating initial schedule...")
-            try:
-                result = batch_scheduler.generate_next_batch(manual_override=True)
-                if result.get("success"):
-                    print(f"Generated initial schedule: {result['message']}")
-                else:
-                    print(f"Failed to generate schedule: {result.get('error')}")
-            except Exception as e:
-                print(f"Error generating schedule: {e}")
-        else:
-            print(f"Schedule exists: {status['total_daily_sets']} daily sets, {status['days_remaining']} days remaining")
+        # Check if schedule needs to be generated (with fresh session if needed)
+        try:
+            batch_scheduler = BatchScheduler(db)
+            status = batch_scheduler.get_schedule_status()
             
+            if status["total_daily_sets"] == 0:
+                print("No schedule found. Generating initial schedule...")
+                try:
+                    result = batch_scheduler.generate_next_batch(manual_override=True)
+                    if result.get("success"):
+                        print(f"Generated initial schedule: {result['message']}")
+                    else:
+                        print(f"Failed to generate schedule: {result.get('error')}")
+                except Exception as e:
+                    print(f"Error generating schedule: {e}")
+                    db.rollback()
+            else:
+                print(f"Schedule exists: {status['total_daily_sets']} daily sets, {status['days_remaining']} days remaining")
+        except Exception as e:
+            print(f"Error with schedule operations: {e}")
+            db.rollback()
+            
+    except Exception as e:
+        print(f"Startup initialization error: {e}")
+        db.rollback()
     finally:
         db.close()
 

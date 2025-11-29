@@ -14,8 +14,13 @@ class BatchScheduler:
         
     def get_last_scheduled_date(self) -> Optional[date]:
         """Get the last date that has a scheduled daily set"""
-        last_set = self.db.query(DailySet).order_by(DailySet.date.desc()).first()
-        return last_set.date if last_set else None
+        try:
+            last_set = self.db.query(DailySet).order_by(DailySet.date.desc()).first()
+            return last_set.date if last_set else None
+        except Exception as e:
+            logger.error(f"Error getting last scheduled date: {e}")
+            self.db.rollback()
+            return None
     
     def days_until_schedule_ends(self) -> int:
         """Calculate how many days until the current schedule runs out"""
@@ -110,17 +115,30 @@ class BatchScheduler:
     
     def get_schedule_status(self) -> Dict:
         """Get current schedule status"""
-        last_date = self.get_last_scheduled_date()
-        days_remaining = self.days_until_schedule_ends()
-        needs_batch = self.needs_new_batch()
-        
-        total_sets = self.db.query(DailySet).count()
-        
-        return {
-            "total_daily_sets": total_sets,
-            "last_scheduled_date": last_date.isoformat() if last_date else None,
-            "days_remaining": days_remaining,
-            "needs_new_batch": needs_batch,
-            "batch_size": self.batch_size,
-            "current_date": date.today().isoformat()
-        }
+        try:
+            last_date = self.get_last_scheduled_date()
+            days_remaining = self.days_until_schedule_ends()
+            needs_batch = self.needs_new_batch()
+            
+            total_sets = self.db.query(DailySet).count()
+            
+            return {
+                "total_daily_sets": total_sets,
+                "last_scheduled_date": last_date.isoformat() if last_date else None,
+                "days_remaining": days_remaining,
+                "needs_new_batch": needs_batch,
+                "batch_size": self.batch_size,
+                "current_date": date.today().isoformat()
+            }
+        except Exception as e:
+            logger.error(f"Error getting schedule status: {e}")
+            self.db.rollback()
+            return {
+                "total_daily_sets": 0,
+                "last_scheduled_date": None,
+                "days_remaining": 0,
+                "needs_new_batch": True,
+                "batch_size": self.batch_size,
+                "current_date": date.today().isoformat(),
+                "error": str(e)
+            }
