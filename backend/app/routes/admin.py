@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 from ..db.session import get_db
 from ..services.player_loader import load_players_from_csv, get_top_players_by_ranking
 from ..services.scheduler import GameScheduler
+from ..services.batch_scheduler import BatchScheduler
 import os
 
 router = APIRouter(prefix="/admin", tags=["admin"])
@@ -37,13 +38,13 @@ def load_players_endpoint(db: Session = Depends(get_db)):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error loading players: {str(e)}")
 
-@router.post("/generate-schedule")
-def generate_schedule_endpoint(
+@router.post("/generate-initial-schedule")
+def generate_initial_schedule_endpoint(
     days_back: int = 3,
     days_forward: int = 47,
     db: Session = Depends(get_db)
 ):
-    """Generate 50-day schedule starting from 3 days ago"""
+    """Generate initial 50-day schedule (for first-time setup only)"""
     
     scheduler = GameScheduler(db)
     
@@ -63,7 +64,7 @@ def generate_schedule_endpoint(
         scheduler.save_schedule_to_database()
         
         return {
-            "message": "Schedule generated successfully",
+            "message": "Initial schedule generated successfully",
             "start_date": start_date.isoformat(),
             "end_date": (start_date + timedelta(days=49)).isoformat(),
             "total_days": len(schedule),
@@ -77,6 +78,30 @@ def generate_schedule_endpoint(
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to generate schedule: {str(e)}")
+
+
+@router.post("/generate-next-batch")
+def generate_next_batch_endpoint(
+    manual_override: bool = False,
+    db: Session = Depends(get_db)
+):
+    """Generate next 30-day batch of matchups (runs automatically every 30 days)"""
+    
+    batch_scheduler = BatchScheduler(db)
+    result = batch_scheduler.generate_next_batch(manual_override=manual_override)
+    
+    if result.get("success", True):
+        return result
+    else:
+        raise HTTPException(status_code=400, detail=result.get("error", "Unknown error"))
+
+
+@router.get("/schedule-status")
+def get_schedule_status_endpoint(db: Session = Depends(get_db)):
+    """Get current schedule status and check if new batch is needed"""
+    
+    batch_scheduler = BatchScheduler(db)
+    return batch_scheduler.get_schedule_status()
 
 @router.get("/schedule-stats")
 def get_schedule_stats(db: Session = Depends(get_db)):
