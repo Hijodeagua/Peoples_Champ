@@ -15,7 +15,9 @@ app = FastAPI(title="Peoples Champ API")
 origins = [
     "http://localhost:5173",
     "http://127.0.0.1:5173",
-    "https://<replace-with-frontend-domain-after-deploy>",
+    "https://peoples-champ-frontend.onrender.com",
+    "https://*.onrender.com",  # Allow any Render subdomain
+    "*"  # Temporary: allow all origins for testing
 ]
 
 app.add_middleware(

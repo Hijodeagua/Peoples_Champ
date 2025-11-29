@@ -1,21 +1,54 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { api } from "../api/client";
+
+interface ArchiveEntry {
+  date: string;
+  players: Array<{id: string; name: string; team: string | null}>;
+  total_votes: number;
+  is_completed: boolean;
+}
+
+interface ArchiveResponse {
+  archives: ArchiveEntry[];
+  total_days: number;
+}
 
 export default function ArchivePage() {
-  const [showComingSoon, setShowComingSoon] = useState(false);
+  const [archives, setArchives] = useState<ArchiveEntry[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  // Placeholder past games
-  const pastGames = [
-    { date: "November 25, 2024", players: "Jokić, SGA, Giannis, Luka, AD" },
-    { date: "November 24, 2024", players: "Curry, LeBron, Durant, Embiid, Tatum" },
-    { date: "November 23, 2024", players: "Harden, Butler, George, Leonard, Mitchell" },
-    { date: "November 22, 2024", players: "Booker, Towns, Sabonis, Brunson, Fox" },
-    { date: "November 21, 2024", players: "Edwards, Haliburton, Maxey, Banchero, Wembanyama" },
-  ];
+  useEffect(() => {
+    loadArchives();
+  }, []);
 
-  const handleReplay = () => {
-    setShowComingSoon(true);
-    setTimeout(() => setShowComingSoon(false), 3000);
+  const loadArchives = async () => {
+    try {
+      setLoading(true);
+      const response = await api.get<ArchiveResponse>('/game/archive');
+      setArchives(response.data.archives);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load archives');
+    } finally {
+      setLoading(false);
+    }
   };
+
+  const handleReplay = (date: string) => {
+    // TODO: Implement replay functionality
+    alert(`Replay for ${date} coming soon!`);
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-500 mx-auto mb-4"></div>
+          <p className="text-slate-300">Loading archive...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
@@ -26,9 +59,9 @@ export default function ArchivePage() {
         </p>
       </header>
 
-      {showComingSoon && (
-        <div className="mb-6 p-4 bg-emerald-900/40 border border-emerald-700 text-emerald-200 rounded-lg text-center">
-          Replay feature coming soon! We're working on letting you revisit past matchups.
+      {error && (
+        <div className="mb-6 p-4 bg-red-900/40 border border-red-700 text-red-200 rounded-lg text-center">
+          {error}
         </div>
       )}
 
@@ -41,28 +74,49 @@ export default function ArchivePage() {
         </div>
 
         <div className="space-y-3">
-          {pastGames.map((game, index) => (
-            <div
-              key={index}
-              className="flex items-center justify-between p-4 bg-slate-700/30 rounded-lg border border-slate-700 hover:border-slate-600 transition"
-            >
-              <div>
-                <p className="font-semibold text-lg">{game.date}</p>
-                <p className="text-sm text-slate-400">Players: {game.players}</p>
-              </div>
-              <button
-                onClick={handleReplay}
-                className="px-4 py-2 rounded-lg bg-slate-700 hover:bg-slate-600 text-slate-200 font-medium transition"
-              >
-                Replay
-              </button>
+          {archives.length === 0 ? (
+            <div className="text-center py-8 text-slate-400">
+              <p>No archived games found.</p>
+              <p className="text-sm mt-2">Games will appear here after you play daily matchups.</p>
             </div>
-          ))}
+          ) : (
+            archives.map((archive, index) => {
+              const formattedDate = new Date(archive.date).toLocaleDateString('en-US', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+              });
+              const playerNames = archive.players.map(p => p.name).join(', ');
+              
+              return (
+                <div
+                  key={index}
+                  className="flex items-center justify-between p-4 bg-slate-700/30 rounded-lg border border-slate-700 hover:border-slate-600 transition"
+                >
+                  <div>
+                    <p className="font-semibold text-lg">{formattedDate}</p>
+                    <p className="text-sm text-slate-400">Players: {playerNames}</p>
+                    <p className="text-xs text-slate-500 mt-1">
+                      {archive.total_votes} votes • {archive.is_completed ? 'Completed' : 'In Progress'}
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => handleReplay(archive.date)}
+                    className="px-4 py-2 rounded-lg bg-slate-700 hover:bg-slate-600 text-slate-200 font-medium transition"
+                  >
+                    Replay
+                  </button>
+                </div>
+              );
+            })
+          )}
         </div>
 
-        <div className="mt-6 text-center text-sm text-slate-400">
-          <p>More archived games will appear here as you play daily.</p>
-        </div>
+        {archives.length > 0 && (
+          <div className="mt-6 text-center text-sm text-slate-400">
+            <p>Showing {archives.length} archived games</p>
+          </div>
+        )}
       </div>
     </div>
   );
