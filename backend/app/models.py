@@ -129,13 +129,15 @@ class User(Base):
 class UserChoice(Base):
     """
     One row per user answer on a matchup.
+    Supports both authenticated users (user_id) and anonymous users (session_id).
     """
 
     __tablename__ = "user_choices"
 
     id = Column(Integer, primary_key=True, index=True)
 
-    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=True)  # Nullable for anonymous users
+    session_id = Column(String, nullable=True)  # For anonymous users
     matchup_id = Column(Integer, ForeignKey("matchups.id"), nullable=False)
 
     winner_player_id = Column(String, ForeignKey("players.id"), nullable=False)
@@ -146,6 +148,12 @@ class UserChoice(Base):
     user = relationship("User", back_populates="choices")
     matchup = relationship("Matchup", back_populates="user_choices")
     winner_player = relationship("Player", back_populates="user_choices")
+
+    __table_args__ = (
+        # Ensure one vote per user/session per matchup
+        UniqueConstraint("user_id", "matchup_id", name="uq_user_matchup"),
+        UniqueConstraint("session_id", "matchup_id", name="uq_session_matchup"),
+    )
 
 
 class RatingHistory(Base):

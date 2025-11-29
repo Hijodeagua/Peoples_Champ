@@ -137,6 +137,7 @@ def get_today(db: Session = Depends(get_db)):
     daily_set = db.query(models.DailySet).filter(models.DailySet.date == today).first()
 
     if not daily_set:
+        # Select exactly 5 players for the daily set
         players = (
             db.query(models.Player)
             .order_by(func.random())
@@ -150,6 +151,7 @@ def get_today(db: Session = Depends(get_db)):
         db.add(daily_set)
         db.flush()
 
+        # Add all 5 players to the daily set
         for player in players:
             db.add(
                 models.DailySetPlayer(
@@ -158,10 +160,7 @@ def get_today(db: Session = Depends(get_db)):
                 )
             )
 
-        true_ranking_ids = [p.id for p in players]
-        random.shuffle(true_ranking_ids)
-        daily_set.true_ranking = json.dumps(true_ranking_ids)
-
+        # Create all possible matchups between the 5 players (C(5,2) = 10 matchups)
         for idx, (p1, p2) in enumerate(combinations(players, 2)):
             db.add(
                 models.Matchup(
@@ -171,6 +170,9 @@ def get_today(db: Session = Depends(get_db)):
                     order_index=idx,
                 )
             )
+
+        # No true ranking needed for individual matchup voting
+        daily_set.true_ranking = None
 
         db.commit()
         db.refresh(daily_set)
@@ -203,8 +205,8 @@ def submit_game(request: GameSubmitRequest, db: Session = Depends(get_db)):
     if daily_set.date != date.today():
         raise HTTPException(status_code=400, detail="Submission must be for today's game")
 
-    if len(request.answers) != 10:
-        raise HTTPException(status_code=400, detail="Must answer all matchups")
+    if len(request.answers) != len(daily_set.matchups):
+        raise HTTPException(status_code=400, detail=f"Must answer all {len(daily_set.matchups)} matchups")
     matchup_ids = [a.matchup_id for a in request.answers]
     if len(set(matchup_ids)) != len(matchup_ids):
         raise HTTPException(status_code=400, detail="Duplicate matchup answers")

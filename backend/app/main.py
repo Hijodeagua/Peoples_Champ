@@ -5,7 +5,7 @@ from dotenv import load_dotenv
 # Load environment variables from .env file
 load_dotenv()
 
-from .routes import auth, daily_set, game, players, analysis
+from .routes import auth, daily_set, game, players, analysis, voting
 from .db.session import engine
 from .db.base import Base
 
@@ -44,3 +44,4 @@ app.include_router(daily_set.router, prefix="/daily-set", tags=["daily-set"])
 app.include_router(auth.router, prefix="/auth", tags=["auth"])
 app.include_router(analysis.router, prefix="/analysis", tags=["analysis"])
 app.include_router(game.router)
+app.include_router(voting.router)

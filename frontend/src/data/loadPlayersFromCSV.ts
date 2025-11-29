@@ -53,7 +53,7 @@ function toNumber(value: unknown): number {
   return Number.isFinite(parsed) ? parsed : 0;
 }
 
-function mapRowToPlayer(row: Record<string, any>): Player {
+function mapRowToPlayer(row: Record<string, string | number | undefined>): Player {
   // Basic stats are missing in the advanced CSV, so we default to 0 or try to read if present
   // The divisor is 1 because the advanced CSV doesn't have per-game totals usually, but if it did we'd use G
   // Actually, advanced CSV usually doesn't have PTS/AST totals either.
