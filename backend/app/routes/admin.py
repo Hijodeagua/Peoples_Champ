@@ -15,9 +15,10 @@ def load_players_endpoint(db: Session = Depends(get_db)):
     # Try multiple possible CSV locations
     possible_paths = [
         "C:/Users/tmacr/OneDrive/Desktop/Peoples_Champ/frontend/public/data/Bbref_Adv_25-26.csv",
-        "C:/Users/tmacr/OneDrive/Desktop/Peoples_Champ/data/Bbref_Adv_25-26.csv",
-        os.path.join(os.path.dirname(__file__), "../../../frontend/public/data/Bbref_Adv_25-26.csv"),
-        os.path.join(os.path.dirname(__file__), "../../../data/Bbref_Adv_25-26.csv")
+        "/opt/render/project/src/frontend/public/data/Bbref_Adv_25-26.csv",
+        "/opt/render/project/src/data/Bbref_Adv_25-26.csv",
+        "frontend/public/data/Bbref_Adv_25-26.csv",
+        "data/Bbref_Adv_25-26.csv"
     ]
     
     csv_path = None
@@ -27,7 +28,7 @@ def load_players_endpoint(db: Session = Depends(get_db)):
             break
     
     if not csv_path:
-        raise HTTPException(status_code=404, detail=f"CSV file not found. Tried: {possible_paths}")
+        raise HTTPException(status_code=404, detail=f"CSV file not found in any of these locations: {possible_paths}")
     
     try:
         players = load_players_from_csv(db, csv_path)
@@ -37,6 +38,114 @@ def load_players_endpoint(db: Session = Depends(get_db)):
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error loading players: {str(e)}")
+
+@router.post("/create-test-players")
+def create_test_players_endpoint(db: Session = Depends(get_db)):
+    """Create test players for demo purposes"""
+    from ..models import Player
+    
+    test_players = [
+        {"id": "jamesle01", "name": "LeBron James", "team": "LAL", "position": "SF", "total_ws": 15.0},
+        {"id": "curryst01", "name": "Stephen Curry", "team": "GSW", "position": "PG", "total_ws": 14.5},
+        {"id": "doncilu01", "name": "Luka Doncic", "team": "DAL", "position": "PG", "total_ws": 13.8},
+        {"id": "antetgi01", "name": "Giannis Antetokounmpo", "team": "MIL", "position": "PF", "total_ws": 13.5},
+        {"id": "jokicni01", "name": "Nikola Jokic", "team": "DEN", "position": "C", "total_ws": 13.2},
+        {"id": "tatumja01", "name": "Jayson Tatum", "team": "BOS", "position": "SF", "total_ws": 12.8},
+        {"id": "duranke01", "name": "Kevin Durant", "team": "PHO", "position": "PF", "total_ws": 12.5},
+        {"id": "edwaran01", "name": "Anthony Edwards", "team": "MIN", "position": "SG", "total_ws": 12.0},
+        {"id": "davisan01", "name": "Anthony Davis", "team": "LAL", "position": "PF", "total_ws": 11.8},
+        {"id": "bookerde01", "name": "Devin Booker", "team": "PHO", "position": "SG", "total_ws": 11.5},
+        {"id": "irvinky01", "name": "Kyrie Irving", "team": "DAL", "position": "PG", "total_ws": 11.2},
+        {"id": "brownj02", "name": "Jaylen Brown", "team": "BOS", "position": "SG", "total_ws": 11.0},
+        {"id": "embiijo01", "name": "Joel Embiid", "team": "PHI", "position": "C", "total_ws": 10.8},
+        {"id": "willizi01", "name": "Zion Williamson", "team": "NOP", "position": "PF", "total_ws": 10.5},
+        {"id": "maxeyty01", "name": "Tyrese Maxey", "team": "PHI", "position": "PG", "total_ws": 10.2},
+        {"id": "georgpa01", "name": "Paul George", "team": "PHI", "position": "SF", "total_ws": 10.0},
+        {"id": "leonaka01", "name": "Kawhi Leonard", "team": "LAC", "position": "SF", "total_ws": 9.8},
+        {"id": "hardeja01", "name": "James Harden", "team": "LAC", "position": "PG", "total_ws": 9.5},
+        {"id": "westbru01", "name": "Russell Westbrook", "team": "DEN", "position": "PG", "total_ws": 9.2},
+        {"id": "holidjr01", "name": "Jrue Holiday", "team": "BOS", "position": "PG", "total_ws": 9.0},
+        {"id": "butlerji01", "name": "Jimmy Butler", "team": "MIA", "position": "SF", "total_ws": 8.8},
+        {"id": "adebaba01", "name": "Bam Adebayo", "team": "MIA", "position": "C", "total_ws": 8.5},
+        {"id": "townska01", "name": "Karl-Anthony Towns", "team": "NYK", "position": "C", "total_ws": 8.2},
+        {"id": "mitchdo01", "name": "Donovan Mitchell", "team": "CLE", "position": "SG", "total_ws": 8.0},
+        {"id": "youngtr01", "name": "Trae Young", "team": "ATL", "position": "PG", "total_ws": 7.8},
+        {"id": "lillada01", "name": "Damian Lillard", "team": "MIL", "position": "PG", "total_ws": 7.5},
+        {"id": "goberru01", "name": "Rudy Gobert", "team": "MIN", "position": "C", "total_ws": 7.2},
+        {"id": "siakapa01", "name": "Pascal Siakam", "team": "IND", "position": "PF", "total_ws": 7.0},
+        {"id": "murrayde01", "name": "Dejounte Murray", "team": "NOP", "position": "PG", "total_ws": 6.8},
+        {"id": "foxde01", "name": "De'Aaron Fox", "team": "SAC", "position": "PG", "total_ws": 6.5},
+        {"id": "sabonido01", "name": "Domantas Sabonis", "team": "SAC", "position": "C", "total_ws": 6.2},
+        {"id": "allenj01", "name": "Jarrett Allen", "team": "CLE", "position": "C", "total_ws": 6.0},
+        {"id": "banchpa01", "name": "Paolo Banchero", "team": "ORL", "position": "PF", "total_ws": 5.8},
+        {"id": "wembavi01", "name": "Victor Wembanyama", "team": "SAS", "position": "C", "total_ws": 5.5},
+        {"id": "moranja01", "name": "Ja Morant", "team": "MEM", "position": "PG", "total_ws": 5.2},
+        {"id": "ballla01", "name": "LaMelo Ball", "team": "CHA", "position": "PG", "total_ws": 5.0},
+        {"id": "garrida01", "name": "Darius Garland", "team": "CLE", "position": "PG", "total_ws": 4.8},
+        {"id": "halibu01", "name": "Tyrese Haliburton", "team": "IND", "position": "PG", "total_ws": 4.5},
+        {"id": "johnsca02", "name": "Cam Johnson", "team": "BKN", "position": "SF", "total_ws": 4.2},
+        {"id": "vanvlf01", "name": "Fred VanVleet", "team": "HOU", "position": "PG", "total_ws": 4.0},
+        {"id": "senguap01", "name": "Alperen Sengun", "team": "HOU", "position": "C", "total_ws": 3.8},
+        {"id": "greenda02", "name": "Draymond Green", "team": "GSW", "position": "PF", "total_ws": 3.5},
+        {"id": "smartma01", "name": "Marcus Smart", "team": "MEM", "position": "PG", "total_ws": 3.2},
+        {"id": "whitedr01", "name": "Derrick White", "team": "BOS", "position": "PG", "total_ws": 3.0},
+        {"id": "porzikr01", "name": "Kristaps Porzingis", "team": "BOS", "position": "C", "total_ws": 2.8},
+        {"id": "claxtni01", "name": "Nic Claxton", "team": "BKN", "position": "C", "total_ws": 2.5},
+        {"id": "thompkl01", "name": "Klay Thompson", "team": "DAL", "position": "SG", "total_ws": 2.2},
+        {"id": "wiggiand01", "name": "Andrew Wiggins", "team": "GSW", "position": "SF", "total_ws": 2.0},
+        {"id": "poolejo01", "name": "Jordan Poole", "team": "WAS", "position": "PG", "total_ws": 1.8},
+        {"id": "kuzmakyy01", "name": "Kyle Kuzma", "team": "WAS", "position": "PF", "total_ws": 1.5},
+        {"id": "ingrabr01", "name": "Brandon Ingram", "team": "NOP", "position": "SF", "total_ws": 1.2},
+        {"id": "mccolcj01", "name": "CJ McCollum", "team": "NOP", "position": "SG", "total_ws": 1.0},
+        {"id": "valencj01", "name": "Cade Cunningham", "team": "DET", "position": "PG", "total_ws": 0.8},
+        {"id": "greenj01", "name": "Jalen Green", "team": "HOU", "position": "SG", "total_ws": 0.5},
+        {"id": "mobley01", "name": "Evan Mobley", "team": "CLE", "position": "PF", "total_ws": 0.2},
+        {"id": "barnesr02", "name": "Scottie Barnes", "team": "TOR", "position": "SF", "total_ws": 0.1}
+    ]
+    
+    inserted_count = 0
+    for player_data in test_players:
+        try:
+            # Check if player already exists
+            existing = db.query(Player).filter(Player.id == player_data["id"]).first()
+            if existing:
+                continue
+                
+            player = Player(
+                id=player_data["id"],
+                name=player_data["name"],
+                team=player_data["team"],
+                position=player_data["position"],
+                seasons=1,
+                current_age=28,
+                total_ws=player_data["total_ws"],
+                ws_per_game=player_data["total_ws"] / 82,
+                threes_per_game=2.5,
+                ast_per_game=5.0,
+                stl_per_game=1.0,
+                trb_per_game=6.0,
+                blk_per_game=0.5,
+                pts_per_game=20.0,
+                three_pct=0.35,
+                ft_pct=0.80,
+                ts_pct=0.58,
+                efg_pct=0.52,
+                initial_rating=1500.0,
+                current_rating=1500.0
+            )
+            
+            db.add(player)
+            db.commit()
+            inserted_count += 1
+            
+        except Exception as e:
+            db.rollback()
+            continue
+    
+    return {
+        "message": f"Successfully created {inserted_count} test players",
+        "players_created": inserted_count
+    }
 
 @router.post("/generate-initial-schedule")
 def generate_initial_schedule_endpoint(
