@@ -83,6 +83,18 @@ class SharedResultResponse(BaseModel):
     score_summary: Optional[str]
 
 
+class ArchiveEntry(BaseModel):
+    date: date
+    players: List[PlayerOut]
+    total_votes: int
+    is_completed: bool
+
+
+class ArchiveResponse(BaseModel):
+    archives: List[ArchiveEntry]
+    total_days: int
+
+
 def int_to_base36(number: int) -> str:
     chars = "0123456789abcdefghijklmnopqrstuvwxyz"
     if number == 0:
@@ -305,4 +317,33 @@ def get_shared_result(share_slug: str, db: Session = Depends(get_db)):
         mode=submission.mode,
         final_ranking=final_ranking_entries,
         score_summary=score_summary,
+    )
+
+
+@router.get("/archive", response_model=ArchiveResponse)
+def get_archive(db: Session = Depends(get_db)):
+    """Get archive of past daily sets"""
+    daily_sets = db.query(models.DailySet).order_by(models.DailySet.date.desc()).limit(30).all()
+    
+    archives = []
+    for daily_set in daily_sets:
+        # Count total votes for this daily set
+        total_votes = db.query(models.UserChoice).join(models.Matchup).filter(
+            models.Matchup.daily_set_id == daily_set.id
+        ).count()
+        
+        # Check if voting is completed (arbitrary threshold)
+        is_completed = total_votes > 0 or daily_set.date < date.today()
+        
+        archives.append(ArchiveEntry(
+            date=daily_set.date,
+            players=[PlayerOut(id=dsp.player.id, name=dsp.player.name, team=dsp.player.team) 
+                    for dsp in daily_set.players],
+            total_votes=total_votes,
+            is_completed=is_completed
+        ))
+    
+    return ArchiveResponse(
+        archives=archives,
+        total_days=len(archives)
     )
