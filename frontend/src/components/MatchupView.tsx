@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { getRandomMatchup } from "../data/getRandomMatchup";
-import type { Matchup } from "../data/getRandomMatchup";
+import { getRandomMatchup, type Matchup } from "../data/getRandomMatchup";
 import { submitVote } from "../api/voting";
 import PlayerColumn from "./PlayerColumn";
 

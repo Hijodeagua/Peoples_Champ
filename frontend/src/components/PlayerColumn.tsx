@@ -1,4 +1,4 @@
-import type { Player } from "../data/loadPlayersFromCSV";
+import { type Player } from "../data/loadPlayersFromCSV";
 import PercentileBar from "./PercentileBar";
 
 type PlayerColumnProps = {
