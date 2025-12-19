@@ -15,9 +15,8 @@ app = FastAPI(title="Peoples Champ API")
 origins = [
     "http://localhost:5173",
     "http://127.0.0.1:5173",
+    "https://peoples-champ.vercel.app",
     "https://peoples-champ-frontend.onrender.com",
-    "https://*.onrender.com",  # Allow any Render subdomain
-    "*"  # Temporary: allow all origins for testing
 ]
 
 app.add_middleware(
@@ -59,16 +58,20 @@ def initialize_data():
         if player_count == 0:
             print("No players found. Attempting to load from CSV...")
             
-            # Try to find and load CSV
+            # Get the directory where this file is located
+            base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+            
+            # Try to find and load CSV using relative paths from backend directory
             possible_paths = [
-                "/opt/render/project/src/frontend/public/data/Bbref_Adv_25-26.csv",
-                "/opt/render/project/src/data/Bbref_Adv_25-26.csv",
-                "frontend/public/data/Bbref_Adv_25-26.csv",
-                "data/Bbref_Adv_25-26.csv"
+                os.path.join(base_dir, "data", "Bbref_Adv_25-26.csv"),
+                os.path.join(base_dir, "..", "data", "Bbref_Adv_25-26.csv"),
+                os.path.join(base_dir, "..", "frontend", "public", "data", "Bbref_Adv_25-26.csv"),
+                "data/Bbref_Adv_25-26.csv",
             ]
             
             csv_path = None
             for path in possible_paths:
+                print(f"Checking path: {path}")
                 if os.path.exists(path):
                     csv_path = path
                     break
