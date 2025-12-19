@@ -32,24 +32,29 @@ def load_players_from_csv(db: Session, csv_path: str) -> List[Player]:
             if not row.get('Player'):
                 continue
                 
+            # Get player ID from 'Player-additional' column (bbref id like 'jokicni01')
+            player_id = row.get('Player-additional', '').strip()
+            if not player_id:
+                player_id = row.get('bbref_id', '').strip()
+            
             player_data = {
-                'id': row.get('bbref_id', '').strip(),
+                'id': player_id,
                 'name': row.get('Player', '').strip(),
-                'team': row.get('Tm', '').strip() or None,
+                'team': row.get('Team', row.get('Tm', '')).strip() or None,
                 'position': row.get('Pos', '').strip() or None,
-                'seasons': safe_int(row.get('Seasons', 1)),
-                'current_age': safe_int(row.get('Age')),
-                'total_ws': safe_float(row.get('WS', 0)),
-                'ws_per_game': safe_float(row.get('WS/48', 0)) / 48 if safe_float(row.get('WS/48', 0)) else 0,
-                'threes_per_game': safe_float(row.get('3PA', 0)),
-                'ast_per_game': safe_float(row.get('AST', 0)),
-                'stl_per_game': safe_float(row.get('STL', 0)),
-                'trb_per_game': safe_float(row.get('TRB', 0)),
-                'blk_per_game': safe_float(row.get('BLK', 0)),
-                'pts_per_game': safe_float(row.get('PTS', 0)),
+                'seasons': safe_int(row.get('Seasons', '1')) or 1,
+                'current_age': safe_int(row.get('Age', '')),
+                'total_ws': safe_float(row.get('WS', '0')) or 0,
+                'ws_per_game': (safe_float(row.get('WS/48', '0')) or 0) / 48 if safe_float(row.get('WS/48', '0')) else 0,
+                'threes_per_game': safe_float(row.get('3PA', '0')),
+                'ast_per_game': safe_float(row.get('AST%', '0')),
+                'stl_per_game': safe_float(row.get('STL%', '0')),
+                'trb_per_game': safe_float(row.get('TRB%', '0')),
+                'blk_per_game': safe_float(row.get('BLK%', '0')),
+                'pts_per_game': safe_float(row.get('PTS', '0')),
                 'three_pct': safe_float(row.get('3P%')) if row.get('3P%') else None,
                 'ft_pct': safe_float(row.get('FT%')) if row.get('FT%') else None,
-                'ts_pct': safe_float(row.get('TS%', 0)),
+                'ts_pct': safe_float(row.get('TS%', '0')) or 0,
                 'efg_pct': safe_float(row.get('eFG%')) if row.get('eFG%') else None,
                 'initial_rating': 1500.0,
                 'current_rating': 1500.0

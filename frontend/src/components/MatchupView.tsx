@@ -90,6 +90,23 @@ export default function MatchupView() {
     );
   }
 
+  if (error) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[400px] space-y-4">
+        <div className="bg-red-900/40 border border-red-700 text-red-200 p-4 rounded-lg max-w-md text-center">
+          <p className="font-semibold mb-2">Error Loading Game</p>
+          <p className="text-sm">{error}</p>
+        </div>
+        <button
+          onClick={() => window.location.reload()}
+          className="px-4 py-2 rounded-lg bg-emerald-500 text-black font-semibold hover:bg-emerald-400 transition"
+        >
+          Try Again
+        </button>
+      </div>
+    );
+  }
+
   if (!gameData || !votingStatus) {
     return (
       <div className="text-center py-12">
