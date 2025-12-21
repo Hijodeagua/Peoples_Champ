@@ -12,15 +12,89 @@ from sqlalchemy.orm import Session
 
 from ..db.session import get_db
 from .. import models
+from ..services.stats_loader import get_stats_with_percentiles, get_top_stats_for_position, get_advanced_stats_with_percentiles
 
 
 router = APIRouter(prefix="/game", tags=["game"])
+
+
+class PlayerStats(BaseModel):
+    # Core per-game stats
+    pts: Optional[float] = None
+    reb: Optional[float] = None
+    ast: Optional[float] = None
+    stl: Optional[float] = None
+    blk: Optional[float] = None
+    # Shooting percentages
+    three_pct: Optional[float] = None
+    ft_pct: Optional[float] = None
+    efg_pct: Optional[float] = None
+    # Other
+    tov: Optional[float] = None
+    mpg: Optional[float] = None
+    games: Optional[int] = None
+    pos_count: Optional[int] = None  # Total players at this position
+    # Percentiles (0-100) for league-wide comparison
+    pts_pctl: Optional[float] = None
+    reb_pctl: Optional[float] = None
+    ast_pctl: Optional[float] = None
+    stl_pctl: Optional[float] = None
+    blk_pctl: Optional[float] = None
+    three_pctl: Optional[float] = None
+    ft_pctl: Optional[float] = None
+    efg_pctl: Optional[float] = None
+    tov_pctl: Optional[float] = None
+    # Position ranks (1 = best at position)
+    pts_pos_rank: Optional[int] = None
+    reb_pos_rank: Optional[int] = None
+    ast_pos_rank: Optional[int] = None
+    stl_pos_rank: Optional[int] = None
+    blk_pos_rank: Optional[int] = None
+    three_pos_rank: Optional[int] = None
+    ft_pos_rank: Optional[int] = None
+    efg_pos_rank: Optional[int] = None
+    tov_pos_rank: Optional[int] = None
+    # Position-based top stats (list of stat names to highlight)
+    top_stats: Optional[List[str]] = None
+
+
+class AdvancedStats(BaseModel):
+    """Advanced stats from BBRef (PER, WS, BPM, VORP, etc.)"""
+    per: Optional[float] = None           # Player Efficiency Rating
+    ts_pct: Optional[float] = None        # True Shooting %
+    usg_pct: Optional[float] = None       # Usage %
+    ws: Optional[float] = None            # Win Shares
+    ws_48: Optional[float] = None         # Win Shares per 48
+    ows: Optional[float] = None           # Offensive Win Shares
+    dws: Optional[float] = None           # Defensive Win Shares
+    obpm: Optional[float] = None          # Offensive Box Plus/Minus
+    dbpm: Optional[float] = None          # Defensive Box Plus/Minus
+    bpm: Optional[float] = None           # Box Plus/Minus
+    vorp: Optional[float] = None          # Value Over Replacement Player
+    tov_pct: Optional[float] = None       # Turnover %
+    games: Optional[int] = None
+    minutes: Optional[int] = None
+    # Percentiles
+    per_pctl: Optional[float] = None
+    ts_pctl: Optional[float] = None
+    ws_pctl: Optional[float] = None
+    ws_48_pctl: Optional[float] = None
+    bpm_pctl: Optional[float] = None
+    vorp_pctl: Optional[float] = None
+    usg_pctl: Optional[float] = None
+    obpm_pctl: Optional[float] = None
+    dbpm_pctl: Optional[float] = None
+    tov_pct_pctl: Optional[float] = None
 
 
 class PlayerOut(BaseModel):
     id: str
     name: str
     team: Optional[str]
+    position: Optional[str] = None
+    stats: Optional[PlayerStats] = None
+    advanced: Optional[AdvancedStats] = None  # Advanced stats (PER, WS, BPM, VORP)
+    season: Optional[str] = None  # "current" or "combined"
 
 
 class MatchupOut(BaseModel):
@@ -34,6 +108,8 @@ class GameTodayResponse(BaseModel):
     daily_set_id: int
     date: date
     mode_options: List[str]
+    season_options: List[str]  # ["current", "combined"]
+    current_season: str  # Which season stats are being shown
     players: List[PlayerOut]
     matchups: List[MatchupOut]
 
@@ -106,6 +182,88 @@ def int_to_base36(number: int) -> str:
     return result
 
 
+def build_player_stats(player_id: str, position: str, season: str = "current") -> Optional[PlayerStats]:
+    """Build PlayerStats from CSV data with percentiles and position ranks"""
+    stats_data = get_stats_with_percentiles(player_id, season)
+    
+    if not stats_data:
+        return None
+    
+    # Get top stats for this position
+    top_stats = get_top_stats_for_position(position or stats_data.get("position", ""))
+    
+    return PlayerStats(
+        pts=stats_data.get("pts"),
+        reb=stats_data.get("reb"),
+        ast=stats_data.get("ast"),
+        stl=stats_data.get("stl"),
+        blk=stats_data.get("blk"),
+        three_pct=stats_data.get("three_pct"),
+        ft_pct=stats_data.get("ft_pct"),
+        efg_pct=stats_data.get("efg_pct"),
+        tov=stats_data.get("tov"),
+        mpg=stats_data.get("mpg"),
+        games=stats_data.get("games"),
+        pos_count=stats_data.get("pos_count"),
+        # Percentiles
+        pts_pctl=stats_data.get("pts_pctl"),
+        reb_pctl=stats_data.get("reb_pctl"),
+        ast_pctl=stats_data.get("ast_pctl"),
+        stl_pctl=stats_data.get("stl_pctl"),
+        blk_pctl=stats_data.get("blk_pctl"),
+        three_pctl=stats_data.get("three_pctl"),
+        ft_pctl=stats_data.get("ft_pctl"),
+        efg_pctl=stats_data.get("efg_pctl"),
+        tov_pctl=stats_data.get("tov_pctl"),
+        # Position ranks
+        pts_pos_rank=stats_data.get("pts_pos_rank"),
+        reb_pos_rank=stats_data.get("reb_pos_rank"),
+        ast_pos_rank=stats_data.get("ast_pos_rank"),
+        stl_pos_rank=stats_data.get("stl_pos_rank"),
+        blk_pos_rank=stats_data.get("blk_pos_rank"),
+        three_pos_rank=stats_data.get("three_pos_rank"),
+        ft_pos_rank=stats_data.get("ft_pos_rank"),
+        efg_pos_rank=stats_data.get("efg_pos_rank"),
+        tov_pos_rank=stats_data.get("tov_pos_rank"),
+        top_stats=top_stats,
+    )
+
+
+def build_advanced_stats(player_id: str, season: str = "current") -> Optional[AdvancedStats]:
+    """Build AdvancedStats from BBRef Advanced CSV data with percentiles"""
+    adv_data = get_advanced_stats_with_percentiles(player_id, season)
+    
+    if not adv_data:
+        return None
+    
+    return AdvancedStats(
+        per=adv_data.get("per"),
+        ts_pct=adv_data.get("ts_pct"),
+        usg_pct=adv_data.get("usg_pct"),
+        ws=adv_data.get("ws"),
+        ws_48=adv_data.get("ws_48"),
+        ows=adv_data.get("ows"),
+        dws=adv_data.get("dws"),
+        obpm=adv_data.get("obpm"),
+        dbpm=adv_data.get("dbpm"),
+        bpm=adv_data.get("bpm"),
+        vorp=adv_data.get("vorp"),
+        tov_pct=adv_data.get("tov_pct"),
+        games=adv_data.get("games"),
+        minutes=adv_data.get("minutes"),
+        per_pctl=adv_data.get("per_pctl"),
+        ts_pctl=adv_data.get("ts_pctl"),
+        ws_pctl=adv_data.get("ws_pctl"),
+        ws_48_pctl=adv_data.get("ws_48_pctl"),
+        bpm_pctl=adv_data.get("bpm_pctl"),
+        vorp_pctl=adv_data.get("vorp_pctl"),
+        usg_pctl=adv_data.get("usg_pctl"),
+        obpm_pctl=adv_data.get("obpm_pctl"),
+        dbpm_pctl=adv_data.get("dbpm_pctl"),
+        tov_pct_pctl=adv_data.get("tov_pct_pctl"),
+    )
+
+
 def compute_final_ranking(
     players: List[models.Player],
     matchups: List[models.Matchup],
@@ -144,7 +302,10 @@ def compute_final_ranking(
 
 
 @router.get("/today", response_model=GameTodayResponse)
-def get_today(db: Session = Depends(get_db)):
+def get_today(db: Session = Depends(get_db), season: str = "current"):
+    """Get today's game with player stats. Season can be 'current' (25-26) or 'combined' (24-25 + 25-26)"""
+    if season not in ["current", "combined"]:
+        season = "current"
     today = date.today()
     daily_set = db.query(models.DailySet).filter(models.DailySet.date == today).first()
 
@@ -196,7 +357,20 @@ def get_today(db: Session = Depends(get_db)):
         daily_set_id=daily_set.id,
         date=daily_set.date,
         mode_options=["GUESS", "OWN"],
-        players=[PlayerOut(id=p.id, name=p.name, team=p.team) for p in players],
+        season_options=["current", "combined"],
+        current_season=season,
+        players=[
+            PlayerOut(
+                id=p.id, 
+                name=p.name, 
+                team=p.team,
+                position=p.position,
+                stats=build_player_stats(p.id, p.position, season),
+                advanced=build_advanced_stats(p.id, season),
+                season=season,
+            ) 
+            for p in players
+        ],
         matchups=[
             MatchupOut(
                 id=m.id,

@@ -30,6 +30,24 @@ class UserVotesResponse(BaseModel):
     completed: bool
 
 
+class PlayerRanking(BaseModel):
+    id: str
+    name: str
+    team: str | None
+    position: str | None
+    wins: int
+    total_matchups: int
+    win_percentage: float
+    total_votes_received: int
+
+
+class GlobalRankingsResponse(BaseModel):
+    date: date
+    rankings: list[PlayerRanking]
+    total_voters: int
+    total_votes: int
+
+
 def get_or_create_session_id(request: Request, response: Response) -> str:
     """Get session ID from cookie or create new one for anonymous users"""
     session_id = request.cookies.get("session_id")
@@ -161,3 +179,89 @@ def get_matchup_results(matchup_id: int, db: Session = Depends(get_db)):
         },
         "total_votes": total_votes
     }
+
+
+@router.get("/global-rankings", response_model=GlobalRankingsResponse)
+def get_global_rankings(db: Session = Depends(get_db)):
+    """
+    Get today's global rankings based on all votes.
+    Rankings are calculated by counting wins across all matchups.
+    """
+    today = date.today()
+    daily_set = db.query(models.DailySet).filter(models.DailySet.date == today).first()
+    
+    if not daily_set:
+        return GlobalRankingsResponse(
+            date=today,
+            rankings=[],
+            total_voters=0,
+            total_votes=0
+        )
+    
+    # Get all players in today's set
+    players = {dsp.player.id: dsp.player for dsp in daily_set.players}
+    
+    # Get all matchups for today
+    matchups = daily_set.matchups
+    
+    # Get all votes for today's matchups
+    all_votes = db.query(models.UserChoice).join(models.Matchup).filter(
+        models.Matchup.daily_set_id == daily_set.id
+    ).all()
+    
+    # Count unique voters (by session_id)
+    unique_sessions = set(vote.session_id for vote in all_votes if vote.session_id)
+    total_voters = len(unique_sessions)
+    total_votes = len(all_votes)
+    
+    # Calculate wins for each player
+    player_stats = {pid: {"wins": 0, "total_matchups": 0, "votes_received": 0} for pid in players}
+    
+    for matchup in matchups:
+        matchup_votes = [v for v in all_votes if v.matchup_id == matchup.id]
+        
+        if not matchup_votes:
+            continue
+        
+        p1_votes = sum(1 for v in matchup_votes if v.winner_player_id == matchup.player1_id)
+        p2_votes = sum(1 for v in matchup_votes if v.winner_player_id == matchup.player2_id)
+        
+        # Track votes received and matchups played
+        if matchup.player1_id in player_stats:
+            player_stats[matchup.player1_id]["votes_received"] += p1_votes
+            player_stats[matchup.player1_id]["total_matchups"] += 1
+        if matchup.player2_id in player_stats:
+            player_stats[matchup.player2_id]["votes_received"] += p2_votes
+            player_stats[matchup.player2_id]["total_matchups"] += 1
+        
+        # Determine winner of this matchup (who got more votes)
+        if p1_votes > p2_votes and matchup.player1_id in player_stats:
+            player_stats[matchup.player1_id]["wins"] += 1
+        elif p2_votes > p1_votes and matchup.player2_id in player_stats:
+            player_stats[matchup.player2_id]["wins"] += 1
+    
+    # Build rankings list
+    rankings = []
+    for pid, stats in player_stats.items():
+        player = players[pid]
+        win_pct = (stats["wins"] / stats["total_matchups"] * 100) if stats["total_matchups"] > 0 else 0
+        rankings.append(PlayerRanking(
+            id=pid,
+            name=player.name,
+            team=player.team,
+            position=player.position,
+            wins=stats["wins"],
+            total_matchups=stats["total_matchups"],
+            win_percentage=round(win_pct, 1),
+            total_votes_received=stats["votes_received"]
+        ))
+    
+    # Sort by wins (desc), then by votes received (desc)
+    rankings.sort(key=lambda x: (x.wins, x.total_votes_received), reverse=True)
+    
+    return GlobalRankingsResponse(
+        date=today,
+        rankings=rankings,
+        total_voters=total_voters,
+        total_votes=total_votes
+    )

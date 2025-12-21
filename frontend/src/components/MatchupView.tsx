@@ -1,22 +1,195 @@
 import { useCallback, useEffect, useState } from "react";
-import { getTodayGame, type GameTodayResponse } from "../api/game";
+import { getTodayGame, type GameTodayResponse, type Player, type SeasonOption, type PlayerStats, type AdvancedStats } from "../api/game";
 import { submitVote, getVotingStatus, type UserVotesResponse } from "../api/voting";
+
+// Stat label mapping for per-game stats
+const STAT_LABELS: Record<string, string> = {
+  pts: "PTS",
+  reb: "REB",
+  ast: "AST",
+  stl: "STL",
+  blk: "BLK",
+  three_pct: "3P%",
+  ft_pct: "FT%",
+  efg_pct: "eFG%",
+  tov: "TOV",
+  mpg: "MPG",
+};
+
+// Advanced stat labels
+const ADV_STAT_LABELS: Record<string, string> = {
+  per: "PER",
+  ts_pct: "TS%",
+  ws: "WS",
+  ws_48: "WS/48",
+  bpm: "BPM",
+  vorp: "VORP",
+  usg_pct: "USG%",
+  obpm: "OBPM",
+  dbpm: "DBPM",
+};
+
+// Stats view mode: "pergame" or "advanced"
+type StatsViewMode = "pergame" | "advanced";
+
+// Get stat value, percentile, and position rank from stats object
+function getStatData(stats: PlayerStats | AdvancedStats, statKey: string): { 
+  value: number | null; 
+  pctl: number | null; 
+  posRank: number | null;
+} {
+  const value = stats[statKey as keyof typeof stats] as number | null;
+  // For percentage stats like "efg_pct", the percentile key is "efg_pctl" (not "efg_pct_pctl")
+  const baseKey = statKey.replace(/_pct$/, '');
+  const pctlKey = `${baseKey}_pctl` as keyof typeof stats;
+  const pctl = stats[pctlKey] as number | null;
+  const posRankKey = `${baseKey}_pos_rank` as keyof typeof stats;
+  const posRank = stats[posRankKey] as number | null;
+  return { value, pctl, posRank };
+}
+
+// Percentile bar component with position rank
+function PercentileBar({ 
+  value, 
+  percentile, 
+  label, 
+  posRank,
+  posCount,
+  isPercentage = false 
+}: { 
+  value: number | null; 
+  percentile: number | null; 
+  label: string;
+  posRank?: number | null;
+  posCount?: number | null;
+  isPercentage?: boolean;
+}) {
+  const pctl = percentile ?? 0;
+  const displayValue = value ?? 0;
+  
+  // Color based on percentile
+  const getBarColor = (p: number) => {
+    if (p >= 90) return "bg-emerald-500";
+    if (p >= 75) return "bg-emerald-400";
+    if (p >= 50) return "bg-yellow-400";
+    if (p >= 25) return "bg-orange-400";
+    return "bg-red-400";
+  };
+
+  const formattedValue = isPercentage 
+    ? `${displayValue.toFixed(1)}%` 
+    : displayValue.toFixed(1);
+
+  // Format position rank display
+  const posRankDisplay = posRank && posCount ? `#${posRank}/${posCount}` : null;
+
+  return (
+    <div className="flex items-center gap-2 text-xs">
+      <span className="w-10 text-slate-400 font-medium">{label}</span>
+      <div className="flex-1 h-2 bg-slate-700 rounded-full overflow-hidden">
+        <div 
+          className={`h-full ${getBarColor(pctl)} transition-all duration-300`}
+          style={{ width: `${Math.max(pctl, 2)}%` }}
+        />
+      </div>
+      <span className="w-12 text-right font-semibold">{formattedValue}</span>
+      <span className="w-10 text-slate-500 text-right">{pctl.toFixed(0)}%</span>
+      {posRankDisplay && (
+        <span className="w-14 text-slate-400 text-right text-[10px]">{posRankDisplay}</span>
+      )}
+    </div>
+  );
+}
+
+// Player card with stats
+function PlayerCard({ 
+  player, 
+  isSelected, 
+  onClick,
+  statsViewMode = "pergame",
+}: { 
+  player: Player; 
+  isSelected: boolean; 
+  onClick: () => void;
+  statsViewMode?: StatsViewMode;
+}) {
+  const stats = player.stats;
+  const advanced = player.advanced;
+  
+  // Determine which stats to show based on mode
+  const isAdvancedMode = statsViewMode === "advanced";
+  const statsToShow = isAdvancedMode 
+    ? ["per", "ts_pct", "ws", "ws_48", "bpm", "vorp"]
+    : ["pts", "reb", "ast", "stl", "blk", "efg_pct", "three_pct"];
+  
+  const currentStats = isAdvancedMode ? advanced : stats;
+  const labelMap = isAdvancedMode ? ADV_STAT_LABELS : STAT_LABELS;
+  const posCount = stats?.pos_count ?? null;
+  
+  const isPercentageStat = (key: string) => key.includes("pct") || key === "ws_48";
+  
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`w-full text-left rounded-xl p-5 shadow border transition hover:bg-slate-800/50 bg-slate-800/30 backdrop-blur cursor-pointer ${
+        isSelected ? "border-2 border-emerald-500 ring-2 ring-emerald-500/20" : "border-slate-700"
+      }`}
+    >
+      <div className="flex items-center justify-between gap-3 mb-4">
+        <div>
+          <p className="text-xl font-bold">{player.name}</p>
+          <p className="text-sm text-slate-400">
+            {player.team} {player.position && `• ${player.position}`}
+          </p>
+        </div>
+        {stats?.games && (
+          <span className="text-xs text-slate-500 bg-slate-800 px-2 py-1 rounded">
+            {stats.games} GP
+          </span>
+        )}
+      </div>
+      
+      {currentStats && (
+        <div className="space-y-2 mt-4 pt-4 border-t border-slate-700">
+          {statsToShow.map((statKey) => {
+            const { value, pctl, posRank } = getStatData(currentStats, statKey);
+            const label = labelMap[statKey] || statKey.toUpperCase();
+            return (
+              <PercentileBar 
+                key={statKey}
+                label={label} 
+                value={value} 
+                percentile={pctl}
+                posRank={!isAdvancedMode ? posRank : null}
+                posCount={!isAdvancedMode ? posCount : null}
+                isPercentage={isPercentageStat(statKey)}
+              />
+            );
+          })}
+        </div>
+      )}
+    </button>
+  );
+}
 
 export default function MatchupView() {
   const [gameData, setGameData] = useState<GameTodayResponse | null>(null);
   const [currentMatchupIndex, setCurrentMatchupIndex] = useState<number>(0);
   const [selectedPlayerId, setSelectedPlayerId] = useState<string | null>(null);
-  const [loading, setLoading] = useState<boolean>(false);
+  const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [votingStatus, setVotingStatus] = useState<UserVotesResponse | null>(null);
   const [votes, setVotes] = useState<Record<number, string>>({});
+  const [selectedSeason, setSelectedSeason] = useState<SeasonOption>("current");
+  const [statsViewMode, setStatsViewMode] = useState<StatsViewMode>("pergame");
 
-  const loadGameData = useCallback(async () => {
+  const loadGameData = useCallback(async (season: SeasonOption = "current") => {
     setLoading(true);
     setError(null);
     try {
       const [game, status] = await Promise.all([
-        getTodayGame(),
+        getTodayGame(season),
         getVotingStatus()
       ]);
       setGameData(game);
@@ -29,8 +202,12 @@ export default function MatchupView() {
   }, []);
 
   useEffect(() => {
-    loadGameData();
-  }, [loadGameData]);
+    loadGameData(selectedSeason);
+  }, [loadGameData, selectedSeason]);
+
+  const handleSeasonChange = (season: SeasonOption) => {
+    setSelectedSeason(season);
+  };
 
   const handleSubmit = async () => {
     if (!gameData || !selectedPlayerId) return;
@@ -139,6 +316,57 @@ export default function MatchupView() {
         </div>
       )}
 
+      {/* Season and Stats Toggle Controls */}
+      <div className="flex flex-wrap items-center justify-center gap-4">
+        {/* Season Toggle */}
+        <div className="flex items-center gap-2 bg-slate-800/50 rounded-lg p-1">
+          <button
+            onClick={() => handleSeasonChange("current")}
+            className={`px-3 py-1.5 rounded-md text-sm font-medium transition ${
+              selectedSeason === "current"
+                ? "bg-emerald-500 text-black"
+                : "text-slate-300 hover:bg-slate-700"
+            }`}
+          >
+            This Year
+          </button>
+          <button
+            onClick={() => handleSeasonChange("combined")}
+            className={`px-3 py-1.5 rounded-md text-sm font-medium transition ${
+              selectedSeason === "combined"
+                ? "bg-emerald-500 text-black"
+                : "text-slate-300 hover:bg-slate-700"
+            }`}
+          >
+            This Year and Last
+          </button>
+        </div>
+
+        {/* Stats View Toggle */}
+        <div className="flex items-center gap-2 bg-slate-800/50 rounded-lg p-1">
+          <button
+            onClick={() => setStatsViewMode("pergame")}
+            className={`px-3 py-1.5 rounded-md text-sm font-medium transition ${
+              statsViewMode === "pergame"
+                ? "bg-purple-500 text-white"
+                : "text-slate-300 hover:bg-slate-700"
+            }`}
+          >
+            Per Game
+          </button>
+          <button
+            onClick={() => setStatsViewMode("advanced")}
+            className={`px-3 py-1.5 rounded-md text-sm font-medium transition ${
+              statsViewMode === "advanced"
+                ? "bg-amber-500 text-black"
+                : "text-slate-300 hover:bg-slate-700"
+            }`}
+          >
+            Advanced
+          </button>
+        </div>
+      </div>
+
       {!isCompleted && (
         <p className="text-center text-sm text-slate-400 font-medium">
           Matchup {currentMatchupIndex + 1} of {gameData.matchups.length} • {votingStatus.votes_today} votes submitted
@@ -158,43 +386,23 @@ export default function MatchupView() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 max-w-5xl mx-auto">
             <div>
               {player1 && (
-                <button
-                  type="button"
+                <PlayerCard
+                  player={player1}
+                  isSelected={selectedPlayerId === player1.id}
                   onClick={() => setSelectedPlayerId(player1.id)}
-                  className={`w-full text-left rounded-xl p-5 shadow border transition hover:bg-slate-800/50 bg-slate-800/30 backdrop-blur cursor-pointer ${
-                    selectedPlayerId === player1.id ? "border-2 border-emerald-500 ring-2 ring-emerald-500/20" : "border-slate-700"
-                  }`}
-                >
-                  <div className="flex items-center justify-between gap-3 mb-4">
-                    <div>
-                      <p className="text-xl font-bold">{player1.name}</p>
-                      <p className="text-sm text-slate-400">
-                        {player1.team}
-                      </p>
-                    </div>
-                  </div>
-                </button>
+                  statsViewMode={statsViewMode}
+                />
               )}
             </div>
 
             <div>
               {player2 && (
-                <button
-                  type="button"
+                <PlayerCard
+                  player={player2}
+                  isSelected={selectedPlayerId === player2.id}
                   onClick={() => setSelectedPlayerId(player2.id)}
-                  className={`w-full text-left rounded-xl p-5 shadow border transition hover:bg-slate-800/50 bg-slate-800/30 backdrop-blur cursor-pointer ${
-                    selectedPlayerId === player2.id ? "border-2 border-emerald-500 ring-2 ring-emerald-500/20" : "border-slate-700"
-                  }`}
-                >
-                  <div className="flex items-center justify-between gap-3 mb-4">
-                    <div>
-                      <p className="text-xl font-bold">{player2.name}</p>
-                      <p className="text-sm text-slate-400">
-                        {player2.team}
-                      </p>
-                    </div>
-                  </div>
-                </button>
+                  statsViewMode={statsViewMode}
+                />
               )}
             </div>
           </div>
@@ -232,7 +440,8 @@ export default function MatchupView() {
       )}
 
       <p className="mt-8 text-xs text-slate-400 text-center">
-        * Stats pulled from Basketball Reference as of 11/17/2024.
+        * Stats pulled from Basketball Reference. 
+        {selectedSeason === "current" ? " Showing 2025-26 season only." : " Showing combined 2024-25 & 2025-26 stats."}
       </p>
     </div>
   );

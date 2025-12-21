@@ -52,3 +52,26 @@ export async function getMatchupResults(matchupId: number): Promise<MatchupResul
   const response = await api.get<MatchupResults>(`/voting/aggregate/${matchupId}`);
   return response.data;
 }
+
+export interface PlayerRanking {
+  id: string;
+  name: string;
+  team: string | null;
+  position: string | null;
+  wins: number;
+  total_matchups: number;
+  win_percentage: number;
+  total_votes_received: number;
+}
+
+export interface GlobalRankingsResponse {
+  date: string;
+  rankings: PlayerRanking[];
+  total_voters: number;
+  total_votes: number;
+}
+
+export async function getGlobalRankings(): Promise<GlobalRankingsResponse> {
+  const response = await api.get<GlobalRankingsResponse>("/voting/global-rankings");
+  return response.data;
+}
