@@ -306,20 +306,29 @@ def debug_schedule(db: Session = Depends(get_db)):
     """Debug endpoint to check schedule status"""
     from datetime import datetime
     
-    utc_now = datetime.utcnow()
-    today_utc = date.today()
-    
-    # Get recent daily sets
-    recent_sets = db.query(models.DailySet).order_by(models.DailySet.date.desc()).limit(5).all()
-    
-    return {
-        "server_utc_now": utc_now.isoformat(),
-        "server_date_today": today_utc.isoformat(),
-        "recent_daily_sets": [
-            {"id": ds.id, "date": ds.date.isoformat(), "player_count": len(ds.players), "matchup_count": len(ds.matchups)}
-            for ds in recent_sets
-        ]
-    }
+    try:
+        utc_now = datetime.utcnow()
+        today_utc = date.today()
+        
+        # Get recent daily sets
+        recent_sets = db.query(models.DailySet).order_by(models.DailySet.date.desc()).limit(5).all()
+        
+        sets_info = []
+        for ds in recent_sets:
+            sets_info.append({
+                "id": ds.id, 
+                "date": str(ds.date),
+                "player_count": len(ds.players) if ds.players else 0,
+                "matchup_count": len(ds.matchups) if ds.matchups else 0
+            })
+        
+        return {
+            "server_utc_now": str(utc_now),
+            "server_date_today": str(today_utc),
+            "recent_daily_sets": sets_info
+        }
+    except Exception as e:
+        return {"error": str(e)}
 
 
 @router.get("/today", response_model=GameTodayResponse)
