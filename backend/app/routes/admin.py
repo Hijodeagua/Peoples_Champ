@@ -282,15 +282,23 @@ def get_today_preview(db: Session = Depends(get_db)):
     }
 
 @router.get("/full-reset")
-def full_reset_and_regenerate(db: Session = Depends(get_db)):
-    """Reset database and regenerate everything - USE WITH CAUTION"""
+def full_reset_and_regenerate(db: Session = Depends(get_db), top_n: int = 30, days_back: int = 6):
+    """Reset database and regenerate everything with top N players - USE WITH CAUTION
+    
+    Args:
+        top_n: Only use top N players for matchups (default 30)
+        days_back: Generate matchups for this many days in the past for archive (default 6)
+    """
     from ..models import DailySet, DailySetPlayer, Matchup, UserChoice, Player
     from ..services.player_loader import load_players_from_csv
     from ..services.batch_scheduler import BatchScheduler
+    from ..services.scheduler import GameScheduler
+    from itertools import combinations
+    import random
     
-    results = {"steps": []}
+    results = {"steps": [], "top_n_players": top_n, "days_back": days_back}
     
-    # Step 1: Clear old schedule
+    # Step 1: Clear old schedule (but preserve user choices if possible)
     try:
         db.query(UserChoice).delete()
         db.query(Matchup).delete()
@@ -337,17 +345,59 @@ def full_reset_and_regenerate(db: Session = Depends(get_db)):
         results["steps"].append(f"Error loading players: {e}")
         return results
     
-    # Step 4: Generate new schedule
+    # Step 4: Generate schedule with top N players, including past days for archive
     try:
-        player_count = db.query(Player).count()
-        if player_count >= 75:
-            scheduler = BatchScheduler(db)
-            batch_result = scheduler.generate_next_batch(manual_override=True)
-            results["steps"].append(f"Generated schedule: {batch_result}")
-        else:
-            results["steps"].append(f"Not enough players ({player_count}) to generate schedule")
+        # Get top N players
+        top_players = db.query(Player).order_by(Player.total_ws.desc()).limit(top_n).all()
+        results["steps"].append(f"Using top {len(top_players)} players for matchups")
+        
+        if len(top_players) < 5:
+            results["steps"].append(f"Not enough players ({len(top_players)}) to generate schedule")
+            return results
+        
+        # Generate for past days (archive) + today + future days
+        today = date.today()
+        start_date = today - timedelta(days=days_back)
+        total_days = days_back + 1 + 30  # past + today + 30 future days
+        
+        days_created = 0
+        for day_offset in range(total_days):
+            current_date = start_date + timedelta(days=day_offset)
+            
+            # Select 5 random players from top N
+            selected_players = random.sample(top_players, 5)
+            selected_ids = [p.id for p in selected_players]
+            
+            # Create daily set
+            daily_set = DailySet(date=current_date, true_ranking=None)
+            db.add(daily_set)
+            db.flush()
+            
+            # Add players to daily set
+            for player_id in selected_ids:
+                db.add(DailySetPlayer(
+                    daily_set_id=daily_set.id,
+                    player_id=player_id
+                ))
+            
+            # Create all matchups (10 matchups for 5 players)
+            for idx, (p1_id, p2_id) in enumerate(combinations(selected_ids, 2)):
+                db.add(Matchup(
+                    daily_set_id=daily_set.id,
+                    player1_id=p1_id,
+                    player2_id=p2_id,
+                    order_index=idx
+                ))
+            
+            days_created += 1
+        
+        db.commit()
+        results["steps"].append(f"Generated {days_created} days of matchups from {start_date} to {start_date + timedelta(days=total_days-1)}")
+        
     except Exception as e:
+        db.rollback()
         results["steps"].append(f"Error generating schedule: {e}")
+        return results
     
     results["success"] = True
     return results

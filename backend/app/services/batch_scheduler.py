@@ -8,9 +8,10 @@ import logging
 logger = logging.getLogger(__name__)
 
 class BatchScheduler:
-    def __init__(self, db: Session):
+    def __init__(self, db: Session, top_n_players: int = 30):
         self.db = db
         self.batch_size = 30  # 30-day batches
+        self.top_n_players = top_n_players  # Only use top N players for matchups
         
     def get_last_scheduled_date(self) -> Optional[date]:
         """Get the last date that has a scheduled daily set"""
@@ -57,17 +58,19 @@ class BatchScheduler:
         
         # Generate 30-day schedule
         scheduler = GameScheduler(self.db)
-        player_count = scheduler.load_top_players(100)
+        player_count = scheduler.load_top_players(self.top_n_players)
         
-        if player_count < 75:
+        if player_count < 5:
             return {
-                "error": f"Need at least 75 players, found {player_count}",
+                "error": f"Need at least 5 players, found {player_count}",
                 "success": False
             }
         
         try:
             # Generate exactly 30 days
             schedule = {}
+            import random
+            
             for day_offset in range(self.batch_size):
                 current_date = start_date + timedelta(days=day_offset)
                 date_str = current_date.isoformat()
@@ -77,21 +80,12 @@ class BatchScheduler:
                 if existing:
                     continue
                 
-                # Use the scheduler logic but for single days
-                attempts = 0
-                max_attempts = 1000
+                # Select 5 random players from top N players only
+                available_players = scheduler.players[:self.top_n_players]
+                selected_players = random.sample(available_players, 5)
+                selected_ids = [p.id for p in selected_players]
                 
-                while attempts < max_attempts:
-                    # Get 5 random players (simplified for now - you can enhance with constraints later)
-                    available_players = scheduler.players[:75]
-                    import random
-                    selected_players = random.sample(available_players, 5)
-                    selected_ids = [p.id for p in selected_players]
-                    
-                    # For now, skip trio constraint checking for simplicity
-                    # You can add it back later if needed
-                    schedule[date_str] = selected_ids
-                    break
+                schedule[date_str] = selected_ids
             
             # Save to database
             scheduler.schedule = schedule
