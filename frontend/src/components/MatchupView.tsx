@@ -286,8 +286,23 @@ export default function MatchupView() {
 
   if (!gameData || !votingStatus) {
     return (
-      <div className="text-center py-12">
-        <p className="text-slate-300">No matchups available today.</p>
+      <div className="flex flex-col items-center justify-center min-h-[400px] space-y-6">
+        <div className="text-6xl">🏀</div>
+        <div className="text-center space-y-2">
+          <h2 className="text-2xl font-bold text-slate-200">No Matchups Available</h2>
+          <p className="text-slate-400 max-w-md">
+            We couldn't load today's matchups. The server might be waking up - please try again in a moment.
+          </p>
+        </div>
+        <button
+          onClick={() => loadGameData(selectedSeason)}
+          className="px-6 py-3 rounded-xl bg-emerald-500 text-black font-bold hover:bg-emerald-400 transition"
+        >
+          Retry Loading
+        </button>
+        <p className="text-xs text-slate-500">
+          If this persists, the backend server may be starting up (takes ~30 seconds).
+        </p>
       </div>
     );
   }
@@ -295,8 +310,20 @@ export default function MatchupView() {
   // Defensive check for empty matchups array
   if (!gameData.matchups || gameData.matchups.length === 0) {
     return (
-      <div className="text-center py-12">
-        <p className="text-slate-300">No matchups available today.</p>
+      <div className="flex flex-col items-center justify-center min-h-[400px] space-y-6">
+        <div className="text-6xl">📅</div>
+        <div className="text-center space-y-2">
+          <h2 className="text-2xl font-bold text-slate-200">No Matchups Scheduled</h2>
+          <p className="text-slate-400 max-w-md">
+            There are no matchups scheduled for today. Check back tomorrow or visit the Archive to replay past games.
+          </p>
+        </div>
+        <a
+          href="/archive"
+          className="px-6 py-3 rounded-xl bg-amber-500 text-black font-bold hover:bg-amber-400 transition"
+        >
+          View Archive
+        </a>
       </div>
     );
   }
@@ -304,8 +331,15 @@ export default function MatchupView() {
   const currentMatchup = gameData.matchups[currentMatchupIndex];
   if (!currentMatchup) {
     return (
-      <div className="text-center py-12">
-        <p className="text-slate-300">Matchup not found.</p>
+      <div className="flex flex-col items-center justify-center min-h-[400px] space-y-4">
+        <div className="text-6xl">❓</div>
+        <p className="text-slate-300 text-lg">Matchup not found.</p>
+        <button
+          onClick={() => setCurrentMatchupIndex(0)}
+          className="px-4 py-2 rounded-lg bg-slate-700 text-slate-200 hover:bg-slate-600 transition"
+        >
+          Go to First Matchup
+        </button>
       </div>
     );
   }

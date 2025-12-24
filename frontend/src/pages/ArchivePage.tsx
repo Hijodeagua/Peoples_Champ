@@ -64,12 +64,29 @@ export default function ArchivePage() {
         </p>
       </header>
 
-      {error && (
-        <div className="mb-6 p-4 bg-red-900/40 border border-red-700 text-red-200 rounded-lg text-center">
-          {error}
+      {error ? (
+        <div className="flex flex-col items-center justify-center min-h-[300px] space-y-6">
+          <div className="text-6xl">📦</div>
+          <div className="text-center space-y-2">
+            <h2 className="text-2xl font-bold text-slate-200">Couldn't Load Archive</h2>
+            <p className="text-slate-400 max-w-md">
+              {error}
+            </p>
+          </div>
+          <button
+            onClick={() => {
+              setError(null);
+              loadArchives();
+            }}
+            className="px-6 py-3 rounded-xl bg-amber-500 text-black font-bold hover:bg-amber-400 transition"
+          >
+            Retry Loading
+          </button>
+          <p className="text-xs text-slate-500">
+            The backend server may be starting up (takes ~30 seconds).
+          </p>
         </div>
-      )}
-
+      ) : (
       <div className="bg-slate-800/50 rounded-xl border border-slate-700 p-6">
         <div className="mb-4 p-4 bg-amber-900/20 border border-amber-700/50 rounded-lg">
           <p className="text-amber-200 text-sm">
@@ -81,8 +98,15 @@ export default function ArchivePage() {
         <div className="space-y-3">
           {archives.length === 0 ? (
             <div className="text-center py-8 text-slate-400">
-              <p>No archived games found.</p>
-              <p className="text-sm mt-2">Games will appear here after you play daily matchups.</p>
+              <div className="text-4xl mb-4">📅</div>
+              <p className="text-lg font-medium">No archived games found.</p>
+              <p className="text-sm mt-2">Games will appear here once daily matchups are created.</p>
+              <a
+                href="/daily"
+                className="inline-block mt-4 px-4 py-2 rounded-lg bg-emerald-500 text-black font-semibold hover:bg-emerald-400 transition"
+              >
+                Play Today's Game
+              </a>
             </div>
           ) : (
             archives.map((archive, index) => {
@@ -123,6 +147,7 @@ export default function ArchivePage() {
           </div>
         )}
       </div>
+      )}
     </div>
   );
 }
