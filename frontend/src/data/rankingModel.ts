@@ -147,11 +147,47 @@ export function generateRankings(
   const playersWithScores = players.map(player => {
     const { score, metrics } = calculateCompositeScore(player, players);
     
-    // Find Ringer rank for this player
-    const ringerRank = ringerRankings.find(
-      r => r.player.toLowerCase().includes(player.name.toLowerCase().split(' ')[0]) ||
-           player.name.toLowerCase().includes(r.player.toLowerCase().split(' ')[0])
-    )?.rank || null;
+    // Find Ringer rank for this player - use full name matching
+    const playerNameLower = player.name.toLowerCase().trim();
+    const playerNameParts = playerNameLower.split(' ').filter(p => p.length > 0);
+    if (playerNameParts.length === 0) {
+      return {
+        player,
+        compositeScore: score,
+        rank: 0,
+        ringerRank: null,
+        rankDifference: null,
+        metrics,
+      };
+    }
+    const playerLastName = playerNameParts[playerNameParts.length - 1];
+    const playerFirstName = playerNameParts[0];
+    
+    const ringerRank = ringerRankings.find(r => {
+      const ringerNameLower = r.player.toLowerCase().trim();
+      const ringerParts = ringerNameLower.split(' ').filter(p => p.length > 0);
+      if (ringerParts.length === 0) return false;
+      const ringerLastName = ringerParts[ringerParts.length - 1];
+      const ringerFirstName = ringerParts[0];
+      
+      // Exact full name match (ignoring accents)
+      if (ringerNameLower === playerNameLower) return true;
+      
+      // Match by first AND last name (handles accent differences like Jokić vs Jokic)
+      if (ringerFirstName === playerFirstName && 
+          (ringerLastName === playerLastName || 
+           (playerLastName.length >= 4 && ringerLastName.startsWith(playerLastName.slice(0, 4))) ||
+           (ringerLastName.length >= 4 && playerLastName.startsWith(ringerLastName.slice(0, 4))))) {
+        return true;
+      }
+      
+      // Handle hyphenated names like Gilgeous-Alexander
+      if (ringerNameLower.includes(playerLastName) && ringerFirstName === playerFirstName) {
+        return true;
+      }
+      
+      return false;
+    })?.rank || null;
 
     return {
       player,

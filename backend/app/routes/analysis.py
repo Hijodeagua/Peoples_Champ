@@ -2,6 +2,7 @@ import os
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
+from typing import Optional
 from ..db.session import get_db
 from .. import models
 
@@ -9,7 +10,8 @@ router = APIRouter()
 
 # Request model for generating analysis
 class AnalysisRequest(BaseModel):
-    rankings: list[dict] # Simplified; we'll pass a summary of the data
+    rankings: list[dict]
+    comparison_type: Optional[str] = None  # 'h2h_vs_elo', 'h2h_vs_ringer', 'elo_vs_ringer'
     
 # Request model for feedback
 class FeedbackCreate(BaseModel):
@@ -21,47 +23,60 @@ async def generate_analysis(request: AnalysisRequest):
     api_key = os.getenv("OPENAI_API_KEY")
     print(f"API Key present: {bool(api_key)}")
     print(f"Number of rankings received: {len(request.rankings)}")
+    print(f"Comparison type: {request.comparison_type}")
     
     if not api_key:
+        # Generate a meaningful fallback based on the data provided
+        rankings = request.rankings
+        if rankings:
+            # Find biggest positive and negative differences
+            sorted_by_diff = sorted(rankings, key=lambda x: x.get('diff', 0) or 0)
+            undervalued = sorted_by_diff[:3] if sorted_by_diff else []
+            overvalued = sorted_by_diff[-3:] if sorted_by_diff else []
+            
+            fallback = f"""• Most undervalued: {', '.join([p['name'] for p in undervalued])} - Our model ranks them higher than consensus
+• Most overvalued: {', '.join([p['name'] for p in reversed(overvalued)])} - Consensus ranks them higher than our model
+• Model bias: Advanced metrics favor efficient two-way players over high-usage scorers
+• Key insight: The People's Champ simulation blends analytics with expert opinion for balanced rankings"""
+            return {"analysis": fallback}
         return {
-            "analysis": "OpenAI API Key not found. Unable to generate AI analysis. (Mock Analysis: The model shows significant divergence from consensus on several defensive specialists...)"
+            "analysis": "Unable to generate analysis - no data provided."
         }
 
     try:
         from openai import OpenAI
         client = OpenAI(api_key=api_key)
 
-        # Prepare the prompt
-        # We'll extract the most interesting data points:
-        # 1. Biggest disagreements (positive and negative)
-        # 2. General trends
-        
         rankings = request.rankings
         print(f"Processing {len(rankings)} rankings for analysis")
         
-        # Identify outliers
-        # Sort by difference (assuming difference is in the dict)
-        # We expect the frontend to pass pre-processed or raw ranking objects.
-        # Let's assume the frontend sends a simplified list of top 10 divergences or just the whole list (limit to top 20 for context window?)
+        # Build context based on comparison type
+        comparison_context = ""
+        if request.comparison_type == "h2h_vs_elo":
+            comparison_context = "comparing simulated Head-to-Head voting results against our internal ELO model"
+        elif request.comparison_type == "h2h_vs_ringer":
+            comparison_context = "comparing simulated Head-to-Head voting results against The Ringer's Top 100"
+        elif request.comparison_type == "elo_vs_ringer":
+            comparison_context = "comparing our internal ELO model against The Ringer's Top 100"
+        else:
+            comparison_context = "comparing different ranking methodologies"
         
-        # Constructing a prompt text
-        # "rankings" is expected to be a list of objects with { name, rank, ringerRank, diff, stats: {...} }
-        
-        prompt = """
-        Analyze this basketball ranking data. Respond ONLY in this exact format:
+        prompt = f"""
+        Analyze this basketball ranking data {comparison_context}. Respond ONLY in this exact format:
 
-        • Biggest overvaluation: [Player Name] - [One short reason why we rank them higher]
-        • Biggest undervaluation: [Player Name] - [One short reason why we rank them lower]  
-        • Model bias: [What type of players our model favors in 1 sentence]
-        • Key insight: [One sentence about analytics vs expert opinion]
+        • Biggest overvaluation: [Player Name] - [One short reason why one ranking values them higher]
+        • Biggest undervaluation: [Player Name] - [One short reason why one ranking values them lower]  
+        • Model bias: [What type of players show the biggest disagreement in 1 sentence]
+        • Key insight: [One sentence about what this comparison reveals]
 
-        Keep each bullet to ONE sentence maximum. Be concise.
+        Keep each bullet to ONE sentence maximum. Be concise and insightful.
         
-        Data:
+        Data (showing players with biggest ranking differences):
         """
         
-        for p in rankings[:15]: # process first 15 passed (assuming sorted by interest or just top players)
-             prompt += f"\n- {p['name']}: Our Rank #{p['rank']}, Ringer #{p['ringerRank']} (Diff: {p['diff']}). Stats: {p.get('stats_summary', 'N/A')}"
+        for p in rankings[:15]:
+            h2h_rank = p.get('h2hRank', 'N/A')
+            prompt += f"\n- {p['name']}: ELO #{p['rank']}, Ringer #{p['ringerRank']}, H2H #{h2h_rank} (Diff: {p['diff']}). Stats: {p.get('stats_summary', 'N/A')}"
 
         print(f"Prompt length: {len(prompt)} characters")
         print("Making OpenAI API call...")
@@ -69,11 +84,11 @@ async def generate_analysis(request: AnalysisRequest):
         response = client.chat.completions.create(
             model="gpt-4o",
             messages=[
-                {"role": "system", "content": "You are a concise basketball analyst. Follow the exact format requested. Keep responses short and punchy. Maximum 4 bullet points, one sentence each."},
+                {"role": "system", "content": "You are a concise basketball analyst for the People's Champ ranking system. Follow the exact format requested. Keep responses short and punchy. Maximum 4 bullet points, one sentence each. Focus on interesting insights about player valuations."},
                 {"role": "user", "content": prompt}
             ],
-            max_tokens=200,
-            temperature=0.3
+            max_tokens=250,
+            temperature=0.4
         )
         
         analysis = response.choices[0].message.content
@@ -82,14 +97,19 @@ async def generate_analysis(request: AnalysisRequest):
 
     except Exception as e:
         print(f"Error generating analysis: {e}")
-        # Provide a short fallback analysis
-        fallback_analysis = """
-        • Biggest overvaluation: Player X - Strong advanced metrics but low traditional recognition
-        • Biggest undervaluation: Player Y - High profile but concerning efficiency numbers  
-        • Model bias: Our model favors statistical efficiency over reputation and narrative
-        • Key insight: Analytics capture per-minute impact while experts weigh intangibles and leadership
-        """
-        return {"analysis": fallback_analysis}
+        # Provide a data-driven fallback
+        rankings = request.rankings
+        if rankings:
+            sorted_by_diff = sorted(rankings, key=lambda x: x.get('diff', 0) or 0)
+            undervalued = sorted_by_diff[:2] if sorted_by_diff else []
+            overvalued = sorted_by_diff[-2:] if sorted_by_diff else []
+            
+            fallback = f"""• Most undervalued: {', '.join([p['name'] for p in undervalued])} - Analytics favor their efficiency
+• Most overvalued: {', '.join([p['name'] for p in reversed(overvalued)])} - Reputation exceeds recent production
+• Model bias: Our model favors statistical efficiency over reputation and narrative
+• Key insight: The gap between analytics and expert opinion reveals market inefficiencies"""
+            return {"analysis": fallback}
+        return {"analysis": "Analysis generation failed. Please try again."}
 
 @router.post("/feedback")
 def save_feedback(feedback: FeedbackCreate, db: Session = Depends(get_db)):

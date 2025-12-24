@@ -346,7 +346,7 @@ def full_reset_and_regenerate(db: Session = Depends(get_db), top_n: int = 30, da
         return results
     
     # Step 4: Generate schedule with top N players, including past days for archive
-    # Ensure top 10 players appear at least 3 times each
+    # Ensure at least 2 top 10 players per day, with good distribution of top 20
     try:
         # Get top N players
         top_players = db.query(Player).order_by(Player.total_ws.desc()).limit(top_n).all()
@@ -356,45 +356,52 @@ def full_reset_and_regenerate(db: Session = Depends(get_db), top_n: int = 30, da
             results["steps"].append(f"Not enough players ({len(top_players)}) to generate schedule")
             return results
         
-        # Separate top 10 and rest
+        # Separate into tiers
         top_10_players = top_players[:10] if len(top_players) >= 10 else top_players
-        other_players = top_players[10:] if len(top_players) > 10 else []
+        top_11_20_players = top_players[10:20] if len(top_players) >= 20 else top_players[10:]
+        top_21_40_players = top_players[20:40] if len(top_players) >= 40 else top_players[20:]
         
-        # Track appearances for top 10 players
-        top_10_appearances = {p.id: 0 for p in top_10_players}
-        min_appearances_for_top_10 = 3
+        # Track appearances for all players
+        all_appearances = {p.id: 0 for p in top_players}
         
         # Generate for past days (archive) + today + future days
         today = date.today()
         start_date = today - timedelta(days=days_back)
         total_days = days_back + 1 + 30  # past + today + 30 future days
         
+        # Target appearances per tier (over ~40 days)
+        # Top 10: each should appear 5-8 times
+        # Top 11-20: each should appear 4-6 times  
+        # Top 21-40: each should appear 2-4 times
+        
         days_created = 0
         for day_offset in range(total_days):
             current_date = start_date + timedelta(days=day_offset)
             
-            # Smart selection: prioritize top 10 players who haven't appeared enough
             selected_players = []
             
-            # First, add top 10 players who need more appearances (up to 2 per day)
-            needy_top_10 = [p for p in top_10_players if top_10_appearances[p.id] < min_appearances_for_top_10]
-            if needy_top_10:
-                # Add 1-2 needy top 10 players
-                num_to_add = min(2, len(needy_top_10))
-                selected_from_top_10 = random.sample(needy_top_10, num_to_add)
-                selected_players.extend(selected_from_top_10)
+            # ALWAYS add exactly 2 top 10 players per day
+            # Prioritize those with fewer appearances
+            sorted_top_10 = sorted(top_10_players, key=lambda p: all_appearances[p.id])
+            selected_players.extend(sorted_top_10[:2])
             
-            # Fill remaining spots randomly from all top N players
+            # Add 1-2 players from top 11-20 (prioritize fewer appearances)
+            if top_11_20_players:
+                sorted_11_20 = sorted(top_11_20_players, key=lambda p: all_appearances[p.id])
+                num_from_11_20 = random.choice([1, 2])
+                selected_players.extend(sorted_11_20[:num_from_11_20])
+            
+            # Fill remaining spots from top 21-40 (or top 11-20 if needed)
             remaining_spots = 5 - len(selected_players)
-            available_for_random = [p for p in top_players if p not in selected_players]
-            if remaining_spots > 0 and available_for_random:
-                random_picks = random.sample(available_for_random, min(remaining_spots, len(available_for_random)))
-                selected_players.extend(random_picks)
+            if remaining_spots > 0:
+                available = [p for p in top_21_40_players + top_11_20_players if p not in selected_players]
+                if available:
+                    sorted_available = sorted(available, key=lambda p: all_appearances[p.id])
+                    selected_players.extend(sorted_available[:remaining_spots])
             
-            # Update appearance counts for top 10
+            # Update appearance counts
             for p in selected_players:
-                if p.id in top_10_appearances:
-                    top_10_appearances[p.id] += 1
+                all_appearances[p.id] += 1
             
             selected_ids = [p.id for p in selected_players]
             
@@ -423,10 +430,24 @@ def full_reset_and_regenerate(db: Session = Depends(get_db), top_n: int = 30, da
         
         db.commit()
         
-        # Report top 10 appearances
-        top_10_summary = {db.query(Player).get(pid).name: count for pid, count in top_10_appearances.items()}
+        # Report appearances by tier
+        top_10_summary = {}
+        top_11_20_summary = {}
+        top_21_40_summary = {}
+        
+        for i, p in enumerate(top_players):
+            count = all_appearances.get(p.id, 0)
+            if i < 10:
+                top_10_summary[p.name] = count
+            elif i < 20:
+                top_11_20_summary[p.name] = count
+            else:
+                top_21_40_summary[p.name] = count
+        
         results["steps"].append(f"Generated {days_created} days of matchups from {start_date} to {start_date + timedelta(days=total_days-1)}")
         results["top_10_appearances"] = top_10_summary
+        results["top_11_20_appearances"] = top_11_20_summary
+        results["top_21_40_appearances"] = top_21_40_summary
         
     except Exception as e:
         db.rollback()

@@ -9,11 +9,10 @@ export default function LandingPage() {
             PEOPLE'S CHAMP
           </p>
           <h1 className="text-5xl md:text-6xl font-bold leading-tight">
-            Who is the best<br />player right now?
+            Who ya got?
           </h1>
           <p className="text-xl text-slate-300 max-w-2xl mx-auto">
-            Compare NBA stars head-to-head using real stats from the past two seasons.
-            Your votes shape the rankings.
+            Compare NBA stars head-to-head using real stats. Your votes decide who's the People's Champ.
           </p>
         </div>
 
@@ -37,7 +36,7 @@ export default function LandingPage() {
             <div className="text-3xl mb-3">🏀</div>
             <h3 className="text-lg font-bold mb-2">Real Stats</h3>
             <p className="text-sm text-slate-300">
-              All data from Basketball Reference covering the 2023-24 and 2024-25 seasons
+              Data comes from Basketball Reference
             </p>
           </div>
           <div className="p-6 bg-slate-800/50 rounded-xl border border-slate-700">
@@ -51,7 +50,7 @@ export default function LandingPage() {
             <div className="text-3xl mb-3">📊</div>
             <h3 className="text-lg font-bold mb-2">See Results</h3>
             <p className="text-sm text-slate-300">
-              Compare your rankings to ELO ratings and The Ringer's NBA Top 100
+              Compare the People's Champ votes against both our internal ELO model and The Ringer's Top 100
             </p>
           </div>
         </div>

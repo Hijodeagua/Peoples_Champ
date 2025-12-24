@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { getTodayGame, type GameTodayResponse, type Player, type SeasonOption, type PlayerStats, type AdvancedStats } from "../api/game";
 import { submitVote, getVotingStatus, type UserVotesResponse } from "../api/voting";
+import { getPlayerImageUrl } from "../utils/playerImages";
 
 // Stat label mapping for per-game stats
 const STAT_LABELS: Record<string, string> = {
@@ -136,18 +137,28 @@ function PlayerCard({
         isSelected ? "border-2 border-emerald-500 ring-2 ring-emerald-500/20" : "border-slate-700"
       }`}
     >
-      <div className="flex items-center justify-between gap-3 mb-4">
-        <div>
-          <p className="text-xl font-bold">{player.name}</p>
+      <div className="flex items-center gap-4 mb-4">
+        <img
+          src={getPlayerImageUrl(player.name)}
+          alt={player.name}
+          className="w-20 h-16 object-cover rounded-lg bg-slate-700"
+          onError={(e) => {
+            (e.target as HTMLImageElement).style.display = 'none';
+          }}
+        />
+        <div className="flex-1">
+          <div className="flex items-center justify-between">
+            <p className="text-xl font-bold">{player.name}</p>
+            {stats?.games && (
+              <span className="text-xs text-slate-500 bg-slate-800 px-2 py-1 rounded">
+                {stats.games} GP
+              </span>
+            )}
+          </div>
           <p className="text-sm text-slate-400">
             {player.team} {player.position && `• ${player.position}`}
           </p>
         </div>
-        {stats?.games && (
-          <span className="text-xs text-slate-500 bg-slate-800 px-2 py-1 rounded">
-            {stats.games} GP
-          </span>
-        )}
       </div>
       
       {currentStats && (
@@ -442,12 +453,24 @@ export default function MatchupView() {
       )}
 
       {isCompleted ? (
-        <div className="max-w-2xl mx-auto text-center py-12 space-y-4">
+        <div className="max-w-2xl mx-auto text-center py-12 space-y-6">
           <div className="text-6xl mb-4">🏆</div>
           <h2 className="text-3xl font-bold text-emerald-400">You&apos;re done for today!</h2>
           <p className="text-slate-300 text-lg">
             You&apos;ve completed all {gameData.matchups.length} matchups. Come back tomorrow for more!
           </p>
+          <div className="bg-slate-800/60 border border-slate-700 rounded-xl p-4 max-w-md mx-auto">
+            <p className="text-emerald-400 font-semibold mb-2">✓ Your votes have been saved!</p>
+            <p className="text-slate-400 text-sm">
+              Your votes are now part of the People&apos;s Rankings. View the combined results on the Rankings page.
+            </p>
+          </div>
+          <a
+            href="/rankings"
+            className="inline-block px-6 py-3 rounded-xl bg-emerald-500 text-black font-bold hover:bg-emerald-400 transition"
+          >
+            View People&apos;s Rankings
+          </a>
         </div>
       ) : (
         <>
