@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { api } from "../api/client";
 
 interface ArchiveEntry {
@@ -17,6 +18,7 @@ export default function ArchivePage() {
   const [archives, setArchives] = useState<ArchiveEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     loadArchives();
@@ -35,8 +37,8 @@ export default function ArchivePage() {
   };
 
   const handleReplay = (date: string) => {
-    // TODO: Implement replay functionality
-    alert(`Replay for ${date} coming soon!`);
+    // Navigate to replay page with the date
+    navigate(`/replay/${date}`);
   };
 
   if (loading) {
@@ -53,9 +55,12 @@ export default function ArchivePage() {
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
       <header className="text-center space-y-3 mb-10">
+        <p className="text-sm uppercase tracking-[0.2em] text-amber-400 font-semibold">
+          7-DAY VAULT
+        </p>
         <h1 className="text-4xl font-bold">Archive</h1>
         <p className="text-slate-300">
-          Replay past daily games and see how you ranked players on previous days
+          Replay past daily games from the last 7 days. Your votes still count!
         </p>
       </header>
 
@@ -66,10 +71,10 @@ export default function ArchivePage() {
       )}
 
       <div className="bg-slate-800/50 rounded-xl border border-slate-700 p-6">
-        <div className="mb-4 p-4 bg-blue-900/20 border border-blue-700/50 rounded-lg">
-          <p className="text-blue-200 text-sm">
-            <strong>Coming Soon:</strong> Replay any past daily game and compare your rankings
-            across different days.
+        <div className="mb-4 p-4 bg-amber-900/20 border border-amber-700/50 rounded-lg">
+          <p className="text-amber-200 text-sm">
+            <strong>🔓 Vault Access:</strong> All users can replay games from the past 7 days.
+            Click "Replay" to vote on any matchup you missed!
           </p>
         </div>
 
@@ -102,7 +107,7 @@ export default function ArchivePage() {
                   </div>
                   <button
                     onClick={() => handleReplay(archive.date)}
-                    className="px-4 py-2 rounded-lg bg-slate-700 hover:bg-slate-600 text-slate-200 font-medium transition"
+                    className="px-4 py-2 rounded-lg bg-amber-500 hover:bg-amber-400 text-black font-semibold transition"
                   >
                     Replay
                   </button>

@@ -165,3 +165,10 @@ export async function getSharedResult(
   const response = await api.get<SharedResultResponse>(`/game/share/${shareSlug}`);
   return response.data;
 }
+
+export async function getDayGame(targetDate: string, season: SeasonOption = "current"): Promise<GameTodayResponse> {
+  const response = await api.get<GameTodayResponse>(`/game/day/${targetDate}`, {
+    params: { season }
+  });
+  return response.data;
+}

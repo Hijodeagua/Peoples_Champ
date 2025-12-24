@@ -301,6 +301,27 @@ def compute_final_ranking(
     return sorted(player_ids, key=cmp_to_key(compare))
 
 
+@router.get("/debug/schedule")
+def debug_schedule(db: Session = Depends(get_db)):
+    """Debug endpoint to check schedule status"""
+    from datetime import datetime
+    
+    utc_now = datetime.utcnow()
+    today_utc = date.today()
+    
+    # Get recent daily sets
+    recent_sets = db.query(models.DailySet).order_by(models.DailySet.date.desc()).limit(5).all()
+    
+    return {
+        "server_utc_now": utc_now.isoformat(),
+        "server_date_today": today_utc.isoformat(),
+        "recent_daily_sets": [
+            {"id": ds.id, "date": ds.date.isoformat(), "player_count": len(ds.players), "matchup_count": len(ds.matchups)}
+            for ds in recent_sets
+        ]
+    }
+
+
 @router.get("/today", response_model=GameTodayResponse)
 def get_today(db: Session = Depends(get_db), season: str = "current"):
     """Get today's game with player stats. Season can be 'current' (25-26) or 'combined' (24-25 + 25-26)"""
@@ -494,10 +515,79 @@ def get_shared_result(share_slug: str, db: Session = Depends(get_db)):
     )
 
 
+@router.get("/day/{target_date}", response_model=GameTodayResponse)
+def get_day(target_date: str, db: Session = Depends(get_db), season: str = "current"):
+    """Get a specific day's game for replay. Only allows access to past 7 days."""
+    from datetime import datetime, timedelta
+    
+    if season not in ["current", "combined"]:
+        season = "current"
+    
+    try:
+        game_date = datetime.strptime(target_date, "%Y-%m-%d").date()
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid date format. Use YYYY-MM-DD")
+    
+    today = date.today()
+    seven_days_ago = today - timedelta(days=7)
+    
+    # Only allow access to past 7 days (vault access)
+    if game_date > today:
+        raise HTTPException(status_code=400, detail="Cannot access future games")
+    if game_date < seven_days_ago:
+        raise HTTPException(status_code=403, detail="Vault access limited to past 7 days")
+    
+    daily_set = db.query(models.DailySet).filter(models.DailySet.date == game_date).first()
+    
+    if not daily_set:
+        raise HTTPException(status_code=404, detail=f"No game found for {target_date}")
+    
+    players = [dsp.player for dsp in daily_set.players]
+    matchups = sorted(daily_set.matchups, key=lambda m: m.order_index or 0)
+    
+    return GameTodayResponse(
+        daily_set_id=daily_set.id,
+        date=daily_set.date,
+        mode_options=["GUESS", "OWN"],
+        season_options=["current", "combined"],
+        current_season=season,
+        players=[
+            PlayerOut(
+                id=p.id, 
+                name=p.name, 
+                team=p.team,
+                position=p.position,
+                stats=build_player_stats(p.id, p.position, season),
+                advanced=build_advanced_stats(p.id, season),
+                season=season,
+            ) 
+            for p in players
+        ],
+        matchups=[
+            MatchupOut(
+                id=m.id,
+                player_a_id=m.player1_id,
+                player_b_id=m.player2_id,
+                order_index=m.order_index or 0,
+            )
+            for m in matchups
+        ],
+    )
+
+
 @router.get("/archive", response_model=ArchiveResponse)
 def get_archive(db: Session = Depends(get_db)):
-    """Get archive of past daily sets"""
-    daily_sets = db.query(models.DailySet).order_by(models.DailySet.date.desc()).limit(30).all()
+    """Get archive of past daily sets (limited to 7 days for vault access)"""
+    from datetime import timedelta
+    
+    today = date.today()
+    seven_days_ago = today - timedelta(days=7)
+    
+    # Only show past 7 days for vault access
+    daily_sets = db.query(models.DailySet).filter(
+        models.DailySet.date >= seven_days_ago,
+        models.DailySet.date <= today
+    ).order_by(models.DailySet.date.desc()).all()
     
     archives = []
     for daily_set in daily_sets:

@@ -6,6 +6,7 @@ import PeoplesRankingsPage from "./pages/PeoplesRankingsPage";
 import MethodologyPage from "./pages/MethodologyPage";
 import ArchivePage from "./pages/ArchivePage";
 import UnlimitedRankPage from "./pages/UnlimitedRankPage";
+import ReplayPage from "./pages/ReplayPage";
 
 function App() {
   return (
@@ -19,6 +20,7 @@ function App() {
             <Route path="/rankings" element={<PeoplesRankingsPage />} />
             <Route path="/methodology" element={<MethodologyPage />} />
             <Route path="/archive" element={<ArchivePage />} />
+            <Route path="/replay/:date" element={<ReplayPage />} />
             <Route path="/unlimited" element={<UnlimitedRankPage />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
