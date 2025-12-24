@@ -165,7 +165,7 @@ export default function GlobalRankings({ onPlayGame }: GlobalRankingsProps) {
       <div className="space-y-8">
         {/* Header */}
         <div className="text-center">
-          <h1 className="text-3xl font-bold mb-2">Today's People's Champ</h1>
+          <h1 className="text-3xl font-bold mb-2">Today's GOAT</h1>
           <p className="text-slate-400">
             Based on {rankings.total_votes} votes from {rankings.total_voters} voters
           </p>
@@ -188,7 +188,7 @@ export default function GlobalRankings({ onPlayGame }: GlobalRankingsProps) {
         {/* Champion highlight */}
         {topThree.length > 0 && (
           <div className="bg-gradient-to-r from-yellow-900/30 via-yellow-600/20 to-yellow-900/30 rounded-xl p-6 text-center border border-yellow-600/30">
-            <p className="text-yellow-400 text-sm font-medium mb-1">TODAY'S PEOPLE'S CHAMP</p>
+            <p className="text-yellow-400 text-sm font-medium mb-1">TODAY'S GOAT</p>
             <h2 className="text-3xl font-bold">{topThree[0].name}</h2>
             <p className="text-slate-300 mt-1">
               {topThree[0].wins} wins out of {topThree[0].total_matchups} matchups • {topThree[0].total_votes_received} total votes

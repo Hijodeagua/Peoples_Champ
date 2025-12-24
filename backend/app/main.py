@@ -9,7 +9,7 @@ from .routes import auth, daily_set, game, players, analysis, voting, admin
 from .db.session import engine
 from .db.base import Base
 
-app = FastAPI(title="Peoples Champ API")
+app = FastAPI(title="Who's Yur GOAT API")
 
 # --- CORS setup so the React frontend can call the API ---
 origins = [
@@ -17,6 +17,10 @@ origins = [
     "http://127.0.0.1:5173",
     "http://localhost:5174",
     "http://127.0.0.1:5174",
+    "https://whosyurgoat.app",
+    "https://www.whosyurgoat.app",
+    "https://whosyurgoat.com",
+    "https://www.whosyurgoat.com",
     "https://peoples-champ.vercel.app",
     "https://peoples-champ-frontend.onrender.com",
 ]

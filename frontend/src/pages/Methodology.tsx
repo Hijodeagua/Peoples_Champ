@@ -3,7 +3,7 @@ export default function MethodologyPage() {
     <div className="max-w-3xl mx-auto px-4 py-8">
       <h1 className="text-2xl font-bold mb-2">Methodology</h1>
       <p className="text-slate-300 text-sm mb-4">
-        This section will walk through how Peoples Champ rankings are built –
+        This section will walk through how GOAT rankings are built –
         both the underlying stats and the game-based adjustments.
       </p>
 

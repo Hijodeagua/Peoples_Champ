@@ -92,7 +92,7 @@ export default function PlayPage() {
   if (loading) {
     return (
       <div className="min-h-screen bg-slate-900 text-white flex items-center justify-center">
-        <p>Loading today&apos;s Peoples Champ game…</p>
+        <p>Loading today's GOAT matchups…</p>
       </div>
     );
   }
@@ -128,7 +128,7 @@ export default function PlayPage() {
     <div className="min-h-screen bg-slate-900 text-white flex flex-col">
       <header className="w-full border-b border-slate-800 px-4 py-3 flex items-center justify-between">
         <a href="/" className="font-bold text-lg">
-          Peoples Champ
+          Who's Yur GOAT
         </a>
         <span className="text-xs text-slate-400">
           Daily set for {game.date}
@@ -231,7 +231,7 @@ export default function PlayPage() {
         {result && (
           <section className="mt-6 border border-slate-800 rounded-xl p-4 bg-slate-900/70">
             <h2 className="text-xl font-semibold mb-2">
-              Your Peoples Champ ranking
+              Your GOAT ranking
             </h2>
             <p className="text-sm text-slate-300 mb-3">
               Mode:{" "}

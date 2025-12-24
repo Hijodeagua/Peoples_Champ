@@ -6,13 +6,13 @@ export default function LandingPage() {
       <div className="text-center space-y-8">
         <div className="space-y-4">
           <p className="text-sm uppercase tracking-[0.2em] text-emerald-400 font-semibold">
-            PEOPLE'S CHAMP
+            WHO'S YUR GOAT
           </p>
           <h1 className="text-5xl md:text-6xl font-bold leading-tight">
             Who ya got?
           </h1>
           <p className="text-xl text-slate-300 max-w-2xl mx-auto">
-            Compare NBA stars head-to-head using real stats. Your votes decide who's the People's Champ.
+            Compare NBA stars head-to-head using real stats. Your votes decide Who's Yur GOAT.
           </p>
         </div>
 
@@ -50,7 +50,7 @@ export default function LandingPage() {
             <div className="text-3xl mb-3">📊</div>
             <h3 className="text-lg font-bold mb-2">See Results</h3>
             <p className="text-sm text-slate-300">
-              Compare the People's Champ votes against both our internal ELO model and The Ringer's Top 100
+              Compare the GOAT votes against both our internal ELO model and The Ringer's Top 100
             </p>
           </div>
         </div>

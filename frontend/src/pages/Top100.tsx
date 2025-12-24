@@ -3,7 +3,7 @@ export default function Top100Page() {
     <div className="max-w-4xl mx-auto px-4 py-8">
       <h1 className="text-2xl font-bold mb-2">Top 100 Rankings</h1>
       <p className="text-slate-300 text-sm mb-4">
-        This page will show the Peoples Champ ladder – the top 100 players with
+        This page will show the GOAT ladder – the top 100 players with
         stats from both the rating system and daily game results. You&apos;ll be
         able to sort by rating, team, position, and more.
       </p>

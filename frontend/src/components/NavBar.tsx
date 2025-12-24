@@ -6,7 +6,7 @@ export default function NavBar() {
       <div className="max-w-7xl mx-auto px-4">
         <div className="flex items-center justify-between py-4">
           <Link to="/" className="text-xl font-bold text-emerald-400 hover:text-emerald-300 transition">
-            PEOPLE'S CHAMP
+            WHO'S YUR GOAT
           </Link>
           
           <div className="flex items-center space-x-1">

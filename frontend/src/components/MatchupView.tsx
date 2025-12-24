@@ -404,7 +404,7 @@ export default function MatchupView() {
     <div className="space-y-8">
       <header className="text-center space-y-3">
         <p className="text-sm uppercase tracking-[0.2em] text-emerald-400 font-semibold">
-          PEOPLE&apos;S CHAMP
+          WHO'S YUR GOAT
         </p>
         <h1 className="text-4xl font-bold">Who is the best player right now?</h1>
         <p className="text-slate-300 max-w-3xl mx-auto leading-relaxed">
