@@ -265,3 +265,102 @@ def get_global_rankings(db: Session = Depends(get_db)):
         total_voters=total_voters,
         total_votes=total_votes
     )
+
+
+class AllTimePlayerStats(BaseModel):
+    id: str
+    name: str
+    team: str | None
+    total_h2h_votes: int  # Total votes received across all matchups
+    total_matchups: int   # Total matchups participated in
+    h2h_wins: int         # Number of matchups won (got more votes than opponent)
+    win_rate: float       # Win rate percentage
+
+
+class AllTimeVotesResponse(BaseModel):
+    players: list[AllTimePlayerStats]
+    total_votes: int
+    total_matchups: int
+
+
+@router.get("/all-time-votes", response_model=AllTimeVotesResponse)
+def get_all_time_votes(db: Session = Depends(get_db)):
+    """
+    Get all-time head-to-head vote tallies for all players.
+    This aggregates votes across all daily sets ever played.
+    """
+    from collections import defaultdict
+    
+    # Get all matchups with their votes
+    all_matchups = db.query(models.Matchup).all()
+    all_votes = db.query(models.UserChoice).all()
+    
+    # Build vote lookup by matchup_id
+    votes_by_matchup = defaultdict(list)
+    for vote in all_votes:
+        votes_by_matchup[vote.matchup_id].append(vote)
+    
+    # Track stats for each player
+    player_stats = defaultdict(lambda: {
+        "total_h2h_votes": 0,
+        "total_matchups": 0,
+        "h2h_wins": 0
+    })
+    
+    # Get all players for name lookup
+    all_players = {p.id: p for p in db.query(models.Player).all()}
+    
+    total_matchups_with_votes = 0
+    
+    for matchup in all_matchups:
+        matchup_votes = votes_by_matchup.get(matchup.id, [])
+        
+        if not matchup_votes:
+            continue
+        
+        total_matchups_with_votes += 1
+        
+        p1_votes = sum(1 for v in matchup_votes if v.winner_player_id == matchup.player1_id)
+        p2_votes = sum(1 for v in matchup_votes if v.winner_player_id == matchup.player2_id)
+        
+        # Track stats for player 1
+        player_stats[matchup.player1_id]["total_h2h_votes"] += p1_votes
+        player_stats[matchup.player1_id]["total_matchups"] += 1
+        
+        # Track stats for player 2
+        player_stats[matchup.player2_id]["total_h2h_votes"] += p2_votes
+        player_stats[matchup.player2_id]["total_matchups"] += 1
+        
+        # Determine winner
+        if p1_votes > p2_votes:
+            player_stats[matchup.player1_id]["h2h_wins"] += 1
+        elif p2_votes > p1_votes:
+            player_stats[matchup.player2_id]["h2h_wins"] += 1
+    
+    # Build response
+    players_list = []
+    for player_id, stats in player_stats.items():
+        player = all_players.get(player_id)
+        if not player:
+            continue
+        
+        win_rate = (stats["h2h_wins"] / stats["total_matchups"] * 100) if stats["total_matchups"] > 0 else 0
+        
+        players_list.append(AllTimePlayerStats(
+            id=player_id,
+            name=player.name,
+            team=player.team,
+            total_h2h_votes=stats["total_h2h_votes"],
+            total_matchups=stats["total_matchups"],
+            h2h_wins=stats["h2h_wins"],
+            win_rate=round(win_rate, 1)
+        ))
+    
+    # Sort by total votes received (desc)
+    players_list.sort(key=lambda x: x.total_h2h_votes, reverse=True)
+    
+    return AllTimeVotesResponse(
+        players=players_list,
+        total_votes=len(all_votes),
+        total_matchups=total_matchups_with_votes
+    )

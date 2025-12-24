@@ -4,9 +4,11 @@ import { loadRingerRankings } from "../data/loadRingerRankings";
 import { generateRankings } from "../data/rankingModel";
 import type { PlayerRanking } from "../data/rankingModel";
 import { RankingsScatterPlot } from "../components/RankingsScatterPlot";
+import { getAllTimeVotes, type AllTimePlayerStats } from "../api/voting";
 
 export default function PeoplesRankingsPage() {
   const [rankings, setRankings] = useState<PlayerRanking[]>([]);
+  const [h2hVotes, setH2hVotes] = useState<Map<string, AllTimePlayerStats>>(new Map());
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showChart, setShowChart] = useState(false);
@@ -29,6 +31,19 @@ export default function PeoplesRankingsPage() {
 
         const playerRankings = generateRankings(validPlayers, ringerRankings);
         setRankings(playerRankings.slice(0, 100)); // Show top 100
+        
+        // Try to load H2H votes from backend (non-blocking)
+        try {
+          const votesData = await getAllTimeVotes();
+          const votesMap = new Map<string, AllTimePlayerStats>();
+          for (const player of votesData.players) {
+            votesMap.set(player.id, player);
+          }
+          setH2hVotes(votesMap);
+        } catch (votesErr) {
+          console.warn("Could not load H2H votes:", votesErr);
+          // Don't fail the whole page if votes can't be loaded
+        }
       } catch (err) {
         setError(err instanceof Error ? err.message : "Failed to load rankings");
       } finally {
@@ -219,44 +234,60 @@ export default function PeoplesRankingsPage() {
                 <th className="text-left py-3 px-4 text-sm font-semibold text-slate-300">Our Rank</th>
                 <th className="text-left py-3 px-4 text-sm font-semibold text-slate-300">Player</th>
                 <th className="text-left py-3 px-4 text-sm font-semibold text-slate-300">Team</th>
-                <th className="text-left py-3 px-4 text-sm font-semibold text-slate-300">Score</th>
+                <th className="text-left py-3 px-4 text-sm font-semibold text-slate-300">Player Model</th>
+                <th className="text-left py-3 px-4 text-sm font-semibold text-slate-300">H2H Votes</th>
                 <th className="text-left py-3 px-4 text-sm font-semibold text-slate-300">Ringer Rank</th>
                 <th className="text-left py-3 px-4 text-sm font-semibold text-slate-300">Diff</th>
               </tr>
             </thead>
             <tbody>
-              {rankings.map((ranking) => (
-                <tr key={ranking.player.id} className="border-b border-slate-700/50 hover:bg-slate-700/30">
-                  <td className="py-3 px-4 text-emerald-400 font-bold">#{ranking.rank}</td>
-                  <td className="py-3 px-4">
-                    <div className="font-semibold">{ranking.player.name}</div>
-                    <div className="text-xs text-slate-400">{ranking.player.season}</div>
-                  </td>
-                  <td className="py-3 px-4 text-slate-300">{ranking.player.team}</td>
-                  <td className="py-3 px-4 text-slate-300">{ranking.compositeScore.toFixed(1)}</td>
-                  <td className="py-3 px-4 text-slate-300">
-                    {ranking.ringerRank ? `#${ranking.ringerRank}` : "—"}
-                  </td>
-                  <td className="py-3 px-4">
-                    {ranking.rankDifference !== null ? (
-                      <span
-                        className={`text-sm font-medium ${
-                          ranking.rankDifference < 0
-                            ? "text-green-400"
-                            : ranking.rankDifference > 0
-                            ? "text-red-400"
-                            : "text-slate-400"
-                        }`}
-                      >
-                        {ranking.rankDifference > 0 ? "+" : ""}
-                        {ranking.rankDifference}
-                      </span>
-                    ) : (
-                      <span className="text-slate-500">—</span>
-                    )}
-                  </td>
-                </tr>
-              ))}
+              {rankings.map((ranking) => {
+                const playerVotes = h2hVotes.get(ranking.player.id);
+                return (
+                  <tr key={ranking.player.id} className="border-b border-slate-700/50 hover:bg-slate-700/30">
+                    <td className="py-3 px-4 text-emerald-400 font-bold">#{ranking.rank}</td>
+                    <td className="py-3 px-4">
+                      <div className="font-semibold">{ranking.player.name}</div>
+                      <div className="text-xs text-slate-400">{ranking.player.season}</div>
+                    </td>
+                    <td className="py-3 px-4 text-slate-300">{ranking.player.team}</td>
+                    <td className="py-3 px-4 text-slate-300">{ranking.compositeScore.toFixed(1)}</td>
+                    <td className="py-3 px-4">
+                      {playerVotes ? (
+                        <div className="text-yellow-400 font-medium">
+                          {playerVotes.total_h2h_votes}
+                          <span className="text-xs text-slate-400 ml-1">
+                            ({playerVotes.h2h_wins}W-{playerVotes.total_matchups - playerVotes.h2h_wins}L)
+                          </span>
+                        </div>
+                      ) : (
+                        <span className="text-slate-500">—</span>
+                      )}
+                    </td>
+                    <td className="py-3 px-4 text-slate-300">
+                      {ranking.ringerRank ? `#${ranking.ringerRank}` : "—"}
+                    </td>
+                    <td className="py-3 px-4">
+                      {ranking.rankDifference !== null ? (
+                        <span
+                          className={`text-sm font-medium ${
+                            ranking.rankDifference < 0
+                              ? "text-green-400"
+                              : ranking.rankDifference > 0
+                              ? "text-red-400"
+                              : "text-slate-400"
+                          }`}
+                        >
+                          {ranking.rankDifference > 0 ? "+" : ""}
+                          {ranking.rankDifference}
+                        </span>
+                      ) : (
+                        <span className="text-slate-500">—</span>
+                      )}
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>

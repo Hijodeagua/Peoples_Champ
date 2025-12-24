@@ -75,3 +75,24 @@ export async function getGlobalRankings(): Promise<GlobalRankingsResponse> {
   const response = await api.get<GlobalRankingsResponse>("/voting/global-rankings");
   return response.data;
 }
+
+export interface AllTimePlayerStats {
+  id: string;
+  name: string;
+  team: string | null;
+  total_h2h_votes: number;
+  total_matchups: number;
+  h2h_wins: number;
+  win_rate: number;
+}
+
+export interface AllTimeVotesResponse {
+  players: AllTimePlayerStats[];
+  total_votes: number;
+  total_matchups: number;
+}
+
+export async function getAllTimeVotes(): Promise<AllTimeVotesResponse> {
+  const response = await api.get<AllTimeVotesResponse>("/voting/all-time-votes");
+  return response.data;
+}
