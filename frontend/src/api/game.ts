@@ -172,3 +172,15 @@ export async function getDayGame(targetDate: string, season: SeasonOption = "cur
   });
   return response.data;
 }
+
+export interface MyVotesResponse {
+  votes_today: number;
+  total_matchups: number;
+  completed: boolean;
+  votes: Record<number, string>;  // matchup_id -> winner_player_id
+}
+
+export async function getMyVotes(): Promise<MyVotesResponse> {
+  const response = await api.get<MyVotesResponse>('/voting/my-votes');
+  return response.data;
+}

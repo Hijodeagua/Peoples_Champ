@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
-import { getTodayGame, type GameTodayResponse, type Player, type SeasonOption, type PlayerStats, type AdvancedStats } from "../api/game";
-import { submitVote, getVotingStatus, type UserVotesResponse } from "../api/voting";
+import { getTodayGame, getMyVotes, type GameTodayResponse, type Player, type SeasonOption, type PlayerStats, type AdvancedStats } from "../api/game";
+import { submitVote, type UserVotesResponse } from "../api/voting";
 import { getPlayerImageUrl } from "../utils/playerImages";
 
 // Stat label mapping for per-game stats
@@ -199,12 +199,30 @@ export default function MatchupView() {
     setLoading(true);
     setError(null);
     try {
-      const [game, status] = await Promise.all([
+      const [game, myVotes] = await Promise.all([
         getTodayGame(season),
-        getVotingStatus()
+        getMyVotes()
       ]);
       setGameData(game);
-      setVotingStatus(status);
+      setVotingStatus({
+        votes_today: myVotes.votes_today,
+        total_matchups: myVotes.total_matchups,
+        completed: myVotes.completed
+      });
+      
+      // Restore previous votes from server
+      setVotes(myVotes.votes);
+      
+      // If user has already voted, skip to the first unvoted matchup
+      if (Object.keys(myVotes.votes).length > 0 && game.matchups) {
+        const firstUnvotedIndex = game.matchups.findIndex(m => !myVotes.votes[m.id]);
+        if (firstUnvotedIndex >= 0) {
+          setCurrentMatchupIndex(firstUnvotedIndex);
+        } else if (myVotes.completed) {
+          // All matchups voted, show last one
+          setCurrentMatchupIndex(game.matchups.length - 1);
+        }
+      }
     } catch (err: unknown) {
       console.error("[MatchupView] Load error:", err);
       // Handle axios errors which have response.data
@@ -247,7 +265,16 @@ export default function MatchupView() {
       await submitVote(currentMatchup.id, selectedPlayerId);
       
       // Store the vote locally
-      setVotes(prev => ({ ...prev, [currentMatchup.id]: selectedPlayerId }));
+      const newVotes = { ...votes, [currentMatchup.id]: selectedPlayerId };
+      setVotes(newVotes);
+      
+      // Update voting status
+      const votesCount = Object.keys(newVotes).length;
+      setVotingStatus({
+        votes_today: votesCount,
+        total_matchups: gameData.matchups.length,
+        completed: votesCount >= gameData.matchups.length
+      });
       
       // Move to next matchup
       const nextIndex = currentMatchupIndex + 1;
@@ -255,10 +282,6 @@ export default function MatchupView() {
         setCurrentMatchupIndex(nextIndex);
         setSelectedPlayerId(null);
       }
-      
-      // Refresh voting status
-      const status = await getVotingStatus();
-      setVotingStatus(status);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to submit vote");
     }

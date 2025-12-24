@@ -117,6 +117,13 @@ def submit_vote(
     )
 
 
+class UserVotesDetailResponse(BaseModel):
+    votes_today: int
+    total_matchups: int
+    completed: bool
+    votes: dict[int, str]  # matchup_id -> winner_player_id
+
+
 @router.get("/status", response_model=UserVotesResponse)
 def get_voting_status(
     request: Request,
@@ -145,6 +152,37 @@ def get_voting_status(
         votes_today=votes_today,
         total_matchups=total_matchups,
         completed=votes_today >= total_matchups
+    )
+
+
+@router.get("/my-votes", response_model=UserVotesDetailResponse)
+def get_my_votes(
+    request: Request,
+    response: Response,
+    db: Session = Depends(get_db)
+):
+    """Get current user's votes for today with details"""
+    
+    today = date.today()
+    daily_set = db.query(models.DailySet).filter(models.DailySet.date == today).first()
+    if not daily_set:
+        return UserVotesDetailResponse(votes_today=0, total_matchups=0, completed=False, votes={})
+    
+    session_id = get_or_create_session_id(request, response)
+    
+    user_votes = db.query(models.UserChoice).join(models.Matchup).filter(
+        models.UserChoice.session_id == session_id,
+        models.Matchup.daily_set_id == daily_set.id
+    ).all()
+    
+    votes_dict = {vote.matchup_id: vote.winner_player_id for vote in user_votes}
+    total_matchups = len(daily_set.matchups)
+    
+    return UserVotesDetailResponse(
+        votes_today=len(user_votes),
+        total_matchups=total_matchups,
+        completed=len(user_votes) >= total_matchups,
+        votes=votes_dict
     )
 
 
