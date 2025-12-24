@@ -280,3 +280,74 @@ def get_today_preview(db: Session = Depends(get_db)):
         "players": players,
         "matchup_count": matchup_count
     }
+
+@router.get("/full-reset")
+def full_reset_and_regenerate(db: Session = Depends(get_db)):
+    """Reset database and regenerate everything - USE WITH CAUTION"""
+    from ..models import DailySet, DailySetPlayer, Matchup, UserChoice, Player
+    from ..services.player_loader import load_players_from_csv
+    from ..services.batch_scheduler import BatchScheduler
+    
+    results = {"steps": []}
+    
+    # Step 1: Clear old schedule
+    try:
+        db.query(UserChoice).delete()
+        db.query(Matchup).delete()
+        db.query(DailySetPlayer).delete()
+        db.query(DailySet).delete()
+        db.commit()
+        results["steps"].append("Cleared old schedule")
+    except Exception as e:
+        db.rollback()
+        results["steps"].append(f"Error clearing schedule: {e}")
+    
+    # Step 2: Clear and reload players
+    try:
+        db.query(Player).delete()
+        db.commit()
+        results["steps"].append("Cleared old players")
+    except Exception as e:
+        db.rollback()
+        results["steps"].append(f"Error clearing players: {e}")
+    
+    # Step 3: Load players from CSV
+    try:
+        base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+        csv_path = os.path.join(base_dir, "data", "Bbref_Adv_25-26.csv")
+        
+        if not os.path.exists(csv_path):
+            # Try alternate paths
+            alt_paths = [
+                "/app/data/Bbref_Adv_25-26.csv",
+                "data/Bbref_Adv_25-26.csv",
+            ]
+            for alt in alt_paths:
+                if os.path.exists(alt):
+                    csv_path = alt
+                    break
+        
+        if os.path.exists(csv_path):
+            players = load_players_from_csv(db, csv_path)
+            results["steps"].append(f"Loaded {len(players)} players from {csv_path}")
+        else:
+            results["steps"].append(f"CSV not found at {csv_path}")
+            return results
+    except Exception as e:
+        results["steps"].append(f"Error loading players: {e}")
+        return results
+    
+    # Step 4: Generate new schedule
+    try:
+        player_count = db.query(Player).count()
+        if player_count >= 75:
+            scheduler = BatchScheduler(db)
+            batch_result = scheduler.generate_next_batch(manual_override=True)
+            results["steps"].append(f"Generated schedule: {batch_result}")
+        else:
+            results["steps"].append(f"Not enough players ({player_count}) to generate schedule")
+    except Exception as e:
+        results["steps"].append(f"Error generating schedule: {e}")
+    
+    results["success"] = True
+    return results
