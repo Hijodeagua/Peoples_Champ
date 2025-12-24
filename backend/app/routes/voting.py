@@ -53,7 +53,15 @@ def get_or_create_session_id(request: Request, response: Response) -> str:
     session_id = request.cookies.get("session_id")
     if not session_id:
         session_id = str(uuid4())
-        response.set_cookie("session_id", session_id, max_age=86400 * 30)  # 30 days
+        # Set cookie with cross-origin settings for production
+        response.set_cookie(
+            "session_id", 
+            session_id, 
+            max_age=86400 * 30,  # 30 days
+            httponly=True,
+            samesite="none",  # Required for cross-origin
+            secure=True  # Required when samesite=none
+        )
     return session_id
 
 

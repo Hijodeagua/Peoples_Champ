@@ -10,6 +10,7 @@ export const api = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
+  withCredentials: true,  // Required for cross-origin cookies
 });
 
 // Add response interceptor for debugging
