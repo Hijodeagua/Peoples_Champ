@@ -328,48 +328,64 @@ def get_today(db: Session = Depends(get_db), season: str = "current"):
     if season not in ["current", "combined"]:
         season = "current"
     today = date.today()
+    print(f"[/game/today] Server date.today() = {today}")
+    
     daily_set = db.query(models.DailySet).filter(models.DailySet.date == today).first()
+    print(f"[/game/today] Found existing daily_set: {daily_set is not None}")
 
     if not daily_set:
+        print(f"[/game/today] No daily set for {today}, creating new one...")
         # Select exactly 5 players for the daily set
+        player_count = db.query(models.Player).count()
+        print(f"[/game/today] Total players in DB: {player_count}")
+        
         players = (
             db.query(models.Player)
             .order_by(func.random())
             .limit(5)
             .all()
         )
+        print(f"[/game/today] Selected {len(players)} random players")
+        
         if len(players) < 5:
-            raise HTTPException(status_code=400, detail="Not enough players to build daily set")
+            raise HTTPException(status_code=400, detail=f"Not enough players to build daily set. Found {len(players)}, need 5.")
 
-        daily_set = models.DailySet(date=today)
-        db.add(daily_set)
-        db.flush()
+        try:
+            daily_set = models.DailySet(date=today)
+            db.add(daily_set)
+            db.flush()
+            print(f"[/game/today] Created daily_set with id={daily_set.id}")
 
-        # Add all 5 players to the daily set
-        for player in players:
-            db.add(
-                models.DailySetPlayer(
-                    daily_set_id=daily_set.id,
-                    player_id=player.id,
+            # Add all 5 players to the daily set
+            for player in players:
+                db.add(
+                    models.DailySetPlayer(
+                        daily_set_id=daily_set.id,
+                        player_id=player.id,
+                    )
                 )
-            )
 
-        # Create all possible matchups between the 5 players (C(5,2) = 10 matchups)
-        for idx, (p1, p2) in enumerate(combinations(players, 2)):
-            db.add(
-                models.Matchup(
-                    daily_set_id=daily_set.id,
-                    player1_id=p1.id,
-                    player2_id=p2.id,
-                    order_index=idx,
+            # Create all possible matchups between the 5 players (C(5,2) = 10 matchups)
+            for idx, (p1, p2) in enumerate(combinations(players, 2)):
+                db.add(
+                    models.Matchup(
+                        daily_set_id=daily_set.id,
+                        player1_id=p1.id,
+                        player2_id=p2.id,
+                        order_index=idx,
+                    )
                 )
-            )
 
-        # No true ranking needed for individual matchup voting
-        daily_set.true_ranking = None
+            # No true ranking needed for individual matchup voting
+            daily_set.true_ranking = None
 
-        db.commit()
-        db.refresh(daily_set)
+            db.commit()
+            db.refresh(daily_set)
+            print(f"[/game/today] Successfully created daily set with {len(daily_set.matchups)} matchups")
+        except Exception as e:
+            print(f"[/game/today] ERROR creating daily set: {e}")
+            db.rollback()
+            raise HTTPException(status_code=500, detail=f"Failed to create daily set: {str(e)}")
 
     players = [dsp.player for dsp in daily_set.players]
     matchups = sorted(daily_set.matchups, key=lambda m: m.order_index or 0)
