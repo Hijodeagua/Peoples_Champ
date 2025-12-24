@@ -90,15 +90,22 @@ def initialize_data():
         
         # Check if schedule needs to be generated (with fresh session if needed)
         try:
+            from datetime import date
+            from .models import DailySet
+            
             batch_scheduler = BatchScheduler(db)
             status = batch_scheduler.get_schedule_status()
             
-            if status["total_daily_sets"] == 0:
-                print("No schedule found. Generating initial schedule...")
+            # Check if today has a daily set
+            today = date.today()
+            today_set = db.query(DailySet).filter(DailySet.date == today).first()
+            
+            if status["total_daily_sets"] == 0 or not today_set:
+                print(f"No schedule for today ({today}). Generating schedule...")
                 try:
                     result = batch_scheduler.generate_next_batch(manual_override=True)
                     if result.get("success"):
-                        print(f"Generated initial schedule: {result['message']}")
+                        print(f"Generated schedule: {result['message']}")
                     else:
                         print(f"Failed to generate schedule: {result.get('error')}")
                 except Exception as e:

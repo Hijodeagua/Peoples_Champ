@@ -522,6 +522,14 @@ export default function MatchupView() {
           </div>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+            <button
+              type="button"
+              onClick={handleSubmit}
+              disabled={!selectedPlayerId || loading}
+              className="px-6 py-3 rounded-xl bg-emerald-500 text-black font-bold shadow-lg hover:bg-emerald-400 transition disabled:opacity-60 disabled:cursor-not-allowed"
+            >
+              {hasVotedOnCurrent ? "Update Vote" : "Submit Vote"}
+            </button>
             {currentMatchupIndex > 0 && (
               <button
                 type="button"
@@ -531,14 +539,6 @@ export default function MatchupView() {
                 Previous
               </button>
             )}
-            <button
-              type="button"
-              onClick={handleSubmit}
-              disabled={!selectedPlayerId || loading}
-              className="px-6 py-3 rounded-xl bg-emerald-500 text-black font-bold shadow-lg hover:bg-emerald-400 transition disabled:opacity-60 disabled:cursor-not-allowed"
-            >
-              {hasVotedOnCurrent ? "Update Vote" : "Submit Vote"}
-            </button>
             {currentMatchupIndex < gameData.matchups.length - 1 && (
               <button
                 type="button"
