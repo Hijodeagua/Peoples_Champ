@@ -292,9 +292,26 @@ export default function MatchupView() {
     );
   }
 
+  // Defensive check for empty matchups array
+  if (!gameData.matchups || gameData.matchups.length === 0) {
+    return (
+      <div className="text-center py-12">
+        <p className="text-slate-300">No matchups available today.</p>
+      </div>
+    );
+  }
+
   const currentMatchup = gameData.matchups[currentMatchupIndex];
-  const player1 = gameData.players.find(p => p.id === currentMatchup?.player_a_id);
-  const player2 = gameData.players.find(p => p.id === currentMatchup?.player_b_id);
+  if (!currentMatchup) {
+    return (
+      <div className="text-center py-12">
+        <p className="text-slate-300">Matchup not found.</p>
+      </div>
+    );
+  }
+
+  const player1 = gameData.players.find(p => p.id === currentMatchup.player_a_id);
+  const player2 = gameData.players.find(p => p.id === currentMatchup.player_b_id);
   const isCompleted = votingStatus.completed;
   const hasVotedOnCurrent = currentMatchup && votes[currentMatchup.id];
 
