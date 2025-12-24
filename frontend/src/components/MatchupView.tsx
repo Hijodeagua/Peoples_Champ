@@ -194,8 +194,25 @@ export default function MatchupView() {
       ]);
       setGameData(game);
       setVotingStatus(status);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load game data");
+    } catch (err: unknown) {
+      console.error("[MatchupView] Load error:", err);
+      // Handle axios errors which have response.data
+      if (err && typeof err === 'object' && 'response' in err) {
+        const axiosErr = err as { response?: { data?: { detail?: string }, status?: number } };
+        const detail = axiosErr.response?.data?.detail;
+        const status = axiosErr.response?.status;
+        if (status === 502 || status === 503) {
+          setError("Server is starting up. Please wait 30 seconds and try again.");
+        } else if (detail) {
+          setError(detail);
+        } else {
+          setError(`Server error (${status || 'unknown'}). Please try again.`);
+        }
+      } else if (err instanceof Error) {
+        setError(err.message);
+      } else {
+        setError("Failed to load game data. Please try again.");
+      }
     } finally {
       setLoading(false);
     }

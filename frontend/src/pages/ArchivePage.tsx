@@ -27,10 +27,27 @@ export default function ArchivePage() {
   const loadArchives = async () => {
     try {
       setLoading(true);
+      setError(null);
       const response = await api.get<ArchiveResponse>('/game/archive');
-      setArchives(response.data.archives);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load archives');
+      setArchives(response.data.archives || []);
+    } catch (err: unknown) {
+      console.error("[ArchivePage] Load error:", err);
+      if (err && typeof err === 'object' && 'response' in err) {
+        const axiosErr = err as { response?: { data?: { detail?: string }, status?: number } };
+        const status = axiosErr.response?.status;
+        const detail = axiosErr.response?.data?.detail;
+        if (status === 502 || status === 503) {
+          setError("Server is starting up. Please wait 30 seconds and try again.");
+        } else if (detail) {
+          setError(detail);
+        } else {
+          setError(`Server error (${status || 'unknown'}). Please try again.`);
+        }
+      } else if (err instanceof Error) {
+        setError(err.message);
+      } else {
+        setError('Failed to load archives. Please try again.');
+      }
     } finally {
       setLoading(false);
     }
