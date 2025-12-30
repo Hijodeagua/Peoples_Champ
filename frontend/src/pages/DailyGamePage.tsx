@@ -2,12 +2,26 @@ import { useState, useEffect } from "react";
 import MatchupView from "../components/MatchupView";
 import GlobalRankings from "../components/GlobalRankings";
 import { getMyVotes } from "../api/game";
+import { loadUserProgress, getCurrentStreak, hasCompletedToday, type UserProgress } from "../utils/userProgress";
 
 type TabType = "matchups" | "rankings";
 
 export default function DailyGamePage() {
   const [activeTab, setActiveTab] = useState<TabType>("matchups");
   const [hasCheckedCompletion, setHasCheckedCompletion] = useState(false);
+  const [userProgress, setUserProgress] = useState<UserProgress | null>(null);
+  const [currentStreak, setCurrentStreak] = useState(0);
+  const [completedToday, setCompletedToday] = useState(false);
+
+  // Load user progress from localStorage
+  useEffect(() => {
+    const progress = loadUserProgress();
+    if (progress.lastCompletionDate) {
+      setUserProgress(progress);
+      setCurrentStreak(getCurrentStreak());
+      setCompletedToday(hasCompletedToday());
+    }
+  }, []);
 
   // Check if user has completed voting - if so, show rankings tab
   useEffect(() => {
@@ -42,6 +56,27 @@ export default function DailyGamePage() {
 
   return (
     <div className="space-y-6">
+      {/* Returning User Message - show if not completed today but has previous data */}
+      {userProgress && userProgress.lastAgreementPercentage !== null && !completedToday && (
+        <div className="bg-slate-800/50 border border-slate-700 rounded-lg px-4 py-3 text-center max-w-lg mx-auto">
+          <p className="text-sm text-slate-400">
+            Last time you agreed with{" "}
+            <span className="text-slate-200 font-medium">
+              {userProgress.lastBenchmarkUsed || "The Ringer"}
+            </span>
+            :{" "}
+            <span className="text-emerald-400 font-bold">
+              {userProgress.lastAgreementPercentage}%
+            </span>
+          </p>
+          {currentStreak > 0 && (
+            <p className="text-sm text-amber-400 font-medium mt-1">
+              🔥 {currentStreak === 1 ? "Keep your streak going!" : `Current streak: ${currentStreak} days`}
+            </p>
+          )}
+        </div>
+      )}
+
       {/* Tab Navigation */}
       <div className="flex justify-center">
         <div className="flex items-center gap-1 bg-slate-800/50 rounded-xl p-1">

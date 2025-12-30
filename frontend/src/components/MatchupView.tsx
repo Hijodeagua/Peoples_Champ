@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { getTodayGame, getMyVotes, type GameTodayResponse, type Player, type SeasonOption, type PlayerStats, type AdvancedStats } from "../api/game";
 import { submitVote, type UserVotesResponse } from "../api/voting";
 import { getPlayerImageUrl } from "../utils/playerImages";
+import AgreementIndicator from "./AgreementIndicator";
 
 // Stat label mapping for per-game stats
 const STAT_LABELS: Record<string, string> = {
@@ -482,6 +483,12 @@ export default function MatchupView() {
           <p className="text-slate-300 text-lg">
             You&apos;ve completed all {gameData.matchups.length} matchups. Come back tomorrow for more!
           </p>
+          
+          {/* Agreement Indicator */}
+          <div className="max-w-sm mx-auto">
+            <AgreementIndicator />
+          </div>
+          
           <div className="bg-slate-800/60 border border-slate-700 rounded-xl p-4 max-w-md mx-auto">
             <p className="text-emerald-400 font-semibold mb-2">✓ Your votes have been saved!</p>
             <p className="text-slate-400 text-sm">

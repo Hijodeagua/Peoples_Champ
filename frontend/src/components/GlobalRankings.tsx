@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { getGlobalRankings, getVotingStatus, type GlobalRankingsResponse, type PlayerRanking, type UserVotesResponse } from "../api/voting";
+import AgreementIndicator from "./AgreementIndicator";
 
 interface GlobalRankingsProps {
   onPlayGame: () => void;
@@ -203,6 +204,13 @@ export default function GlobalRankings({ onPlayGame }: GlobalRankingsProps) {
             <RankingRow key={player.id} player={player} rank={idx + 1} />
           ))}
         </div>
+
+        {/* Agreement Indicator - shows after user has voted */}
+        {votingStatus && votingStatus.votes_today > 0 && (
+          <div className="max-w-sm mx-auto">
+            <AgreementIndicator />
+          </div>
+        )}
 
         {/* User status */}
         {votingStatus && (
