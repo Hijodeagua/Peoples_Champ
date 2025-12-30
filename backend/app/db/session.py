@@ -7,6 +7,7 @@ from ..core.config import settings
 if settings.is_postgres:
     engine = create_engine(settings.database_url)
 else:
+    # SQLite fallback for local development
     engine = create_engine(settings.database_url, connect_args={"check_same_thread": False})
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
