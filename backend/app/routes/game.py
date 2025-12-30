@@ -344,17 +344,42 @@ def get_today(db: Session = Depends(get_db), season: str = "current"):
 
     if not daily_set:
         print(f"[/game/today] No daily set for {today}, creating new one...")
-        # Select exactly 5 players for the daily set
+        # Select exactly 5 players for the daily set, prioritizing top players
         player_count = db.query(models.Player).count()
         print(f"[/game/today] Total players in DB: {player_count}")
         
-        players = (
+        # Get top 25 players by win shares, then use weighted selection
+        top_players = (
             db.query(models.Player)
-            .order_by(func.random())
-            .limit(5)
+            .order_by(models.Player.total_ws.desc())
+            .limit(25)
             .all()
         )
-        print(f"[/game/today] Selected {len(players)} random players")
+        
+        if len(top_players) >= 5:
+            # Use weighted selection favoring top stars
+            import random
+            weights = []
+            for i, player in enumerate(top_players):
+                if i < 10:  # Top 10 superstars
+                    weight = 10
+                elif i < 20:  # Next 10 stars
+                    weight = 5
+                else:  # Remaining players (20-30)
+                    weight = 1
+                weights.append(weight)
+            
+            players = random.choices(top_players, weights=weights, k=5)
+            print(f"[/game/today] Selected {len(players)} weighted top players")
+        else:
+            # Fallback to random if not enough top players
+            players = (
+                db.query(models.Player)
+                .order_by(func.random())
+                .limit(5)
+                .all()
+            )
+            print(f"[/game/today] Selected {len(players)} random players (fallback)")
         
         if len(players) < 5:
             raise HTTPException(status_code=400, detail=f"Not enough players to build daily set. Found {len(players)}, need 5.")

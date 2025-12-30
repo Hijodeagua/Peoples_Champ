@@ -20,23 +20,23 @@ class GameScheduler:
         return len(self.players)
     
     def get_player_tier(self, player_rank: int) -> str:
-        """Determine player tier based on ranking"""
+        """Determine player tier based on ranking - focus on top stars"""
         if player_rank <= 10:
-            return "top10"
-        elif player_rank <= 40:
-            return "mid"
-        elif player_rank <= 75:
-            return "lower"
+            return "superstar"
+        elif player_rank <= 20:
+            return "star"
+        elif player_rank <= 30:
+            return "solid"
         else:
             return "bench"
     
     def get_frequency_range(self, tier: str) -> Tuple[int, int]:
-        """Get min/max appearances for each tier"""
+        """Get min/max appearances for each tier - heavily favor superstars"""
         ranges = {
-            "top10": (3, 5),
-            "mid": (2, 4), 
-            "lower": (1, 1),
-            "bench": (0, 1)
+            "superstar": (4, 6),  # Superstars appear very frequently
+            "star": (3, 5),       # Stars appear frequently  
+            "solid": (1, 2),      # Solid players appear occasionally
+            "bench": (0, 1)       # Bench players rarely appear
         }
         return ranges.get(tier, (0, 1))
     

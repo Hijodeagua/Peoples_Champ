@@ -8,7 +8,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 class BatchScheduler:
-    def __init__(self, db: Session, top_n_players: int = 30):
+    def __init__(self, db: Session, top_n_players: int = 25):
         self.db = db
         self.batch_size = 30  # 30-day batches
         self.top_n_players = top_n_players  # Only use top N players for matchups
@@ -80,9 +80,24 @@ class BatchScheduler:
                 if existing:
                     continue
                 
-                # Select 5 random players from top N players only
+                # Select 5 players with weighted preference for top stars
                 available_players = scheduler.players[:self.top_n_players]
-                selected_players = random.sample(available_players, 5)
+                
+                # Create weights heavily favoring top players
+                weights = []
+                for i, player in enumerate(available_players):
+                    if i < 10:  # Top 10 superstars
+                        weight = 15  # Much higher weight for superstars
+                    elif i < 15:  # Next 5 stars  
+                        weight = 8
+                    elif i < 20:  # Next 5 solid players
+                        weight = 3
+                    else:  # Remaining players (20-25)
+                        weight = 1
+                    weights.append(weight)
+                
+                # Use weighted selection to favor top players
+                selected_players = random.choices(available_players, weights=weights, k=5)
                 selected_ids = [p.id for p in selected_players]
                 
                 schedule[date_str] = selected_ids
