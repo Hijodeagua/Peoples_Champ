@@ -70,6 +70,18 @@ export default function NavBar() {
           >
             Unlimited Rank
           </NavLink>
+          <NavLink
+            to="/alltime"
+            className={({ isActive }) =>
+              `px-4 py-2 rounded-lg text-sm font-medium transition ${
+                isActive
+                  ? "bg-emerald-500 text-black"
+                  : "text-slate-300 hover:bg-slate-700 hover:text-white"
+              }`
+            }
+          >
+            All-Time Top 15 🐐
+          </NavLink>
           </div>
         </div>
       </div>

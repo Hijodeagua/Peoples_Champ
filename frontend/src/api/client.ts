@@ -1,9 +1,10 @@
 import axios from "axios";
 
 // VITE_API_URL must be set in Vercel environment variables for production
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
+// In development, use empty string to leverage Vite's proxy
+const API_BASE_URL = import.meta.env.VITE_API_URL || '';
 
-console.log('[API] Base URL:', API_BASE_URL);
+console.log('[API] Base URL:', API_BASE_URL || '(using proxy)');
 
 export const api = axios.create({
   baseURL: API_BASE_URL,

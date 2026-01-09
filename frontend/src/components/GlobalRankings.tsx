@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { getGlobalRankings, getVotingStatus, type GlobalRankingsResponse, type PlayerRanking, type UserVotesResponse } from "../api/voting";
 import AgreementIndicator from "./AgreementIndicator";
+import SocialGraphicGenerator from "./SocialGraphicGenerator";
 
 interface GlobalRankingsProps {
   onPlayGame: () => void;
@@ -97,6 +98,7 @@ export default function GlobalRankings({ onPlayGame }: GlobalRankingsProps) {
   const [error, setError] = useState<string | null>(null);
   const [showModal, setShowModal] = useState(false);
   const [skippedModal, setSkippedModal] = useState(false);
+  const [showSocialGraphic, setShowSocialGraphic] = useState(false);
 
   const loadData = useCallback(async () => {
     setLoading(true);
@@ -189,11 +191,17 @@ export default function GlobalRankings({ onPlayGame }: GlobalRankingsProps) {
         {/* Champion highlight */}
         {topThree.length > 0 && (
           <div className="bg-gradient-to-r from-yellow-900/30 via-yellow-600/20 to-yellow-900/30 rounded-xl p-6 text-center border border-yellow-600/30">
-            <p className="text-yellow-400 text-sm font-medium mb-1">TODAY'S GOAT</p>
+            <p className="text-yellow-400 text-sm font-medium mb-1">TODAY'S PEOPLES CHAMP</p>
             <h2 className="text-3xl font-bold">{topThree[0].name}</h2>
             <p className="text-slate-300 mt-1">
               {topThree[0].wins} wins out of {topThree[0].total_matchups} matchups • {topThree[0].total_votes_received} total votes
             </p>
+            <button
+              onClick={() => setShowSocialGraphic(true)}
+              className="mt-4 px-6 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-sm transition"
+            >
+              Share Top 5 🏆
+            </button>
           </div>
         )}
 
@@ -221,6 +229,16 @@ export default function GlobalRankings({ onPlayGame }: GlobalRankingsProps) {
               <span>You've voted on {votingStatus.votes_today} of {votingStatus.total_matchups} matchups</span>
             )}
           </div>
+        )}
+
+        {/* Social Graphic Modal */}
+        {showSocialGraphic && rankings && (
+          <SocialGraphicGenerator
+            players={rankings.rankings.slice(0, 5).map(p => ({ name: p.name, team: p.team, position: p.position }))}
+            title="Peoples Champ"
+            subtitle="Today's Top 5"
+            onClose={() => setShowSocialGraphic(false)}
+          />
         )}
       </div>
     </>
