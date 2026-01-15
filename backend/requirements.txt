@@ -8,5 +8,6 @@ passlib[bcrypt]
 alembic
 psycopg2-binary
 openai
+anthropic
 python-dotenv
 

@@ -1,6 +1,7 @@
 from datetime import datetime, date
 
 from sqlalchemy import (
+    Boolean,
     Column,
     Integer,
     String,
@@ -199,3 +200,138 @@ class AnalysisFeedback(Base):
     analysis_text = Column(Text, nullable=False)
     rating = Column(Integer, nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow)
+
+
+class UserRankingHistory(Base):
+    """
+    Tracks each user's daily ranking submissions over time.
+    Enables historical comparison and trend analysis.
+    """
+    __tablename__ = "user_ranking_history"
+
+    id = Column(Integer, primary_key=True, index=True)
+    session_id = Column(String, nullable=True, index=True)  # For anonymous users
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=True)  # For logged-in users
+    daily_set_id = Column(Integer, ForeignKey("daily_sets.id"), nullable=False)
+
+    final_ranking = Column(Text, nullable=False)  # JSON array of player IDs in order
+    score = Column(Integer, nullable=True)  # Points earned
+    agreement_percentage = Column(Float, nullable=True)  # vs site average
+
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    user = relationship("User")
+    daily_set = relationship("DailySet")
+
+    __table_args__ = (
+        UniqueConstraint("session_id", "daily_set_id", name="uq_session_daily_ranking"),
+        UniqueConstraint("user_id", "daily_set_id", name="uq_user_daily_ranking"),
+    )
+
+
+class DailyAggregateStats(Base):
+    """
+    Site-wide daily aggregate statistics for comparison.
+    Computed periodically to show consensus rankings.
+    """
+    __tablename__ = "daily_aggregate_stats"
+
+    id = Column(Integer, primary_key=True, index=True)
+    daily_set_id = Column(Integer, ForeignKey("daily_sets.id"), unique=True, nullable=False)
+
+    average_ranking = Column(Text, nullable=True)  # JSON - computed average ranking
+    total_submissions = Column(Integer, default=0)
+    ranking_variance = Column(Text, nullable=True)  # JSON - how much disagreement per position
+
+    computed_at = Column(DateTime, default=datetime.utcnow)
+
+    daily_set = relationship("DailySet")
+
+
+class AllTimeRanking(Base):
+    """
+    User's all-time GOAT rankings.
+    Supports 10, 50, 100 player modes and infinite ranking.
+    """
+    __tablename__ = "all_time_rankings"
+
+    id = Column(Integer, primary_key=True, index=True)
+    session_id = Column(String, nullable=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=True)
+
+    ranking_size = Column(Integer, nullable=False)  # 10, 50, 100, or 0 for infinite
+    player_rankings = Column(Text, nullable=False)  # JSON - ordered list of player IDs with scores
+    player_pool = Column(Text, nullable=True)  # JSON - custom list of players to rank from
+
+    is_complete = Column(Boolean, default=False)
+    matchups_completed = Column(Integer, default=0)
+    total_matchups = Column(Integer, nullable=True)  # NULL for infinite mode
+
+    share_slug = Column(String(50), unique=True, index=True, nullable=True)
+
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    user = relationship("User")
+
+
+class AllTimeMatchupVote(Base):
+    """
+    Individual matchup votes within an all-time ranking session.
+    Used to compute Elo/Bradley-Terry scores.
+    """
+    __tablename__ = "all_time_matchup_votes"
+
+    id = Column(Integer, primary_key=True, index=True)
+    ranking_id = Column(Integer, ForeignKey("all_time_rankings.id"), nullable=False)
+
+    player1_id = Column(String, ForeignKey("players.id"), nullable=False)
+    player2_id = Column(String, ForeignKey("players.id"), nullable=False)
+    winner_id = Column(String, ForeignKey("players.id"), nullable=False)
+
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    ranking = relationship("AllTimeRanking")
+    player1 = relationship("Player", foreign_keys=[player1_id])
+    player2 = relationship("Player", foreign_keys=[player2_id])
+    winner = relationship("Player", foreign_keys=[winner_id])
+
+
+class CustomList(Base):
+    """
+    Custom comparison lists users can create and share.
+    Allows users to create a subset of players to rank.
+    """
+    __tablename__ = "custom_lists"
+
+    id = Column(Integer, primary_key=True, index=True)
+    session_id = Column(String, nullable=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=True)
+
+    name = Column(String(100), nullable=False)
+    description = Column(Text, nullable=True)
+    player_ids = Column(Text, nullable=False)  # JSON array of player IDs
+
+    share_code = Column(String(20), unique=True, index=True, nullable=True)
+    is_public = Column(Boolean, default=False)
+
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    user = relationship("User")
+
+
+class AnalysisCache(Base):
+    """
+    Cache for AI-generated analyses to reduce API costs.
+    """
+    __tablename__ = "analysis_cache"
+
+    id = Column(Integer, primary_key=True, index=True)
+    cache_key = Column(String(255), unique=True, index=True, nullable=False)  # Hash of input params
+    provider = Column(String(20), nullable=False)  # 'openai' or 'claude'
+
+    analysis_text = Column(Text, nullable=False)
+    input_hash = Column(String(64), nullable=False)  # SHA256 of rankings data
+
+    created_at = Column(DateTime, default=datetime.utcnow)
+    expires_at = Column(DateTime, nullable=True)  # Optional expiration
