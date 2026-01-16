@@ -80,7 +80,7 @@ export default function NavBar() {
               }`
             }
           >
-            All-Time Top 15 🐐
+            Whos yur 🐐?
           </NavLink>
           </div>
         </div>
