@@ -1,5 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useCallback } from "react";
 import SocialGraphicGenerator from "../components/SocialGraphicGenerator";
 import apiClient from "../api/client";
 
@@ -27,20 +26,9 @@ interface RankingEntry {
   losses: number;
 }
 
-interface RankingState {
-  ranking_id: number;
-  ranking_size: number;
-  is_complete: boolean;
-  matchups_completed: number;
-  total_matchups: number | null;
-  current_rankings: RankingEntry[];
-  share_slug: string | null;
-}
-
 type GamePhase = "select" | "playing" | "results";
 
 export default function AllTimeRankingsPage() {
-  const navigate = useNavigate();
   const [phase, setPhase] = useState<GamePhase>("select");
   const [rankingSize, setRankingSize] = useState<RankingSize>(10);
   const [loading, setLoading] = useState(false);
@@ -52,7 +40,7 @@ export default function AllTimeRankingsPage() {
   const [rankings, setRankings] = useState<RankingEntry[]>([]);
   const [matchupsCompleted, setMatchupsCompleted] = useState(0);
   const [totalMatchups, setTotalMatchups] = useState<number | null>(null);
-  const [shareSlug, setShareSlug] = useState<string | null>(null);
+  const [_shareSlug, setShareSlug] = useState<string | null>(null);
   const [showShareModal, setShowShareModal] = useState(false);
 
   // Session ID for anonymous users

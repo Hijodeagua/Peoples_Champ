@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
-import SortableRankingsTable, { PlayerData } from "../components/SortableRankingsTable";
+import SortableRankingsTable from "../components/SortableRankingsTable";
+import type { PlayerData } from "../components/SortableRankingsTable";
 import apiClient from "../api/client";
 
 type ViewMode = "stats" | "rankings";
