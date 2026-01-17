@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session
 
 from ..db.session import get_db
 from .. import models
+from ..core.config import settings
 
 router = APIRouter(prefix="/voting", tags=["voting"])
 
@@ -53,15 +54,28 @@ def get_or_create_session_id(request: Request, response: Response) -> str:
     session_id = request.cookies.get("session_id")
     if not session_id:
         session_id = str(uuid4())
-        # Set cookie with cross-origin settings for production
-        response.set_cookie(
-            "session_id", 
-            session_id, 
-            max_age=86400 * 30,  # 30 days
-            httponly=True,
-            samesite="none",  # Required for cross-origin
-            secure=True  # Required when samesite=none
-        )
+        # Set cookie with environment-appropriate settings
+        # Production (HTTPS): secure=True, samesite="none" for cross-origin
+        # Development (HTTP): secure=False, samesite="lax" for local testing
+        if settings.is_production:
+            response.set_cookie(
+                "session_id",
+                session_id,
+                max_age=86400 * 30,  # 30 days
+                httponly=True,
+                samesite="none",  # Required for cross-origin
+                secure=True  # Required when samesite=none
+            )
+        else:
+            # Development mode: use lax samesite and no secure flag for HTTP
+            response.set_cookie(
+                "session_id",
+                session_id,
+                max_age=86400 * 30,  # 30 days
+                httponly=True,
+                samesite="lax",  # Works with HTTP in development
+                secure=False  # Allow HTTP in development
+            )
     return session_id
 
 
