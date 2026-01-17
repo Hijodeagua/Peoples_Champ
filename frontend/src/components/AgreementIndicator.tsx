@@ -111,7 +111,7 @@ export default function AgreementIndicator({
         setTopPlayers(top5);
 
         let finalAgreement = 0;
-        let finalBenchmark = "WhosYourGOAT consensus";
+        let finalBenchmark = "WhosYurGOAT consensus";
 
         // Try to calculate agreement with Ringer rankings first
         if (ringerRankings.length > 0 && globalRankings.rankings.length > 0) {
@@ -122,7 +122,7 @@ export default function AgreementIndicator({
           }
         }
 
-        // Fall back to WhosYourGOAT consensus if no Ringer agreement
+        // Fall back to WhosYurGOAT consensus if no Ringer agreement
         if (finalAgreement === 0 && globalRankings.rankings.length > 0) {
           let topVotes = 0;
           const topPlayerIds = new Set(
@@ -134,7 +134,7 @@ export default function AgreementIndicator({
             }
           }
           finalAgreement = Math.round((topVotes / voteCount) * 100);
-          finalBenchmark = "WhosYourGOAT consensus";
+          finalBenchmark = "WhosYurGOAT consensus";
         }
 
         setAgreement(finalAgreement);
@@ -164,7 +164,7 @@ export default function AgreementIndicator({
 
     const shortBenchmark = benchmarkName.includes("Ringer") 
       ? "The Ringer's active player rankings" 
-      : "WhosYourGOAT consensus";
+      : "WhosYurGOAT consensus";
     
     const playerList = topPlayers.length > 0 
       ? topPlayers.map(name => name.split(" ").pop()).join(", ") // Use last names
@@ -172,7 +172,7 @@ export default function AgreementIndicator({
 
     const text = `I agree with ${shortBenchmark} ${agreement}%.
 My top 5 active players: ${playerList}.
-Who's Your GOAT? https://www.whosyurgoat.app`;
+Who's Yur GOAT? https://www.whosyurgoat.app`;
 
     try {
       await navigator.clipboard.writeText(text);
@@ -197,14 +197,14 @@ Who's Your GOAT? https://www.whosyurgoat.app`;
 
     const shortBenchmark = benchmarkName.includes("Ringer") 
       ? "The Ringer's active player rankings" 
-      : "WhosYourGOAT consensus";
+      : "WhosYurGOAT consensus";
     
     const playerList = topPlayers.length > 0 
       ? topPlayers.map(name => name.split(" ").pop()).join(", ")
       : "N/A";
 
     const shareData = {
-      title: "Who's Your GOAT?",
+      title: "Who's Yur GOAT?",
       text: `I agree with ${shortBenchmark} ${agreement}%.\nMy top 5 active players: ${playerList}.`,
       url: "https://www.whosyurgoat.app"
     };

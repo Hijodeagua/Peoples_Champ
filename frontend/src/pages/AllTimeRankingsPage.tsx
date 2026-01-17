@@ -6,15 +6,37 @@ import { getPlayerImageUrlWithFallback } from "../utils/playerImages";
 
 type RankingSize = 10 | 50 | 100 | 0; // 0 = infinite
 
+interface StatWithRank {
+  value: number;
+  rank: number;
+  percentile: number;
+}
+
+interface PlayerStats {
+  games: StatWithRank;
+  points: StatWithRank;
+  rebounds: StatWithRank;
+  assists: StatWithRank;
+  steals: StatWithRank;
+  blocks: StatWithRank;
+  fg_pct: StatWithRank;
+  ts_pct: StatWithRank;
+  win_shares: StatWithRank;
+  career_from: string;
+  career_to: string;
+}
+
 interface MatchupPlayer {
   player1_id: string;
   player1_name: string;
   player1_team: string | null;
   player1_position: string | null;
+  player1_stats: PlayerStats | null;
   player2_id: string;
   player2_name: string;
   player2_team: string | null;
   player2_position: string | null;
+  player2_stats: PlayerStats | null;
 }
 
 interface RankingEntry {
@@ -44,6 +66,8 @@ export default function AllTimeRankingsPage() {
   const [totalMatchups, setTotalMatchups] = useState<number | null>(null);
   const [_shareSlug, setShareSlug] = useState<string | null>(null);
   const [showShareModal, setShowShareModal] = useState(false);
+  const [showStats, setShowStats] = useState(false);
+  const [showAdvancedStats, setShowAdvancedStats] = useState(false);
 
   // Session ID for anonymous users
   const getSessionId = useCallback(() => {
@@ -277,9 +301,21 @@ export default function AllTimeRankingsPage() {
 
         {/* Matchup View */}
         <div className="bg-slate-800/50 rounded-xl border border-slate-700 p-6 mb-6">
-          <h2 className="text-center text-xl font-bold mb-6 text-slate-300">
-            Who's the better player all-time?
-          </h2>
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-xl font-bold text-slate-300">
+              Who's the better player all-time?
+            </h2>
+            <button
+              onClick={() => setShowStats(!showStats)}
+              className={`px-3 py-1.5 text-sm rounded-lg transition ${
+                showStats 
+                  ? 'bg-amber-500 text-black font-semibold' 
+                  : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
+              }`}
+            >
+              {showStats ? 'Hide Stats' : 'See Stats'}
+            </button>
+          </div>
 
           <div className="grid grid-cols-2 gap-4">
             {/* Player 1 */}
@@ -306,6 +342,79 @@ export default function AllTimeRankingsPage() {
                 <div className="text-sm text-slate-500 mt-1">
                   {currentMatchup.player1_position || "—"}
                 </div>
+                
+                {/* Player 1 Stats */}
+                {showStats && currentMatchup.player1_stats && (
+                  <div className="mt-4 pt-4 border-t border-slate-600 text-left">
+                    <div className="text-xs text-slate-400 mb-2">
+                      {currentMatchup.player1_stats.career_from} - {currentMatchup.player1_stats.career_to}
+                    </div>
+                    <div className="grid grid-cols-2 gap-2 text-sm">
+                      <div>
+                        <span className="text-slate-500">G:</span>{' '}
+                        <span className="text-white font-medium">{currentMatchup.player1_stats.games.value.toLocaleString()}</span>
+                        <span className="text-xs text-emerald-400 ml-1">#{currentMatchup.player1_stats.games.rank}</span>
+                      </div>
+                      <div>
+                        <span className="text-slate-500">PTS:</span>{' '}
+                        <span className="text-white font-medium">{currentMatchup.player1_stats.points.value.toLocaleString()}</span>
+                        <span className="text-xs text-emerald-400 ml-1">#{currentMatchup.player1_stats.points.rank}</span>
+                      </div>
+                      <div>
+                        <span className="text-slate-500">REB:</span>{' '}
+                        <span className="text-white font-medium">{currentMatchup.player1_stats.rebounds.value.toLocaleString()}</span>
+                        <span className="text-xs text-emerald-400 ml-1">#{currentMatchup.player1_stats.rebounds.rank}</span>
+                      </div>
+                      <div>
+                        <span className="text-slate-500">AST:</span>{' '}
+                        <span className="text-white font-medium">{currentMatchup.player1_stats.assists.value.toLocaleString()}</span>
+                        <span className="text-xs text-emerald-400 ml-1">#{currentMatchup.player1_stats.assists.rank}</span>
+                      </div>
+                      <div>
+                        <span className="text-slate-500">STL:</span>{' '}
+                        <span className="text-white font-medium">{currentMatchup.player1_stats.steals.value.toLocaleString()}</span>
+                        <span className="text-xs text-emerald-400 ml-1">#{currentMatchup.player1_stats.steals.rank}</span>
+                      </div>
+                      <div>
+                        <span className="text-slate-500">BLK:</span>{' '}
+                        <span className="text-white font-medium">{currentMatchup.player1_stats.blocks.value.toLocaleString()}</span>
+                        <span className="text-xs text-emerald-400 ml-1">#{currentMatchup.player1_stats.blocks.rank}</span>
+                      </div>
+                      <div>
+                        <span className="text-slate-500">FG%:</span>{' '}
+                        <span className="text-white font-medium">{(currentMatchup.player1_stats.fg_pct.value * 100).toFixed(1)}%</span>
+                        <span className="text-xs text-emerald-400 ml-1">#{currentMatchup.player1_stats.fg_pct.rank}</span>
+                      </div>
+                      <div>
+                        <span className="text-slate-500">WS:</span>{' '}
+                        <span className="text-amber-400 font-medium">{currentMatchup.player1_stats.win_shares.value.toFixed(1)}</span>
+                        <span className="text-xs text-emerald-400 ml-1">#{currentMatchup.player1_stats.win_shares.rank}</span>
+                      </div>
+                    </div>
+                    
+                    {/* Advanced Stats Toggle */}
+                    <button
+                      onClick={(e) => { e.stopPropagation(); setShowAdvancedStats(!showAdvancedStats); }}
+                      className="mt-3 text-xs text-amber-400 hover:text-amber-300 underline"
+                    >
+                      {showAdvancedStats ? 'Hide Advanced' : 'See Advanced Stats'}
+                    </button>
+                    
+                    {showAdvancedStats && (
+                      <div className="mt-2 p-2 bg-slate-800/50 rounded text-xs">
+                        <div className="text-slate-400 mb-1">Percentiles (vs 200 all-time greats)</div>
+                        <div className="grid grid-cols-3 gap-1">
+                          <div>PTS: <span className="text-amber-400">{currentMatchup.player1_stats.points.percentile}%</span></div>
+                          <div>REB: <span className="text-amber-400">{currentMatchup.player1_stats.rebounds.percentile}%</span></div>
+                          <div>AST: <span className="text-amber-400">{currentMatchup.player1_stats.assists.percentile}%</span></div>
+                          <div>TS%: <span className="text-amber-400">{currentMatchup.player1_stats.ts_pct.percentile}%</span></div>
+                          <div>WS: <span className="text-amber-400">{currentMatchup.player1_stats.win_shares.percentile}%</span></div>
+                          <div>G: <span className="text-amber-400">{currentMatchup.player1_stats.games.percentile}%</span></div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             </button>
 
@@ -333,6 +442,79 @@ export default function AllTimeRankingsPage() {
                 <div className="text-sm text-slate-500 mt-1">
                   {currentMatchup.player2_position || "—"}
                 </div>
+                
+                {/* Player 2 Stats */}
+                {showStats && currentMatchup.player2_stats && (
+                  <div className="mt-4 pt-4 border-t border-slate-600 text-left">
+                    <div className="text-xs text-slate-400 mb-2">
+                      {currentMatchup.player2_stats.career_from} - {currentMatchup.player2_stats.career_to}
+                    </div>
+                    <div className="grid grid-cols-2 gap-2 text-sm">
+                      <div>
+                        <span className="text-slate-500">G:</span>{' '}
+                        <span className="text-white font-medium">{currentMatchup.player2_stats.games.value.toLocaleString()}</span>
+                        <span className="text-xs text-emerald-400 ml-1">#{currentMatchup.player2_stats.games.rank}</span>
+                      </div>
+                      <div>
+                        <span className="text-slate-500">PTS:</span>{' '}
+                        <span className="text-white font-medium">{currentMatchup.player2_stats.points.value.toLocaleString()}</span>
+                        <span className="text-xs text-emerald-400 ml-1">#{currentMatchup.player2_stats.points.rank}</span>
+                      </div>
+                      <div>
+                        <span className="text-slate-500">REB:</span>{' '}
+                        <span className="text-white font-medium">{currentMatchup.player2_stats.rebounds.value.toLocaleString()}</span>
+                        <span className="text-xs text-emerald-400 ml-1">#{currentMatchup.player2_stats.rebounds.rank}</span>
+                      </div>
+                      <div>
+                        <span className="text-slate-500">AST:</span>{' '}
+                        <span className="text-white font-medium">{currentMatchup.player2_stats.assists.value.toLocaleString()}</span>
+                        <span className="text-xs text-emerald-400 ml-1">#{currentMatchup.player2_stats.assists.rank}</span>
+                      </div>
+                      <div>
+                        <span className="text-slate-500">STL:</span>{' '}
+                        <span className="text-white font-medium">{currentMatchup.player2_stats.steals.value.toLocaleString()}</span>
+                        <span className="text-xs text-emerald-400 ml-1">#{currentMatchup.player2_stats.steals.rank}</span>
+                      </div>
+                      <div>
+                        <span className="text-slate-500">BLK:</span>{' '}
+                        <span className="text-white font-medium">{currentMatchup.player2_stats.blocks.value.toLocaleString()}</span>
+                        <span className="text-xs text-emerald-400 ml-1">#{currentMatchup.player2_stats.blocks.rank}</span>
+                      </div>
+                      <div>
+                        <span className="text-slate-500">FG%:</span>{' '}
+                        <span className="text-white font-medium">{(currentMatchup.player2_stats.fg_pct.value * 100).toFixed(1)}%</span>
+                        <span className="text-xs text-emerald-400 ml-1">#{currentMatchup.player2_stats.fg_pct.rank}</span>
+                      </div>
+                      <div>
+                        <span className="text-slate-500">WS:</span>{' '}
+                        <span className="text-amber-400 font-medium">{currentMatchup.player2_stats.win_shares.value.toFixed(1)}</span>
+                        <span className="text-xs text-emerald-400 ml-1">#{currentMatchup.player2_stats.win_shares.rank}</span>
+                      </div>
+                    </div>
+                    
+                    {/* Advanced Stats Toggle */}
+                    <button
+                      onClick={(e) => { e.stopPropagation(); setShowAdvancedStats(!showAdvancedStats); }}
+                      className="mt-3 text-xs text-amber-400 hover:text-amber-300 underline"
+                    >
+                      {showAdvancedStats ? 'Hide Advanced' : 'See Advanced Stats'}
+                    </button>
+                    
+                    {showAdvancedStats && (
+                      <div className="mt-2 p-2 bg-slate-800/50 rounded text-xs">
+                        <div className="text-slate-400 mb-1">Percentiles (vs 200 all-time greats)</div>
+                        <div className="grid grid-cols-3 gap-1">
+                          <div>PTS: <span className="text-amber-400">{currentMatchup.player2_stats.points.percentile}%</span></div>
+                          <div>REB: <span className="text-amber-400">{currentMatchup.player2_stats.rebounds.percentile}%</span></div>
+                          <div>AST: <span className="text-amber-400">{currentMatchup.player2_stats.assists.percentile}%</span></div>
+                          <div>TS%: <span className="text-amber-400">{currentMatchup.player2_stats.ts_pct.percentile}%</span></div>
+                          <div>WS: <span className="text-amber-400">{currentMatchup.player2_stats.win_shares.percentile}%</span></div>
+                          <div>G: <span className="text-amber-400">{currentMatchup.player2_stats.games.percentile}%</span></div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             </button>
           </div>

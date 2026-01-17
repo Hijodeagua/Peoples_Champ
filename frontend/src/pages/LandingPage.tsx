@@ -40,7 +40,7 @@ export default function LandingPage() {
       {/* Hero Section - Above the fold */}
       <section className="text-center py-16 space-y-6">
         <h1 className="text-5xl md:text-6xl font-bold leading-tight">
-          Who's Your GOAT?
+          Who's Yur GOAT?
         </h1>
         <p className="text-xl md:text-2xl text-slate-300 max-w-2xl mx-auto">
           Rank and compare the best basketball players ever.

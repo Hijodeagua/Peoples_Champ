@@ -36,15 +36,37 @@ class StartRankingResponse(BaseModel):
     first_matchup: "MatchupOut"
 
 
+class StatWithRank(BaseModel):
+    value: float
+    rank: int  # All-time rank in this category
+    percentile: float  # Percentile (0-100, higher is better)
+
+
+class PlayerStats(BaseModel):
+    games: StatWithRank
+    points: StatWithRank
+    rebounds: StatWithRank
+    assists: StatWithRank
+    steals: StatWithRank
+    blocks: StatWithRank
+    fg_pct: StatWithRank
+    ts_pct: StatWithRank
+    win_shares: StatWithRank
+    career_from: str
+    career_to: str
+
+
 class MatchupOut(BaseModel):
     player1_id: str
     player1_name: str
     player1_team: Optional[str]
     player1_position: Optional[str]
+    player1_stats: Optional[PlayerStats] = None
     player2_id: str
     player2_name: str
     player2_team: Optional[str]
     player2_position: Optional[str]
+    player2_stats: Optional[PlayerStats] = None
 
 
 class VoteRequest(BaseModel):
@@ -180,6 +202,90 @@ def get_next_matchup(
     return best_pair
 
 
+def compute_stat_ranks() -> dict:
+    """
+    Compute all-time ranks for each stat category.
+    Returns dict of {stat_name: [(player_id, value, rank, percentile), ...]}
+    """
+    all_players = get_cached_all_time_players()
+    total = len(all_players)
+    
+    stat_ranks = {}
+    
+    # Define stats to rank (attr_name, higher_is_better)
+    stats = [
+        ('games', True),
+        ('points', True),
+        ('rebounds', True),
+        ('assists', True),
+        ('steals', True),
+        ('blocks', True),
+        ('fg_pct', True),
+        ('ts_pct', True),
+        ('career_ws', True),
+    ]
+    
+    for stat_name, higher_is_better in stats:
+        # Sort players by this stat
+        sorted_players = sorted(
+            all_players,
+            key=lambda p: getattr(p, stat_name),
+            reverse=higher_is_better
+        )
+        
+        # Build rank lookup: player_id -> (value, rank, percentile)
+        rank_lookup = {}
+        for rank, player in enumerate(sorted_players, 1):
+            value = getattr(player, stat_name)
+            # Percentile: 100 = best, 0 = worst
+            percentile = round((total - rank) / total * 100, 1)
+            rank_lookup[player.id] = (value, rank, percentile)
+        
+        stat_ranks[stat_name] = rank_lookup
+    
+    return stat_ranks
+
+
+# Cache stat ranks
+_cached_stat_ranks: Optional[dict] = None
+
+
+def get_cached_stat_ranks() -> dict:
+    """Get cached stat ranks (computes once)."""
+    global _cached_stat_ranks
+    if _cached_stat_ranks is None:
+        _cached_stat_ranks = compute_stat_ranks()
+    return _cached_stat_ranks
+
+
+def build_player_stats(player_id: str) -> Optional[PlayerStats]:
+    """Build PlayerStats from all-time player data with ranks and percentiles."""
+    all_time_dict = get_all_time_players_dict()
+    player = all_time_dict.get(player_id)
+    if not player:
+        return None
+    
+    stat_ranks = get_cached_stat_ranks()
+    
+    def make_stat(stat_name: str) -> StatWithRank:
+        value, rank, percentile = stat_ranks[stat_name].get(player_id, (0, 0, 0))
+        return StatWithRank(value=value, rank=rank, percentile=percentile)
+    
+    return PlayerStats(
+        games=make_stat('games'),
+        points=make_stat('points'),
+        rebounds=make_stat('rebounds'),
+        assists=make_stat('assists'),
+        steals=make_stat('steals'),
+        blocks=make_stat('blocks'),
+        fg_pct=make_stat('fg_pct'),
+        ts_pct=make_stat('ts_pct'),
+        win_shares=make_stat('career_ws'),
+        career_from=player.career_from,
+        career_to=player.career_to
+    )
+
+
 def compute_rankings_from_scores(player_scores: dict, db: Session) -> List[RankingEntry]:
     """Convert player scores dict to sorted ranking entries."""
     sorted_players = sorted(
@@ -313,10 +419,12 @@ async def start_ranking(
         player1_name=p1_name,
         player1_team=p1_team,
         player1_position=p1_pos,
+        player1_stats=build_player_stats(next_pair[0]),
         player2_id=next_pair[1],
         player2_name=p2_name,
         player2_team=p2_team,
         player2_position=p2_pos,
+        player2_stats=build_player_stats(next_pair[1]),
     )
 
     return StartRankingResponse(
@@ -440,10 +548,12 @@ async def submit_vote(
             player1_name=p1_name,
             player1_team=p1_team,
             player1_position=p1_pos,
+            player1_stats=build_player_stats(next_pair[0]),
             player2_id=next_pair[1],
             player2_name=p2_name,
             player2_team=p2_team,
             player2_position=p2_pos,
+            player2_stats=build_player_stats(next_pair[1]),
         )
 
     return VoteResponse(

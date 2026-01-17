@@ -19,6 +19,12 @@ class AllTimePlayer:
     career_to: str  # Career end year
     games: int
     points: int
+    rebounds: int  # TRB
+    assists: int  # AST
+    steals: int  # STL
+    blocks: int  # BLK
+    fg_pct: float  # FG%
+    ts_pct: float  # TS% (True Shooting)
     
 
 def load_all_time_players() -> List[AllTimePlayer]:
@@ -63,6 +69,36 @@ def load_all_time_players() -> List[AllTimePlayer]:
                 except (ValueError, TypeError):
                     points = 0
                 
+                try:
+                    rebounds = int(row.get('TRB', 0))
+                except (ValueError, TypeError):
+                    rebounds = 0
+                
+                try:
+                    assists = int(row.get('AST', 0))
+                except (ValueError, TypeError):
+                    assists = 0
+                
+                try:
+                    steals = int(row.get('STL', 0))
+                except (ValueError, TypeError):
+                    steals = 0
+                
+                try:
+                    blocks = int(row.get('BLK', 0))
+                except (ValueError, TypeError):
+                    blocks = 0
+                
+                try:
+                    fg_pct = float(row.get('FG%', 0))
+                except (ValueError, TypeError):
+                    fg_pct = 0.0
+                
+                try:
+                    ts_pct = float(row.get('TS%', 0))
+                except (ValueError, TypeError):
+                    ts_pct = 0.0
+                
                 players.append(AllTimePlayer(
                     id=player_id,
                     name=name,
@@ -72,7 +108,13 @@ def load_all_time_players() -> List[AllTimePlayer]:
                     career_from=career_from,
                     career_to=career_to,
                     games=games,
-                    points=points
+                    points=points,
+                    rebounds=rebounds,
+                    assists=assists,
+                    steals=steals,
+                    blocks=blocks,
+                    fg_pct=fg_pct,
+                    ts_pct=ts_pct
                 ))
     except FileNotFoundError:
         print(f"[AllTime] Warning: Could not find {csv_path}")
