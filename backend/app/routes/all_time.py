@@ -90,6 +90,7 @@ class RankingEntry(BaseModel):
     score: float  # Elo score
     wins: int
     losses: int
+    jersey_number: Optional[int] = None
 
 
 class GetRankingResponse(BaseModel):
@@ -309,6 +310,9 @@ def compute_rankings_from_scores(player_scores: dict, db: Session) -> List[Ranki
             team = player.team if player else None
             position = player.position if player else None
         
+        # Get jersey number from all-time player data
+        jersey_num = alltime_player.jersey_number if alltime_player else None
+        
         rankings.append(RankingEntry(
             rank=rank,
             player_id=player_id,
@@ -317,7 +321,8 @@ def compute_rankings_from_scores(player_scores: dict, db: Session) -> List[Ranki
             position=position,
             score=round(data['score'], 1),
             wins=data['wins'],
-            losses=data['losses']
+            losses=data['losses'],
+            jersey_number=jersey_num
         ))
 
     return rankings

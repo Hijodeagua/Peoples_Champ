@@ -48,6 +48,7 @@ interface RankingEntry {
   score: number;
   wins: number;
   losses: number;
+  jersey_number?: number | null;
 }
 
 type GamePhase = "select" | "playing" | "results";
@@ -646,10 +647,12 @@ export default function AllTimeRankingsPage() {
             name: r.player_name,
             team: r.team,
             position: r.position,
+            jerseyNumber: r.jersey_number,
           }))}
           title="My All-Time GOAT List"
           subtitle={`Top ${Math.min(rankings.length, 15)} Players`}
           onClose={() => setShowShareModal(false)}
+          style="rushmore"
         />
       )}
     </div>

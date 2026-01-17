@@ -4,10 +4,12 @@ type Player = {
   name: string;
   team?: string | null;
   position?: string | null;
+  jerseyNumber?: number | string | null;
   [key: string]: any;
 };
 
 type ImageFormat = "twitter" | "instagram" | "square";
+type GraphicStyle = "podium" | "rushmore";
 
 interface SocialGraphicGeneratorProps {
   players: Player[];
@@ -15,6 +17,7 @@ interface SocialGraphicGeneratorProps {
   subtitle: string;
   onClose: () => void;
   shareUrl?: string;
+  style?: GraphicStyle; // "podium" for daily, "rushmore" for all-time
 }
 
 const FORMATS: Record<ImageFormat, { width: number; height: number; label: string }> = {
@@ -86,13 +89,14 @@ export default function SocialGraphicGenerator({
   subtitle,
   onClose,
   shareUrl,
+  style = "podium",
 }: SocialGraphicGeneratorProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [format, setFormat] = useState<ImageFormat>("twitter");
   const [copied, setCopied] = useState(false);
 
-  // Draw a jersey shape
-  const drawJersey = (
+  // Draw a basketball jersey shape (tank top style)
+  const drawBasketballJersey = (
     ctx: CanvasRenderingContext2D,
     x: number,
     y: number,
@@ -100,48 +104,61 @@ export default function SocialGraphicGenerator({
     height: number,
     primaryColor: string,
     secondaryColor: string,
-    rank: number
+    jerseyNumber: string | number
   ) => {
     const w = width;
     const h = height;
     
-    // Jersey body
+    // Basketball tank top jersey shape
     ctx.fillStyle = primaryColor;
     ctx.beginPath();
-    // Neck
-    ctx.moveTo(x + w * 0.35, y);
-    ctx.lineTo(x + w * 0.65, y);
-    // Right shoulder
-    ctx.lineTo(x + w * 0.85, y + h * 0.15);
-    ctx.lineTo(x + w, y + h * 0.25);
-    // Right sleeve
-    ctx.lineTo(x + w, y + h * 0.4);
-    ctx.lineTo(x + w * 0.8, y + h * 0.35);
-    // Right side
-    ctx.lineTo(x + w * 0.85, y + h);
-    // Bottom
-    ctx.lineTo(x + w * 0.15, y + h);
-    // Left side
-    ctx.lineTo(x + w * 0.2, y + h * 0.35);
-    // Left sleeve
-    ctx.lineTo(x, y + h * 0.4);
-    ctx.lineTo(x, y + h * 0.25);
-    // Left shoulder
-    ctx.lineTo(x + w * 0.15, y + h * 0.15);
+    
+    // Start at left shoulder strap
+    ctx.moveTo(x + w * 0.25, y);
+    
+    // Neck curve (scoop neck)
+    ctx.quadraticCurveTo(x + w * 0.5, y + h * 0.08, x + w * 0.75, y);
+    
+    // Right shoulder strap
+    ctx.lineTo(x + w * 0.85, y + h * 0.05);
+    
+    // Right armhole (curved)
+    ctx.quadraticCurveTo(x + w * 0.95, y + h * 0.15, x + w * 0.88, y + h * 0.32);
+    
+    // Right side of jersey
+    ctx.lineTo(x + w * 0.85, y + h * 0.95);
+    
+    // Bottom curve
+    ctx.quadraticCurveTo(x + w * 0.5, y + h, x + w * 0.15, y + h * 0.95);
+    
+    // Left side of jersey
+    ctx.lineTo(x + w * 0.12, y + h * 0.32);
+    
+    // Left armhole (curved)
+    ctx.quadraticCurveTo(x + w * 0.05, y + h * 0.15, x + w * 0.15, y + h * 0.05);
+    
     ctx.closePath();
     ctx.fill();
     
-    // Jersey trim/collar
+    // Jersey trim/outline
     ctx.strokeStyle = secondaryColor;
     ctx.lineWidth = 3;
     ctx.stroke();
     
-    // Rank number on jersey
+    // Collar trim
+    ctx.beginPath();
+    ctx.moveTo(x + w * 0.28, y + h * 0.02);
+    ctx.quadraticCurveTo(x + w * 0.5, y + h * 0.1, x + w * 0.72, y + h * 0.02);
+    ctx.strokeStyle = secondaryColor;
+    ctx.lineWidth = 4;
+    ctx.stroke();
+    
+    // Jersey number
     ctx.fillStyle = secondaryColor;
-    ctx.font = `bold ${h * 0.4}px -apple-system, BlinkMacSystemFont, sans-serif`;
+    ctx.font = `bold ${h * 0.45}px -apple-system, BlinkMacSystemFont, sans-serif`;
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
-    ctx.fillText(`${rank}`, x + w / 2, y + h * 0.55);
+    ctx.fillText(`${jerseyNumber}`, x + w / 2, y + h * 0.55);
   };
 
   // Draw trophy case frame
@@ -169,62 +186,140 @@ export default function SocialGraphicGenerator({
     ctx.fillRect(x, y, width, height);
   };
 
-  const generateGraphic = async () => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
+  // Generate PODIUM style graphic (for daily rankings)
+  const generatePodiumGraphic = (ctx: CanvasRenderingContext2D, width: number, height: number) => {
+    const scale = format === "instagram" ? 1.5 : format === "square" ? 1.2 : 1;
+    const isVertical = format === "instagram";
 
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
+    // Background gradient (dark theme)
+    const gradient = ctx.createLinearGradient(0, 0, 0, height);
+    gradient.addColorStop(0, "#0f172a"); // slate-900
+    gradient.addColorStop(0.5, "#1e293b"); // slate-800
+    gradient.addColorStop(1, "#0f172a"); // slate-900
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, width, height);
 
-    const { width, height } = FORMATS[format];
-    canvas.width = width;
-    canvas.height = height;
+    // Decorative circles
+    ctx.fillStyle = "rgba(16, 185, 129, 0.1)";
+    ctx.beginPath();
+    ctx.arc(width * 0.9, height * 0.1, 200, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(width * 0.1, height * 0.9, 150, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Title
+    ctx.fillStyle = "#10b981";
+    ctx.font = `bold ${48 * scale}px -apple-system, BlinkMacSystemFont, sans-serif`;
+    ctx.textAlign = "center";
+    const titleY = isVertical ? 120 * scale : 80;
+    ctx.fillText(title, width / 2, titleY);
+
+    // Subtitle
+    ctx.fillStyle = "#94a3b8";
+    ctx.font = `${24 * scale}px -apple-system, BlinkMacSystemFont, sans-serif`;
+    const subtitleY = isVertical ? 180 * scale : 130;
+    ctx.fillText(subtitle, width / 2, subtitleY);
+
+    // Decorative line
+    ctx.strokeStyle = "#10b981";
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(width * 0.3, subtitleY + 30);
+    ctx.lineTo(width * 0.7, subtitleY + 30);
+    ctx.stroke();
+
+    // Player list
+    const startY = subtitleY + 60 * scale;
+    const itemHeight = isVertical ? 80 : format === "square" ? 65 : 50;
+    const maxPlayers = Math.min(players.length, isVertical ? 15 : format === "square" ? 10 : 8);
+
+    for (let i = 0; i < maxPlayers; i++) {
+      const player = players[i];
+      const y = startY + i * itemHeight;
+      const rowCenterX = width / 2;
+
+      // Medal/rank decoration for top 3
+      if (i < 3) {
+        const medals = ["#fbbf24", "#9ca3af", "#d97706"]; // gold, silver, bronze
+        ctx.fillStyle = medals[i];
+        ctx.beginPath();
+        ctx.arc(rowCenterX - 280 * (format === "twitter" ? 1 : scale), y - 5, 18 * scale, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = "#000000";
+        ctx.font = `bold ${16 * scale}px -apple-system, BlinkMacSystemFont, sans-serif`;
+        ctx.textAlign = "center";
+        ctx.fillText(`${i + 1}`, rowCenterX - 280 * (format === "twitter" ? 1 : scale), y + 2);
+      } else {
+        ctx.fillStyle = "#64748b";
+        ctx.font = `bold ${20 * scale}px -apple-system, BlinkMacSystemFont, sans-serif`;
+        ctx.textAlign = "center";
+        ctx.fillText(`${i + 1}`, rowCenterX - 280 * (format === "twitter" ? 1 : scale), y);
+      }
+
+      // Player name (no team)
+      ctx.fillStyle = "#ffffff";
+      ctx.font = `${i < 3 ? "bold " : ""}${22 * scale}px -apple-system, BlinkMacSystemFont, sans-serif`;
+      ctx.textAlign = "left";
+      ctx.fillText(player.name, rowCenterX - 240 * (format === "twitter" ? 1 : scale), y);
+    }
+
+    // Footer
+    const footerY = height - (isVertical ? 150 : 60);
+    ctx.fillStyle = "#10b981";
+    ctx.font = `bold ${20 * scale}px -apple-system, BlinkMacSystemFont, sans-serif`;
+    ctx.textAlign = "center";
+    ctx.fillText("WhosYurGoat.app", width / 2, footerY);
+
+    const dateStr = new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+    ctx.fillStyle = "#64748b";
+    ctx.font = `${14 * scale}px -apple-system, BlinkMacSystemFont, sans-serif`;
+    ctx.fillText(dateStr, width / 2, footerY + 25 * scale);
+  };
+
+  // Generate RUSHMORE style graphic (for all-time rankings)
+  const generateRushmoreGraphic = (ctx: CanvasRenderingContext2D, width: number, height: number) => {
+    const scale = format === "instagram" ? 1.5 : format === "square" ? 1.2 : 1;
+    const isVertical = format === "instagram";
 
     // Background - light court color
     const bgGradient = ctx.createLinearGradient(0, 0, 0, height);
-    bgGradient.addColorStop(0, "#e2e8f0"); // slate-200
-    bgGradient.addColorStop(0.5, "#f1f5f9"); // slate-100
-    bgGradient.addColorStop(1, "#e2e8f0"); // slate-200
+    bgGradient.addColorStop(0, "#e2e8f0");
+    bgGradient.addColorStop(0.5, "#f1f5f9");
+    bgGradient.addColorStop(1, "#e2e8f0");
     ctx.fillStyle = bgGradient;
     ctx.fillRect(0, 0, width, height);
 
     // Court lines decoration
-    ctx.strokeStyle = "rgba(148, 163, 184, 0.3)"; // slate-400 transparent
+    ctx.strokeStyle = "rgba(148, 163, 184, 0.3)";
     ctx.lineWidth = 2;
-    // Center circle
     ctx.beginPath();
     ctx.arc(width / 2, height * 0.45, Math.min(width, height) * 0.35, 0, Math.PI * 2);
     ctx.stroke();
-    // Half court line
     ctx.beginPath();
     ctx.moveTo(0, height * 0.45);
     ctx.lineTo(width, height * 0.45);
     ctx.stroke();
 
-    const scale = format === "instagram" ? 1.5 : format === "square" ? 1.2 : 1;
-    const isVertical = format === "instagram";
-
     // Title banner
     const bannerHeight = 50 * scale;
-    ctx.fillStyle = "#1e293b"; // slate-800
+    ctx.fillStyle = "#1e293b";
     ctx.fillRect(0, 0, width, bannerHeight + 10);
-    // Banner ribbon effect
     ctx.beginPath();
     ctx.moveTo(0, bannerHeight + 10);
     ctx.lineTo(width * 0.05, bannerHeight + 25);
     ctx.lineTo(width * 0.95, bannerHeight + 25);
     ctx.lineTo(width, bannerHeight + 10);
-    ctx.fillStyle = "#334155"; // slate-700
+    ctx.fillStyle = "#334155";
     ctx.fill();
 
-    // Title text
     ctx.fillStyle = "#ffffff";
     ctx.font = `bold ${32 * scale}px -apple-system, BlinkMacSystemFont, sans-serif`;
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
     ctx.fillText("🐐 GOAT MT RUSHMORE 🐐", width / 2, bannerHeight / 2 + 5);
 
-    // Mt Rushmore - Top 4 players with jerseys in trophy cases
+    // Top 4 players with jerseys
     const top4 = players.slice(0, 4);
     const jerseyAreaY = bannerHeight + 40 * scale;
     const jerseyWidth = format === "twitter" ? 140 : 120 * scale;
@@ -233,52 +328,37 @@ export default function SocialGraphicGenerator({
     const caseHeight = jerseyHeight + 40;
     const spacing = (width - caseWidth * 4) / 5;
 
-    // Rank colors
-    const rankColors = ["#3B82F6", "#8B5CF6", "#10B981", "#EF4444"]; // blue, purple, green, red
+    const rankColors = ["#3B82F6", "#8B5CF6", "#10B981", "#EF4444"];
 
     for (let i = 0; i < Math.min(4, top4.length); i++) {
       const player = top4[i];
       const caseX = spacing + i * (caseWidth + spacing);
       const caseY = jerseyAreaY;
-      
-      // Draw trophy case
+
       drawTrophyCase(ctx, caseX, caseY, caseWidth, caseHeight);
-      
-      // Rank number above case
+
       ctx.fillStyle = rankColors[i];
       ctx.font = `bold ${36 * scale}px -apple-system, BlinkMacSystemFont, sans-serif`;
       ctx.textAlign = "center";
       ctx.fillText(`${i + 1}`, caseX + caseWidth / 2, caseY - 15);
-      
-      // Draw jersey
+
       const [primary, secondary] = getTeamColors(player.team);
-      drawJersey(
-        ctx,
-        caseX + 15,
-        caseY + 15,
-        jerseyWidth,
-        jerseyHeight,
-        primary,
-        secondary,
-        i + 1
-      );
-      
-      // Player name below case
+      const jerseyNum = player.jerseyNumber ?? (i + 1);
+      drawBasketballJersey(ctx, caseX + 15, caseY + 15, jerseyWidth, jerseyHeight, primary, secondary, jerseyNum);
+
       ctx.fillStyle = "#1e293b";
       ctx.font = `bold ${18 * scale}px -apple-system, BlinkMacSystemFont, sans-serif`;
       ctx.textAlign = "center";
-      // Get last name for cleaner display
       const nameParts = player.name.split(" ");
       const displayName = nameParts.length > 1 ? nameParts[nameParts.length - 1].toUpperCase() : player.name.toUpperCase();
       ctx.fillText(displayName, caseX + caseWidth / 2, caseY + caseHeight + 25);
     }
 
-    // Remaining players (5-10) as simple list
+    // Remaining players (5-10)
     const listStartY = jerseyAreaY + caseHeight + 55 * scale;
     const remainingPlayers = players.slice(4, 10);
-    
+
     if (remainingPlayers.length > 0 && !isVertical) {
-      // Two columns for remaining players
       const col1X = width * 0.2;
       const col2X = width * 0.6;
       const itemHeight = 28 * scale;
@@ -291,20 +371,16 @@ export default function SocialGraphicGenerator({
         const x = col === 0 ? col1X : col2X;
         const y = listStartY + row * itemHeight;
 
-        // Rank
         ctx.fillStyle = "#64748b";
         ctx.font = `${16 * scale}px -apple-system, BlinkMacSystemFont, sans-serif`;
         ctx.textAlign = "right";
         ctx.fillText(`${rank}.`, x - 10, y);
 
-        // Name
         ctx.fillStyle = "#334155";
-        ctx.font = `${16 * scale}px -apple-system, BlinkMacSystemFont, sans-serif`;
         ctx.textAlign = "left";
         ctx.fillText(player.name, x, y);
       }
     } else if (isVertical) {
-      // Single column for Instagram
       const itemHeight = 45 * scale;
       for (let i = 0; i < Math.min(remainingPlayers.length, 6); i++) {
         const player = remainingPlayers[i];
@@ -325,15 +401,28 @@ export default function SocialGraphicGenerator({
     ctx.textAlign = "center";
     ctx.fillText("WHOSYURGOAT.APP", width / 2, footerY);
 
-    // Date
-    const dateStr = new Date().toLocaleDateString("en-US", {
-      month: "short",
-      day: "numeric",
-      year: "numeric",
-    });
+    const dateStr = new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
     ctx.fillStyle = "#64748b";
     ctx.font = `${12 * scale}px -apple-system, BlinkMacSystemFont, sans-serif`;
     ctx.fillText(dateStr, width / 2, footerY + 18 * scale);
+  };
+
+  const generateGraphic = async () => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+
+    const { width, height } = FORMATS[format];
+    canvas.width = width;
+    canvas.height = height;
+
+    if (style === "rushmore") {
+      generateRushmoreGraphic(ctx, width, height);
+    } else {
+      generatePodiumGraphic(ctx, width, height);
+    }
   };
 
   const downloadImage = () => {

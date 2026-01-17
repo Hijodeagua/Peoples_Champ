@@ -25,6 +25,79 @@ class AllTimePlayer:
     blocks: int  # BLK
     fg_pct: float  # FG%
     ts_pct: float  # TS% (True Shooting)
+    jersey_number: Optional[int] = None  # Most iconic jersey number
+
+
+# Famous jersey numbers for all-time greats (most iconic number)
+JERSEY_NUMBERS: Dict[str, int] = {
+    "jamesle01": 23,      # LeBron James
+    "abdulka01": 33,      # Kareem Abdul-Jabbar
+    "malonka01": 32,      # Karl Malone
+    "paulch01": 3,        # Chris Paul
+    "jordami01": 23,      # Michael Jordan
+    "stockjo01": 12,      # John Stockton
+    "duncati01": 21,      # Tim Duncan
+    "nowitdi01": 41,      # Dirk Nowitzki
+    "garneke01": 21,      # Kevin Garnett
+    "bryanko01": 24,      # Kobe Bryant
+    "onMDsha01": 34,      # Shaquille O'Neal
+    "onealsh01": 34,      # Shaq alternate ID
+    "duranke01": 35,      # Kevin Durant
+    "curryst01": 30,      # Stephen Curry
+    "hardeja01": 13,      # James Harden
+    "westbru01": 0,       # Russell Westbrook
+    "leonaka01": 2,       # Kawhi Leonard
+    "anMDgi01": 34,       # Giannis Antetokounmpo
+    "antetoMD01": 34,     # Giannis alternate
+    "lillada01": 0,       # Damian Lillard
+    "davisan02": 23,      # Anthony Davis
+    "embiijo01": 21,      # Joel Embiid
+    "jokicni01": 15,      # Nikola Jokic
+    "tatumja01": 0,       # Jayson Tatum
+    "doncilu01": 77,      # Luka Doncic
+    "youngtr01": 11,      # Trae Young
+    "moMDja01": 12,       # Ja Morant
+    "willizi01": 1,       # Zion Williamson
+    "edwaran01": 5,       # Anthony Edwards (changed from 1)
+    "gilMDsh01": 2,       # Shai Gilgeous-Alexander
+    "birdla01": 33,       # Larry Bird
+    "magiMD01": 32,       # Magic Johnson
+    "johnser01": 32,      # Magic Johnson alternate
+    "ervinju01": 6,       # Julius Erving
+    "chambwi01": 13,      # Wilt Chamberlain
+    "russewi01": 6,       # Bill Russell
+    "roberos01": 14,      # Oscar Robertson
+    "westje01": 44,       # Jerry West
+    "havlijo01": 17,      # John Havlicek
+    "barklch01": 34,      # Charles Barkley
+    "robinda01": 50,      # David Robinson
+    "olajuha01": 34,      # Hakeem Olajuwon
+    "ewingpa01": 33,      # Patrick Ewing
+    "mloMDka01": 11,      # Karl-Anthony Towns
+    "piercpa01": 34,      # Paul Pierce
+    "allenra02": 20,      # Ray Allen
+    "nashst01": 13,       # Steve Nash
+    "kiddja01": 5,        # Jason Kidd
+    "iveral01": 3,        # Allen Iverson
+    "wadedw01": 3,        # Dwyane Wade
+    "anthoca01": 15,      # Carmelo Anthony
+    "boMDch01": 1,        # Chris Bosh
+    "howardw01": 12,      # Dwight Howard
+    "paulga01": 24,       # Paul George
+    "butleji01": 22,      # Jimmy Butler
+    "thomais02": 4,       # Isaiah Thomas
+    "lowryky01": 7,       # Kyle Lowry
+    "greendr01": 23,      # Draymond Green
+    "thompkl01": 11,      # Klay Thompson
+    "irviky01": 2,        # Kyrie Irving
+    "loveke01": 0,        # Kevin Love
+    "walljo01": 2,        # John Wall
+    "bealMD01": 3,        # Bradley Beal
+    "bookede01": 1,       # Devin Booker
+    "mitchdo01": 45,      # Donovan Mitchell
+    "adebaba01": 13,      # Bam Adebayo
+    "brownma01": 7,       # Jaylen Brown
+}
     
 
 def load_all_time_players() -> List[AllTimePlayer]:
@@ -108,6 +181,9 @@ def load_all_time_players() -> List[AllTimePlayer]:
                 except (ValueError, TypeError):
                     ts_pct = 0.0
                 
+                # Get jersey number from lookup
+                jersey_num = JERSEY_NUMBERS.get(player_id)
+                
                 players.append(AllTimePlayer(
                     id=player_id,
                     name=name,
@@ -123,7 +199,8 @@ def load_all_time_players() -> List[AllTimePlayer]:
                     steals=steals,
                     blocks=blocks,
                     fg_pct=fg_pct,
-                    ts_pct=ts_pct
+                    ts_pct=ts_pct,
+                    jersey_number=jersey_num
                 ))
     except FileNotFoundError:
         print(f"[AllTime] Warning: Could not find {csv_path}")
