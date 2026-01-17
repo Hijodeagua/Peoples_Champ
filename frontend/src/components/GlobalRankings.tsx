@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { getGlobalRankings, getVotingStatus, type GlobalRankingsResponse, type PlayerRanking, type UserVotesResponse } from "../api/voting";
 import AgreementIndicator from "./AgreementIndicator";
 import SocialGraphicGenerator from "./SocialGraphicGenerator";
+import FeedbackLink from "./FeedbackLink";
 
 interface GlobalRankingsProps {
   onPlayGame: () => void;
@@ -141,8 +142,9 @@ export default function GlobalRankings({ onPlayGame }: GlobalRankingsProps) {
 
   if (error) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
+      <div className="flex flex-col items-center justify-center min-h-[400px] space-y-4">
         <div className="text-red-400">{error}</div>
+        <FeedbackLink variant="compact" />
       </div>
     );
   }

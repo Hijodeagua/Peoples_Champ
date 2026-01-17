@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { api } from "../api/client";
+import FeedbackLink from "../components/FeedbackLink";
 
 interface ArchiveEntry {
   date: string;
@@ -108,6 +109,7 @@ export default function ArchivePage() {
           <p className="text-xs text-slate-500">
             The backend server may be starting up (takes ~30 seconds).
           </p>
+          <FeedbackLink variant="compact" className="mt-2" />
         </div>
       ) : (
       <div className="bg-slate-800/50 rounded-xl border border-slate-700 p-6">

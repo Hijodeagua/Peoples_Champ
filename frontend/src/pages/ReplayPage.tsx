@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { getDayGame, type GameTodayResponse, type Player, type SeasonOption, type PlayerStats, type AdvancedStats } from "../api/game";
 import { submitVote } from "../api/voting";
+import FeedbackLink from "../components/FeedbackLink";
 
 // Stat label mapping for per-game stats
 const STAT_LABELS: Record<string, string> = {
@@ -268,6 +269,7 @@ export default function ReplayPage() {
         >
           Back to Archive
         </Link>
+        <FeedbackLink variant="compact" className="mt-4" />
       </div>
     );
   }

@@ -3,6 +3,7 @@ import { getTodayGame, getMyVotes, type GameTodayResponse, type Player, type Sea
 import { submitVote, type UserVotesResponse } from "../api/voting";
 import { getPlayerImageUrl } from "../utils/playerImages";
 import AgreementIndicator from "./AgreementIndicator";
+import FeedbackLink from "./FeedbackLink";
 
 // Stat label mapping for per-game stats
 const STAT_LABELS: Record<string, string> = {
@@ -416,6 +417,7 @@ export default function MatchupView() {
       {error && (
         <div className="bg-red-900/40 border border-red-700 text-red-200 p-3 rounded">
           {error}
+          <FeedbackLink variant="compact" className="mt-2 block" />
         </div>
       )}
 

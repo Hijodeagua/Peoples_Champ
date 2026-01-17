@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import SortableRankingsTable from "../components/SortableRankingsTable";
 import type { PlayerData } from "../components/SortableRankingsTable";
 import apiClient from "../api/client";
+import FeedbackLink from "../components/FeedbackLink";
 
 type ViewMode = "stats" | "rankings";
 
@@ -117,6 +118,7 @@ export default function Top100Page() {
             >
               Retry
             </button>
+            <FeedbackLink variant="compact" className="mt-4" />
           </div>
         </div>
       </div>

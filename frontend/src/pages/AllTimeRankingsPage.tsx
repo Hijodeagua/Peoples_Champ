@@ -1,5 +1,6 @@
 import { useState, useCallback } from "react";
 import SocialGraphicGenerator from "../components/SocialGraphicGenerator";
+import FeedbackLink from "../components/FeedbackLink";
 import apiClient from "../api/client";
 
 type RankingSize = 10 | 50 | 100 | 0; // 0 = infinite
@@ -226,6 +227,7 @@ export default function AllTimeRankingsPage() {
         {error && (
           <div className="p-3 bg-red-900/40 border border-red-700 text-red-200 rounded-lg text-sm">
             {error}
+            <FeedbackLink variant="compact" className="mt-2 block" />
           </div>
         )}
       </div>
@@ -360,6 +362,7 @@ export default function AllTimeRankingsPage() {
         {error && (
           <div className="mt-4 p-3 bg-red-900/40 border border-red-700 text-red-200 rounded-lg text-sm">
             {error}
+            <FeedbackLink variant="compact" className="mt-2 block" />
           </div>
         )}
       </div>

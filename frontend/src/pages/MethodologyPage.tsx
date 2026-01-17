@@ -100,6 +100,26 @@ export default function MethodologyPage() {
           </div>
         </section>
 
+        <section className="bg-amber-900/20 rounded-xl border border-amber-700/50 p-6 space-y-4">
+          <h2 className="text-2xl font-bold text-amber-400">Feedback & Bug Reports</h2>
+          <div className="space-y-3">
+            <p>
+              Found a bug? Have a feature request? We'd love to hear from you!
+            </p>
+            <p>
+              This project is in active development and your feedback helps us improve.
+            </p>
+            <a
+              href="https://forms.gle/xFGFXCDMsxuNAmK57"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-block px-6 py-3 rounded-xl bg-amber-500 hover:bg-amber-400 text-black font-bold transition"
+            >
+              Submit Feedback 📝
+            </a>
+          </div>
+        </section>
+
         <div className="text-center text-sm text-slate-400 pt-6">
           <p>
             Questions or feedback? This methodology will continue to evolve as we gather more data

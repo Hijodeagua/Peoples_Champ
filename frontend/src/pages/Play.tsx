@@ -8,6 +8,7 @@ import {
   type GameSubmitResponse,
   type GameMode,
 } from "../api/game";
+import FeedbackLink from "../components/FeedbackLink";
 
 type MatchupChoiceMap = Record<number, string>; // matchup_id -> winner_id
 
@@ -107,6 +108,7 @@ export default function PlayPage() {
         >
           Retry
         </button>
+        <FeedbackLink variant="compact" />
       </div>
     );
   }
