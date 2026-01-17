@@ -74,7 +74,15 @@ export default function AllTimeRankingsPage() {
       setRankings([]);
       setPhase("playing");
     } catch (err: any) {
-      setError(err.response?.data?.detail || "Failed to start ranking");
+      const status = err.response?.status;
+      const detail = err.response?.data?.detail;
+      if (status === 404) {
+        setError("API endpoint not found. The backend may not be configured correctly.");
+      } else if (status === 502 || status === 503) {
+        setError("Server is starting up. Please wait 30 seconds and try again.");
+      } else {
+        setError(detail || `Failed to start ranking (${status || 'network error'})`);
+      }
     } finally {
       setLoading(false);
     }

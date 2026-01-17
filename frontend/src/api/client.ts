@@ -4,6 +4,12 @@ import axios from "axios";
 // In development, use empty string to leverage Vite's proxy
 const API_BASE_URL = import.meta.env.VITE_API_URL || '';
 
+// Warn if in production without API URL configured
+if (typeof window !== 'undefined' && !API_BASE_URL && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
+  console.warn('[API] WARNING: VITE_API_URL is not set in production! API calls will fail.');
+  console.warn('[API] Set VITE_API_URL in your Vercel/Netlify environment variables.');
+}
+
 console.log('[API] Base URL:', API_BASE_URL || '(using proxy)');
 
 export const api = axios.create({

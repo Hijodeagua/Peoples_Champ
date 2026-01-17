@@ -1,4 +1,34 @@
-# React + TypeScript + Vite
+# WhosYurGoat Frontend
+
+NBA player ranking app built with React + TypeScript + Vite.
+
+## Deployment
+
+### Environment Variables
+
+For production deployment (Vercel/Netlify), you **must** set the following environment variable:
+
+```
+VITE_API_URL=https://your-backend-url.onrender.com
+```
+
+Without this, API calls will fail with "Not Found" errors.
+
+### Vercel Setup
+1. Go to your Vercel project settings
+2. Navigate to Environment Variables
+3. Add `VITE_API_URL` with your backend URL
+4. Redeploy
+
+### Netlify Setup
+1. Go to your Netlify site settings
+2. Navigate to Build & deploy > Environment
+3. Add `VITE_API_URL` with your backend URL
+4. Trigger a new deploy
+
+---
+
+## Development
 
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 

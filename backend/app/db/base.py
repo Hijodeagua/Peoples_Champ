@@ -11,4 +11,10 @@ from ..models import (  # noqa
     RatingHistory,
     Submission,
     AnalysisFeedback,
+    UserRankingHistory,
+    DailyAggregateStats,
+    AllTimeRanking,
+    AllTimeMatchupVote,
+    CustomList,
+    AnalysisCache,
 )

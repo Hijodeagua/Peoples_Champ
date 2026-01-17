@@ -36,7 +36,9 @@ export default function ArchivePage() {
         const axiosErr = err as { response?: { data?: { detail?: string }, status?: number } };
         const status = axiosErr.response?.status;
         const detail = axiosErr.response?.data?.detail;
-        if (status === 502 || status === 503) {
+        if (status === 404) {
+          setError("API endpoint not found. The backend may not be configured correctly.");
+        } else if (status === 502 || status === 503) {
           setError("Server is starting up. Please wait 30 seconds and try again.");
         } else if (detail) {
           setError(detail);
@@ -44,7 +46,11 @@ export default function ArchivePage() {
           setError(`Server error (${status || 'unknown'}). Please try again.`);
         }
       } else if (err instanceof Error) {
-        setError(err.message);
+        if (err.message.includes('Network Error')) {
+          setError("Cannot connect to server. Please check your connection.");
+        } else {
+          setError(err.message);
+        }
       } else {
         setError('Failed to load archives. Please try again.');
       }
