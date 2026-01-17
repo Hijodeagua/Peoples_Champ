@@ -349,12 +349,19 @@ export default function SocialGraphicGenerator({
 
   const copyToClipboard = async () => {
     // Copy text version of rankings (no team names)
+    const playerCount = Math.min(players.length, 10);
     const text = players
-      .slice(0, 10)
+      .slice(0, playerCount)
       .map((p, i) => `${i + 1}. ${p.name}`)
       .join("\n");
 
-    const fullText = `${title}\n${subtitle}\n\n${text}\n\nCreate yours at WhosYurGoat.app`;
+    // For current players (Peoples Champ), use "My Top 5 Today:" format
+    const isCurrentPlayers = title.toLowerCase().includes("peoples") || subtitle.toLowerCase().includes("today");
+    const header = isCurrentPlayers && playerCount <= 5 
+      ? `My Top ${playerCount} Today:`
+      : `${title}\n${subtitle}`;
+    
+    const fullText = `${header}\n${text}\n\nCreate yours at WhosYurGoat.app`;
 
     try {
       await navigator.clipboard.writeText(fullText);
@@ -366,7 +373,12 @@ export default function SocialGraphicGenerator({
   };
 
   const shareToTwitter = () => {
-    const text = `My ${title}:\n\n${players.slice(0, 5).map((p, i) => `${i + 1}. ${p.name}`).join("\n")}\n\nCreate yours at`;
+    const playerCount = Math.min(players.length, 5);
+    const isCurrentPlayers = title.toLowerCase().includes("peoples") || subtitle.toLowerCase().includes("today");
+    const header = isCurrentPlayers 
+      ? `My Top ${playerCount} Today:`
+      : `My ${title}:`;
+    const text = `${header}\n${players.slice(0, playerCount).map((p, i) => `${i + 1}. ${p.name}`).join("\n")}\n\nCreate yours at`;
     const url = shareUrl || "https://whosyurgoat.app";
     const tweetUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`;
     window.open(tweetUrl, "_blank");
@@ -379,9 +391,14 @@ export default function SocialGraphicGenerator({
   };
 
   const shareToReddit = () => {
-    const playerList = players.slice(0, 10).map((p, i) => `${i + 1}. ${p.name}`).join("\n");
-    const text = `${title}\n\n${playerList}\n\nCreated at WhosYurGoat.app`;
-    const url = `https://www.reddit.com/submit?title=${encodeURIComponent(title)}&selftext=true&text=${encodeURIComponent(text)}`;
+    const playerCount = Math.min(players.length, 10);
+    const isCurrentPlayers = title.toLowerCase().includes("peoples") || subtitle.toLowerCase().includes("today");
+    const header = isCurrentPlayers && playerCount <= 5
+      ? `My Top ${playerCount} Today:`
+      : title;
+    const playerList = players.slice(0, playerCount).map((p, i) => `${i + 1}. ${p.name}`).join("\n");
+    const text = `${header}\n\n${playerList}\n\nCreated at WhosYurGoat.app`;
+    const url = `https://www.reddit.com/submit?title=${encodeURIComponent(header)}&selftext=true&text=${encodeURIComponent(text)}`;
     window.open(url, "_blank");
   };
 
@@ -511,9 +528,10 @@ export default function SocialGraphicGenerator({
                 View text version
               </summary>
               <div className="mt-3 p-4 bg-slate-900 rounded-lg font-mono text-xs text-slate-300 whitespace-pre-wrap">
-                {title}
-                {"\n"}{subtitle}
-                {"\n\n"}
+                {(title.toLowerCase().includes("peoples") || subtitle.toLowerCase().includes("today")) && players.length <= 5
+                  ? `My Top ${players.length} Today:`
+                  : `${title}\n${subtitle}`}
+                {"\n"}
                 {players.slice(0, 10).map((p, i) => `${i + 1}. ${p.name}`).join("\n")}
                 {"\n\n"}Create yours at WhosYurGoat.app
               </div>
