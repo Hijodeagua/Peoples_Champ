@@ -55,47 +55,56 @@ def load_all_time_players() -> List[AllTimePlayer]:
                 career_to = row.get('To', '').strip()
                 
                 try:
-                    career_ws = float(row.get('WS', 0))
+                    ws_val = row.get('WS', '0').strip() or '0'
+                    career_ws = float(ws_val)
                 except (ValueError, TypeError):
                     career_ws = 0.0
                 
                 try:
-                    games = int(row.get('G', 0))
+                    g_val = row.get('G', '0').strip() or '0'
+                    games = int(g_val)
                 except (ValueError, TypeError):
                     games = 0
                 
                 try:
-                    points = int(row.get('PTS', 0))
+                    pts_val = row.get('PTS', '0').strip() or '0'
+                    points = int(pts_val)
                 except (ValueError, TypeError):
                     points = 0
                 
                 try:
-                    rebounds = int(row.get('TRB', 0))
+                    trb_val = row.get('TRB', '0').strip() or '0'
+                    rebounds = int(trb_val)
                 except (ValueError, TypeError):
                     rebounds = 0
                 
                 try:
-                    assists = int(row.get('AST', 0))
+                    ast_val = row.get('AST', '0').strip() or '0'
+                    assists = int(ast_val)
                 except (ValueError, TypeError):
                     assists = 0
                 
                 try:
-                    steals = int(row.get('STL', 0))
+                    stl_val = row.get('STL', '0').strip() or '0'
+                    steals = int(stl_val)
                 except (ValueError, TypeError):
                     steals = 0
                 
                 try:
-                    blocks = int(row.get('BLK', 0))
+                    blk_val = row.get('BLK', '0').strip() or '0'
+                    blocks = int(blk_val)
                 except (ValueError, TypeError):
                     blocks = 0
                 
                 try:
-                    fg_pct = float(row.get('FG%', 0))
+                    fg_val = row.get('FG%', '0').strip() or '0'
+                    fg_pct = float(fg_val)
                 except (ValueError, TypeError):
                     fg_pct = 0.0
                 
                 try:
-                    ts_pct = float(row.get('TS%', 0))
+                    ts_val = row.get('TS%', '0').strip() or '0'
+                    ts_pct = float(ts_val)
                 except (ValueError, TypeError):
                     ts_pct = 0.0
                 

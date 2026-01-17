@@ -268,8 +268,8 @@ def build_player_stats(player_id: str) -> Optional[PlayerStats]:
     stat_ranks = get_cached_stat_ranks()
     
     def make_stat(stat_name: str) -> StatWithRank:
-        value, rank, percentile = stat_ranks[stat_name].get(player_id, (0, 0, 0))
-        return StatWithRank(value=value, rank=rank, percentile=percentile)
+        value, rank, percentile = stat_ranks[stat_name].get(player_id, (0, 0, 0.0))
+        return StatWithRank(value=float(value), rank=int(rank), percentile=float(percentile))
     
     return PlayerStats(
         games=make_stat('games'),
