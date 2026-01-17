@@ -218,3 +218,40 @@ export function getPlayerThumbnailUrl(playerName: string): string {
 export function hasPlayerImage(playerName: string): boolean {
   return playerName in NBA_PLAYER_IDS;
 }
+
+/**
+ * Get Basketball Reference headshot URL for all-time/historical players
+ * Uses the player's Basketball Reference ID (e.g., "jordami01" for Michael Jordan)
+ * @param bbrefId - Basketball Reference player ID
+ * @returns URL to player headshot
+ */
+export function getBBRefPlayerImageUrl(bbrefId: string): string {
+  if (!bbrefId) {
+    return `https://cdn.nba.com/headshots/nba/latest/1040x760/fallback.png`;
+  }
+  // Basketball Reference headshot URL format
+  return `https://www.basketball-reference.com/req/202106291/images/headshots/${bbrefId}.jpg`;
+}
+
+/**
+ * Get player image URL - tries NBA.com first (for current players), 
+ * then Basketball Reference (for historical players using their ID)
+ * @param playerName - Full player name
+ * @param bbrefId - Optional Basketball Reference player ID for historical players
+ * @returns URL to player headshot
+ */
+export function getPlayerImageUrlWithFallback(playerName: string, bbrefId?: string): string {
+  // First try NBA.com for current players
+  const nbaId = NBA_PLAYER_IDS[playerName];
+  if (nbaId) {
+    return `https://cdn.nba.com/headshots/nba/latest/1040x760/${nbaId}.png`;
+  }
+  
+  // Fall back to Basketball Reference for historical players
+  if (bbrefId) {
+    return getBBRefPlayerImageUrl(bbrefId);
+  }
+  
+  // Final fallback
+  return `https://cdn.nba.com/headshots/nba/latest/1040x760/fallback.png`;
+}

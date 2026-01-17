@@ -2,6 +2,7 @@ import { useState, useCallback } from "react";
 import SocialGraphicGenerator from "../components/SocialGraphicGenerator";
 import FeedbackLink from "../components/FeedbackLink";
 import apiClient from "../api/client";
+import { getPlayerImageUrlWithFallback } from "../utils/playerImages";
 
 type RankingSize = 10 | 50 | 100 | 0; // 0 = infinite
 
@@ -288,7 +289,15 @@ export default function AllTimeRankingsPage() {
               className="p-6 rounded-xl bg-slate-700/50 hover:bg-emerald-600/20 hover:border-emerald-500 border-2 border-transparent transition group disabled:opacity-50"
             >
               <div className="text-center">
-                <div className="text-3xl font-bold mb-2 group-hover:text-emerald-400 transition">
+                <img
+                  src={getPlayerImageUrlWithFallback(currentMatchup.player1_name, currentMatchup.player1_id)}
+                  alt={currentMatchup.player1_name}
+                  className="w-24 h-24 mx-auto mb-3 rounded-full object-cover bg-slate-600"
+                  onError={(e) => {
+                    (e.target as HTMLImageElement).src = 'https://cdn.nba.com/headshots/nba/latest/1040x760/fallback.png';
+                  }}
+                />
+                <div className="text-2xl font-bold mb-2 group-hover:text-emerald-400 transition">
                   {currentMatchup.player1_name}
                 </div>
                 <div className="text-slate-400">
@@ -307,7 +316,15 @@ export default function AllTimeRankingsPage() {
               className="p-6 rounded-xl bg-slate-700/50 hover:bg-emerald-600/20 hover:border-emerald-500 border-2 border-transparent transition group disabled:opacity-50"
             >
               <div className="text-center">
-                <div className="text-3xl font-bold mb-2 group-hover:text-emerald-400 transition">
+                <img
+                  src={getPlayerImageUrlWithFallback(currentMatchup.player2_name, currentMatchup.player2_id)}
+                  alt={currentMatchup.player2_name}
+                  className="w-24 h-24 mx-auto mb-3 rounded-full object-cover bg-slate-600"
+                  onError={(e) => {
+                    (e.target as HTMLImageElement).src = 'https://cdn.nba.com/headshots/nba/latest/1040x760/fallback.png';
+                  }}
+                />
+                <div className="text-2xl font-bold mb-2 group-hover:text-emerald-400 transition">
                   {currentMatchup.player2_name}
                 </div>
                 <div className="text-slate-400">

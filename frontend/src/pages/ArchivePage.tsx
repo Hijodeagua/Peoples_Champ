@@ -113,10 +113,13 @@ export default function ArchivePage() {
         </div>
       ) : (
       <div className="bg-slate-800/50 rounded-xl border border-slate-700 p-6">
-        <div className="mb-4 p-4 bg-amber-900/20 border border-amber-700/50 rounded-lg">
+        <div className="mb-4 p-4 bg-amber-900/20 border border-amber-700/50 rounded-lg space-y-2">
           <p className="text-amber-200 text-sm">
             <strong>🔓 Vault Access:</strong> All users can replay games from the past 7 days.
             Click "Replay" to vote on any matchup you missed!
+          </p>
+          <p className="text-amber-300/70 text-xs">
+            <strong>💎 Pro Tip:</strong> Want to see full player stats in the archive? Check out our <span className="text-amber-400 font-semibold">Pro level</span> (coming soon)!
           </p>
         </div>
 

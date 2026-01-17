@@ -15,6 +15,7 @@ from sqlalchemy.orm import Session
 
 from ..db.session import get_db
 from .. import models
+from ..core.all_time_players import get_cached_all_time_players, get_all_time_players_dict
 
 
 router = APIRouter()
@@ -187,15 +188,27 @@ def compute_rankings_from_scores(player_scores: dict, db: Session) -> List[Ranki
         reverse=True
     )
 
+    # Get all-time players dict for lookups
+    all_time_dict = get_all_time_players_dict()
+
     rankings = []
     for rank, (player_id, data) in enumerate(sorted_players, 1):
-        player = db.query(models.Player).filter(models.Player.id == player_id).first()
+        # Look up from all-time data first, fall back to DB
+        alltime_player = all_time_dict.get(player_id)
+        if alltime_player:
+            name, team, position = alltime_player.name, alltime_player.team, alltime_player.position
+        else:
+            player = db.query(models.Player).filter(models.Player.id == player_id).first()
+            name = player.name if player else player_id
+            team = player.team if player else None
+            position = player.position if player else None
+        
         rankings.append(RankingEntry(
             rank=rank,
             player_id=player_id,
-            player_name=player.name if player else player_id,
-            team=player.team if player else None,
-            position=player.position if player else None,
+            player_name=name,
+            team=team,
+            position=position,
             score=round(data['score'], 1),
             wins=data['wins'],
             losses=data['losses']
@@ -233,15 +246,16 @@ async def start_ranking(
         # Use provided player pool
         player_ids = request.player_pool
     else:
-        # Use default top players based on ranking_size
-        size = request.ranking_size if request.ranking_size > 0 else 100
-        players = db.query(models.Player).order_by(
-            models.Player.current_rating.desc()
-        ).limit(size).all()
-        player_ids = [p.id for p in players]
+        # Use all-time players from CSV (career stats)
+        all_time_players = get_cached_all_time_players()
+        size = request.ranking_size if request.ranking_size > 0 else len(all_time_players)
+        player_ids = [p.id for p in all_time_players[:size]]
 
     if len(player_ids) < 2:
         raise HTTPException(status_code=400, detail="Need at least 2 players to rank")
+
+    # Get all-time players dict for lookups
+    all_time_dict = get_all_time_players_dict()
 
     # Initialize player scores (Elo starting at 1500)
     player_scores = {
@@ -274,18 +288,35 @@ async def start_ranking(
     if not next_pair:
         raise HTTPException(status_code=500, detail="Could not generate first matchup")
 
-    player1 = db.query(models.Player).filter(models.Player.id == next_pair[0]).first()
-    player2 = db.query(models.Player).filter(models.Player.id == next_pair[1]).first()
+    # Look up players from all-time data first, fall back to DB
+    p1_alltime = all_time_dict.get(next_pair[0])
+    p2_alltime = all_time_dict.get(next_pair[1])
+    
+    if p1_alltime:
+        p1_name, p1_team, p1_pos = p1_alltime.name, p1_alltime.team, p1_alltime.position
+    else:
+        player1 = db.query(models.Player).filter(models.Player.id == next_pair[0]).first()
+        p1_name = player1.name if player1 else next_pair[0]
+        p1_team = player1.team if player1 else None
+        p1_pos = player1.position if player1 else None
+    
+    if p2_alltime:
+        p2_name, p2_team, p2_pos = p2_alltime.name, p2_alltime.team, p2_alltime.position
+    else:
+        player2 = db.query(models.Player).filter(models.Player.id == next_pair[1]).first()
+        p2_name = player2.name if player2 else next_pair[1]
+        p2_team = player2.team if player2 else None
+        p2_pos = player2.position if player2 else None
 
     first_matchup = MatchupOut(
         player1_id=next_pair[0],
-        player1_name=player1.name if player1 else next_pair[0],
-        player1_team=player1.team if player1 else None,
-        player1_position=player1.position if player1 else None,
+        player1_name=p1_name,
+        player1_team=p1_team,
+        player1_position=p1_pos,
         player2_id=next_pair[1],
-        player2_name=player2.name if player2 else next_pair[1],
-        player2_team=player2.team if player2 else None,
-        player2_position=player2.position if player2 else None,
+        player2_name=p2_name,
+        player2_team=p2_team,
+        player2_position=p2_pos,
     )
 
     return StartRankingResponse(
@@ -383,17 +414,36 @@ async def submit_vote(
 
     next_matchup = None
     if next_pair:
-        p1 = db.query(models.Player).filter(models.Player.id == next_pair[0]).first()
-        p2 = db.query(models.Player).filter(models.Player.id == next_pair[1]).first()
+        # Look up players from all-time data first, fall back to DB
+        all_time_dict = get_all_time_players_dict()
+        p1_alltime = all_time_dict.get(next_pair[0])
+        p2_alltime = all_time_dict.get(next_pair[1])
+        
+        if p1_alltime:
+            p1_name, p1_team, p1_pos = p1_alltime.name, p1_alltime.team, p1_alltime.position
+        else:
+            p1 = db.query(models.Player).filter(models.Player.id == next_pair[0]).first()
+            p1_name = p1.name if p1 else next_pair[0]
+            p1_team = p1.team if p1 else None
+            p1_pos = p1.position if p1 else None
+        
+        if p2_alltime:
+            p2_name, p2_team, p2_pos = p2_alltime.name, p2_alltime.team, p2_alltime.position
+        else:
+            p2 = db.query(models.Player).filter(models.Player.id == next_pair[1]).first()
+            p2_name = p2.name if p2 else next_pair[1]
+            p2_team = p2.team if p2 else None
+            p2_pos = p2.position if p2 else None
+        
         next_matchup = MatchupOut(
             player1_id=next_pair[0],
-            player1_name=p1.name if p1 else next_pair[0],
-            player1_team=p1.team if p1 else None,
-            player1_position=p1.position if p1 else None,
+            player1_name=p1_name,
+            player1_team=p1_team,
+            player1_position=p1_pos,
             player2_id=next_pair[1],
-            player2_name=p2.name if p2 else next_pair[1],
-            player2_team=p2.team if p2 else None,
-            player2_position=p2.position if p2 else None,
+            player2_name=p2_name,
+            player2_team=p2_team,
+            player2_position=p2_pos,
         )
 
     return VoteResponse(
