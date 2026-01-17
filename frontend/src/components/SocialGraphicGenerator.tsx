@@ -23,6 +23,63 @@ const FORMATS: Record<ImageFormat, { width: number; height: number; label: strin
   square: { width: 1080, height: 1080, label: "Square" },
 };
 
+// Team colors for jersey display (primary, secondary)
+const TEAM_COLORS: Record<string, [string, string]> = {
+  // Current teams
+  ATL: ["#E03A3E", "#C1D32F"],
+  BOS: ["#007A33", "#BA9653"],
+  BRK: ["#000000", "#FFFFFF"],
+  CHA: ["#1D1160", "#00788C"],
+  CHI: ["#CE1141", "#000000"],
+  CLE: ["#860038", "#FDBB30"],
+  DAL: ["#00538C", "#002B5E"],
+  DEN: ["#0E2240", "#FEC524"],
+  DET: ["#C8102E", "#1D42BA"],
+  GSW: ["#1D428A", "#FFC72C"],
+  HOU: ["#CE1141", "#000000"],
+  IND: ["#002D62", "#FDBB30"],
+  LAC: ["#C8102E", "#1D428A"],
+  LAL: ["#552583", "#FDB927"],
+  MEM: ["#5D76A9", "#12173F"],
+  MIA: ["#98002E", "#F9A01B"],
+  MIL: ["#00471B", "#EEE1C6"],
+  MIN: ["#0C2340", "#236192"],
+  NOP: ["#0C2340", "#C8102E"],
+  NYK: ["#006BB6", "#F58426"],
+  OKC: ["#007AC1", "#EF3B24"],
+  ORL: ["#0077C0", "#C4CED4"],
+  PHI: ["#006BB6", "#ED174C"],
+  PHO: ["#1D1160", "#E56020"],
+  POR: ["#E03A3E", "#000000"],
+  SAC: ["#5A2D81", "#63727A"],
+  SAS: ["#C4CED4", "#000000"],
+  TOR: ["#CE1141", "#000000"],
+  UTA: ["#002B5C", "#00471B"],
+  WAS: ["#002B5C", "#E31837"],
+  // Historical abbreviations
+  SEA: ["#00653A", "#FFC200"],
+  NJN: ["#002A60", "#CD1041"],
+  VAN: ["#00B2A9", "#E43C40"],
+  WSB: ["#002B5C", "#E31837"],
+  NOH: ["#0C2340", "#C8102E"],
+  NOK: ["#0C2340", "#C8102E"],
+  KCK: ["#C8102E", "#1D428A"],
+  SDC: ["#C8102E", "#1D428A"],
+  CHH: ["#1D1160", "#00788C"],
+};
+
+// Get primary team from team string (first 3-letter code)
+function getPrimaryTeam(teamStr: string | null | undefined): string {
+  if (!teamStr) return "UNK";
+  // Team string might be like "CLELALMIA" - take first 3 chars
+  return teamStr.substring(0, 3).toUpperCase();
+}
+
+function getTeamColors(teamStr: string | null | undefined): [string, string] {
+  const team = getPrimaryTeam(teamStr);
+  return TEAM_COLORS[team] || ["#374151", "#6B7280"]; // Default gray
+}
+
 export default function SocialGraphicGenerator({
   players,
   title,
@@ -33,6 +90,84 @@ export default function SocialGraphicGenerator({
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [format, setFormat] = useState<ImageFormat>("twitter");
   const [copied, setCopied] = useState(false);
+
+  // Draw a jersey shape
+  const drawJersey = (
+    ctx: CanvasRenderingContext2D,
+    x: number,
+    y: number,
+    width: number,
+    height: number,
+    primaryColor: string,
+    secondaryColor: string,
+    rank: number
+  ) => {
+    const w = width;
+    const h = height;
+    
+    // Jersey body
+    ctx.fillStyle = primaryColor;
+    ctx.beginPath();
+    // Neck
+    ctx.moveTo(x + w * 0.35, y);
+    ctx.lineTo(x + w * 0.65, y);
+    // Right shoulder
+    ctx.lineTo(x + w * 0.85, y + h * 0.15);
+    ctx.lineTo(x + w, y + h * 0.25);
+    // Right sleeve
+    ctx.lineTo(x + w, y + h * 0.4);
+    ctx.lineTo(x + w * 0.8, y + h * 0.35);
+    // Right side
+    ctx.lineTo(x + w * 0.85, y + h);
+    // Bottom
+    ctx.lineTo(x + w * 0.15, y + h);
+    // Left side
+    ctx.lineTo(x + w * 0.2, y + h * 0.35);
+    // Left sleeve
+    ctx.lineTo(x, y + h * 0.4);
+    ctx.lineTo(x, y + h * 0.25);
+    // Left shoulder
+    ctx.lineTo(x + w * 0.15, y + h * 0.15);
+    ctx.closePath();
+    ctx.fill();
+    
+    // Jersey trim/collar
+    ctx.strokeStyle = secondaryColor;
+    ctx.lineWidth = 3;
+    ctx.stroke();
+    
+    // Rank number on jersey
+    ctx.fillStyle = secondaryColor;
+    ctx.font = `bold ${h * 0.4}px -apple-system, BlinkMacSystemFont, sans-serif`;
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText(`${rank}`, x + w / 2, y + h * 0.55);
+  };
+
+  // Draw trophy case frame
+  const drawTrophyCase = (
+    ctx: CanvasRenderingContext2D,
+    x: number,
+    y: number,
+    width: number,
+    height: number
+  ) => {
+    // Wood frame
+    const frameWidth = 8;
+    ctx.fillStyle = "#8B4513"; // saddle brown
+    ctx.fillRect(x - frameWidth, y - frameWidth, width + frameWidth * 2, height + frameWidth * 2);
+    
+    // Inner shadow
+    ctx.fillStyle = "#5D3A1A";
+    ctx.fillRect(x - frameWidth / 2, y - frameWidth / 2, width + frameWidth, height + frameWidth);
+    
+    // Glass/background
+    const gradient = ctx.createLinearGradient(x, y, x, y + height);
+    gradient.addColorStop(0, "#1e293b");
+    gradient.addColorStop(1, "#0f172a");
+    ctx.fillStyle = gradient;
+    ctx.fillRect(x, y, width, height);
+  };
 
   const generateGraphic = async () => {
     const canvas = canvasRef.current;
@@ -45,100 +180,150 @@ export default function SocialGraphicGenerator({
     canvas.width = width;
     canvas.height = height;
 
-    // Background gradient
-    const gradient = ctx.createLinearGradient(0, 0, 0, height);
-    gradient.addColorStop(0, "#0f172a"); // slate-900
-    gradient.addColorStop(0.5, "#1e293b"); // slate-800
-    gradient.addColorStop(1, "#0f172a"); // slate-900
-    ctx.fillStyle = gradient;
+    // Background - light court color
+    const bgGradient = ctx.createLinearGradient(0, 0, 0, height);
+    bgGradient.addColorStop(0, "#e2e8f0"); // slate-200
+    bgGradient.addColorStop(0.5, "#f1f5f9"); // slate-100
+    bgGradient.addColorStop(1, "#e2e8f0"); // slate-200
+    ctx.fillStyle = bgGradient;
     ctx.fillRect(0, 0, width, height);
 
-    // Add decorative elements
-    ctx.fillStyle = "rgba(16, 185, 129, 0.1)"; // emerald with transparency
+    // Court lines decoration
+    ctx.strokeStyle = "rgba(148, 163, 184, 0.3)"; // slate-400 transparent
+    ctx.lineWidth = 2;
+    // Center circle
     ctx.beginPath();
-    ctx.arc(width * 0.9, height * 0.1, 200, 0, Math.PI * 2);
-    ctx.fill();
+    ctx.arc(width / 2, height * 0.45, Math.min(width, height) * 0.35, 0, Math.PI * 2);
+    ctx.stroke();
+    // Half court line
     ctx.beginPath();
-    ctx.arc(width * 0.1, height * 0.9, 150, 0, Math.PI * 2);
-    ctx.fill();
+    ctx.moveTo(0, height * 0.45);
+    ctx.lineTo(width, height * 0.45);
+    ctx.stroke();
 
-    // Scale factors based on format
     const scale = format === "instagram" ? 1.5 : format === "square" ? 1.2 : 1;
     const isVertical = format === "instagram";
 
-    // Title styling
-    ctx.fillStyle = "#10b981"; // emerald-500
-    ctx.font = `bold ${48 * scale}px -apple-system, BlinkMacSystemFont, sans-serif`;
-    ctx.textAlign = "center";
-    const titleY = isVertical ? 120 * scale : 80;
-    ctx.fillText(title, width / 2, titleY);
-
-    // Subtitle
-    ctx.fillStyle = "#94a3b8"; // slate-400
-    ctx.font = `${24 * scale}px -apple-system, BlinkMacSystemFont, sans-serif`;
-    const subtitleY = isVertical ? 180 * scale : 130;
-    ctx.fillText(subtitle, width / 2, subtitleY);
-
-    // Decorative line
-    ctx.strokeStyle = "#10b981";
-    ctx.lineWidth = 2;
+    // Title banner
+    const bannerHeight = 50 * scale;
+    ctx.fillStyle = "#1e293b"; // slate-800
+    ctx.fillRect(0, 0, width, bannerHeight + 10);
+    // Banner ribbon effect
     ctx.beginPath();
-    ctx.moveTo(width * 0.3, subtitleY + 30);
-    ctx.lineTo(width * 0.7, subtitleY + 30);
-    ctx.stroke();
+    ctx.moveTo(0, bannerHeight + 10);
+    ctx.lineTo(width * 0.05, bannerHeight + 25);
+    ctx.lineTo(width * 0.95, bannerHeight + 25);
+    ctx.lineTo(width, bannerHeight + 10);
+    ctx.fillStyle = "#334155"; // slate-700
+    ctx.fill();
 
-    // Player list
-    const startY = subtitleY + 60 * scale;
-    const itemHeight = isVertical ? 80 : format === "square" ? 65 : 50;
-    const maxPlayers = Math.min(players.length, isVertical ? 15 : format === "square" ? 10 : 8);
+    // Title text
+    ctx.fillStyle = "#ffffff";
+    ctx.font = `bold ${32 * scale}px -apple-system, BlinkMacSystemFont, sans-serif`;
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText("🐐 GOAT MT RUSHMORE 🐐", width / 2, bannerHeight / 2 + 5);
 
-    for (let i = 0; i < maxPlayers; i++) {
-      const player = players[i];
-      const y = startY + i * itemHeight;
-      const rowCenterX = width / 2;
+    // Mt Rushmore - Top 4 players with jerseys in trophy cases
+    const top4 = players.slice(0, 4);
+    const jerseyAreaY = bannerHeight + 40 * scale;
+    const jerseyWidth = format === "twitter" ? 140 : 120 * scale;
+    const jerseyHeight = jerseyWidth * 1.1;
+    const caseWidth = jerseyWidth + 30;
+    const caseHeight = jerseyHeight + 40;
+    const spacing = (width - caseWidth * 4) / 5;
 
-      // Medal/rank decoration for top 3
-      if (i < 3) {
-        const medals = ["#fbbf24", "#9ca3af", "#d97706"]; // gold, silver, bronze
-        ctx.fillStyle = medals[i];
-        ctx.beginPath();
-        ctx.arc(rowCenterX - 280 * (format === "twitter" ? 1 : scale), y - 5, 18 * scale, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.fillStyle = "#000000";
-        ctx.font = `bold ${16 * scale}px -apple-system, BlinkMacSystemFont, sans-serif`;
-        ctx.textAlign = "center";
-        ctx.fillText(`${i + 1}`, rowCenterX - 280 * (format === "twitter" ? 1 : scale), y + 2);
-      } else {
-        // Rank number
-        ctx.fillStyle = "#64748b"; // slate-500
-        ctx.font = `bold ${20 * scale}px -apple-system, BlinkMacSystemFont, sans-serif`;
-        ctx.textAlign = "center";
-        ctx.fillText(`${i + 1}`, rowCenterX - 280 * (format === "twitter" ? 1 : scale), y);
-      }
+    // Rank colors
+    const rankColors = ["#3B82F6", "#8B5CF6", "#10B981", "#EF4444"]; // blue, purple, green, red
 
-      // Player name
-      ctx.fillStyle = "#ffffff";
-      ctx.font = `${i < 3 ? "bold " : ""}${22 * scale}px -apple-system, BlinkMacSystemFont, sans-serif`;
-      ctx.textAlign = "left";
-      ctx.fillText(player.name, rowCenterX - 240 * (format === "twitter" ? 1 : scale), y);
+    for (let i = 0; i < Math.min(4, top4.length); i++) {
+      const player = top4[i];
+      const caseX = spacing + i * (caseWidth + spacing);
+      const caseY = jerseyAreaY;
+      
+      // Draw trophy case
+      drawTrophyCase(ctx, caseX, caseY, caseWidth, caseHeight);
+      
+      // Rank number above case
+      ctx.fillStyle = rankColors[i];
+      ctx.font = `bold ${36 * scale}px -apple-system, BlinkMacSystemFont, sans-serif`;
+      ctx.textAlign = "center";
+      ctx.fillText(`${i + 1}`, caseX + caseWidth / 2, caseY - 15);
+      
+      // Draw jersey
+      const [primary, secondary] = getTeamColors(player.team);
+      drawJersey(
+        ctx,
+        caseX + 15,
+        caseY + 15,
+        jerseyWidth,
+        jerseyHeight,
+        primary,
+        secondary,
+        i + 1
+      );
+      
+      // Player name below case
+      ctx.fillStyle = "#1e293b";
+      ctx.font = `bold ${18 * scale}px -apple-system, BlinkMacSystemFont, sans-serif`;
+      ctx.textAlign = "center";
+      // Get last name for cleaner display
+      const nameParts = player.name.split(" ");
+      const displayName = nameParts.length > 1 ? nameParts[nameParts.length - 1].toUpperCase() : player.name.toUpperCase();
+      ctx.fillText(displayName, caseX + caseWidth / 2, caseY + caseHeight + 25);
+    }
 
-      // Team badge (if available)
-      if (player.team) {
-        ctx.fillStyle = "#475569"; // slate-600
+    // Remaining players (5-10) as simple list
+    const listStartY = jerseyAreaY + caseHeight + 55 * scale;
+    const remainingPlayers = players.slice(4, 10);
+    
+    if (remainingPlayers.length > 0 && !isVertical) {
+      // Two columns for remaining players
+      const col1X = width * 0.2;
+      const col2X = width * 0.6;
+      const itemHeight = 28 * scale;
+
+      for (let i = 0; i < remainingPlayers.length; i++) {
+        const player = remainingPlayers[i];
+        const rank = i + 5;
+        const col = i < 3 ? 0 : 1;
+        const row = i < 3 ? i : i - 3;
+        const x = col === 0 ? col1X : col2X;
+        const y = listStartY + row * itemHeight;
+
+        // Rank
+        ctx.fillStyle = "#64748b";
         ctx.font = `${16 * scale}px -apple-system, BlinkMacSystemFont, sans-serif`;
         ctx.textAlign = "right";
-        ctx.fillText(player.team, rowCenterX + 280 * (format === "twitter" ? 1 : scale), y);
+        ctx.fillText(`${rank}.`, x - 10, y);
+
+        // Name
+        ctx.fillStyle = "#334155";
+        ctx.font = `${16 * scale}px -apple-system, BlinkMacSystemFont, sans-serif`;
+        ctx.textAlign = "left";
+        ctx.fillText(player.name, x, y);
+      }
+    } else if (isVertical) {
+      // Single column for Instagram
+      const itemHeight = 45 * scale;
+      for (let i = 0; i < Math.min(remainingPlayers.length, 6); i++) {
+        const player = remainingPlayers[i];
+        const rank = i + 5;
+        const y = listStartY + i * itemHeight;
+
+        ctx.fillStyle = "#64748b";
+        ctx.font = `${20 * scale}px -apple-system, BlinkMacSystemFont, sans-serif`;
+        ctx.textAlign = "center";
+        ctx.fillText(`${rank}. ${player.name}`, width / 2, y);
       }
     }
 
-    // Footer section
-    const footerY = height - (isVertical ? 150 : 60);
-
-    // Logo/brand area
-    ctx.fillStyle = "#10b981"; // emerald-500
-    ctx.font = `bold ${20 * scale}px -apple-system, BlinkMacSystemFont, sans-serif`;
+    // Footer
+    const footerY = height - 40 * scale;
+    ctx.fillStyle = "#10b981";
+    ctx.font = `bold ${18 * scale}px -apple-system, BlinkMacSystemFont, sans-serif`;
     ctx.textAlign = "center";
-    ctx.fillText("WhosYurGoat.app", width / 2, footerY);
+    ctx.fillText("WHOSYURGOAT.APP", width / 2, footerY);
 
     // Date
     const dateStr = new Date().toLocaleDateString("en-US", {
@@ -146,9 +331,9 @@ export default function SocialGraphicGenerator({
       day: "numeric",
       year: "numeric",
     });
-    ctx.fillStyle = "#64748b"; // slate-500
-    ctx.font = `${14 * scale}px -apple-system, BlinkMacSystemFont, sans-serif`;
-    ctx.fillText(dateStr, width / 2, footerY + 25 * scale);
+    ctx.fillStyle = "#64748b";
+    ctx.font = `${12 * scale}px -apple-system, BlinkMacSystemFont, sans-serif`;
+    ctx.fillText(dateStr, width / 2, footerY + 18 * scale);
   };
 
   const downloadImage = () => {
@@ -163,10 +348,10 @@ export default function SocialGraphicGenerator({
   };
 
   const copyToClipboard = async () => {
-    // Copy text version of rankings
+    // Copy text version of rankings (no team names)
     const text = players
       .slice(0, 10)
-      .map((p, i) => `${i + 1}. ${p.name}${p.team ? ` (${p.team})` : ""}`)
+      .map((p, i) => `${i + 1}. ${p.name}`)
       .join("\n");
 
     const fullText = `${title}\n${subtitle}\n\n${text}\n\nCreate yours at WhosYurGoat.app`;
@@ -329,7 +514,7 @@ export default function SocialGraphicGenerator({
                 {title}
                 {"\n"}{subtitle}
                 {"\n\n"}
-                {players.slice(0, 10).map((p, i) => `${i + 1}. ${p.name}${p.team ? ` (${p.team})` : ""}`).join("\n")}
+                {players.slice(0, 10).map((p, i) => `${i + 1}. ${p.name}`).join("\n")}
                 {"\n\n"}Create yours at WhosYurGoat.app
               </div>
             </details>
