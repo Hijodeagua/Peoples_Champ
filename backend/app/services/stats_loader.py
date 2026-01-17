@@ -41,11 +41,11 @@ class PlayerAdvancedStats:
     team: str
     position: str
     games: int
-    minutes: int
+    minutes: int         # May be 0 if not in CSV
     per: float          # Player Efficiency Rating
-    ts_pct: float       # True Shooting %
-    three_ar: float     # 3-Point Attempt Rate
-    ftr: float          # Free Throw Rate
+    ts_pct: float       # True Shooting % (may be 0 if not in CSV)
+    three_ar: float     # 3-Point Attempt Rate (may be 0 if not in CSV)
+    ftr: float          # Free Throw Rate (may be 0 if not in CSV)
     orb_pct: float      # Offensive Rebound %
     drb_pct: float      # Defensive Rebound %
     trb_pct: float      # Total Rebound %
@@ -62,6 +62,8 @@ class PlayerAdvancedStats:
     dbpm: float         # Defensive Box Plus/Minus
     bpm: float          # Box Plus/Minus
     vorp: float         # Value Over Replacement Player
+    ortg: float = 0.0   # Offensive Rating (new)
+    drtg: float = 0.0   # Defensive Rating (new)
 
 
 def safe_float(value: str, default: float = 0.0) -> float:
@@ -393,11 +395,11 @@ def load_advanced_csv(csv_path: str) -> Dict[str, PlayerAdvancedStats]:
                 team=row.get('Team', row.get('Tm', '')).strip() or '',
                 position=row.get('Pos', '').strip() or '',
                 games=safe_int(row.get('G', '0')),
-                minutes=safe_int(row.get('MP', '0')),
+                minutes=safe_int(row.get('MP', '0')),  # May be 0 in new CSV format
                 per=safe_float(row.get('PER', '0')),
-                ts_pct=safe_float(row.get('TS%', '0')),
-                three_ar=safe_float(row.get('3PAr', '0')),
-                ftr=safe_float(row.get('FTr', '0')),
+                ts_pct=safe_float(row.get('TS%', '0')),  # May be 0 in new CSV format
+                three_ar=safe_float(row.get('3PAr', '0')),  # May be 0 in new CSV format
+                ftr=safe_float(row.get('FTr', '0')),  # May be 0 in new CSV format
                 orb_pct=safe_float(row.get('ORB%', '0')),
                 drb_pct=safe_float(row.get('DRB%', '0')),
                 trb_pct=safe_float(row.get('TRB%', '0')),
@@ -414,6 +416,8 @@ def load_advanced_csv(csv_path: str) -> Dict[str, PlayerAdvancedStats]:
                 dbpm=safe_float(row.get('DBPM', '0')),
                 bpm=safe_float(row.get('BPM', '0')),
                 vorp=safe_float(row.get('VORP', '0')),
+                ortg=safe_float(row.get('ORtg', '0')),  # New field
+                drtg=safe_float(row.get('DRtg', '0')),  # New field
             )
             
             players[player_id] = stats
@@ -470,6 +474,8 @@ def combine_advanced_stats(
                 dbpm=round(curr.dbpm * curr_weight + prev.dbpm * prev_weight, 1),
                 bpm=round(curr.bpm * curr_weight + prev.bpm * prev_weight, 1),
                 vorp=round(curr.vorp + prev.vorp, 1),  # Cumulative
+                ortg=round(curr.ortg * curr_weight + prev.ortg * prev_weight, 1),  # Weighted average
+                drtg=round(curr.drtg * curr_weight + prev.drtg * prev_weight, 1),  # Weighted average
             )
         elif curr:
             combined[player_id] = curr

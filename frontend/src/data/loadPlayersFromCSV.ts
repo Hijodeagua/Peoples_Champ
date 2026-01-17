@@ -61,7 +61,7 @@ function mapRowToPlayer(row: Record<string, string | number | undefined>): Playe
   return {
     id: String(row["Player-additional"] ?? row.id ?? ""),
     name: String(row.Player ?? ""),
-    season: "2025-26", // Default to current season as requested
+    season: String(row.Season ?? "2025-26"), // Read from CSV or default
     age: toNumber(row.Age),
     team: String(row.Team ?? ""),
     games: toNumber(row.G),
