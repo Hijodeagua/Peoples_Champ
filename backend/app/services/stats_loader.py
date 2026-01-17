@@ -103,8 +103,8 @@ def load_pergame_csv(csv_path: str) -> Dict[str, PlayerPerGameStats]:
             if not player_name or player_name == 'League Average':
                 continue
             
-            # Get player ID from 'Player-additional' column
-            player_id = row.get('Player-additional', '').strip()
+            # Get player ID from '-9999' column (BBRef export format) or 'Player-additional'
+            player_id = row.get('-9999', row.get('Player-additional', '')).strip()
             if not player_id:
                 continue
             
@@ -385,7 +385,8 @@ def load_advanced_csv(csv_path: str) -> Dict[str, PlayerAdvancedStats]:
             if not player_name or player_name == 'League Average':
                 continue
             
-            player_id = row.get('Player-additional', '').strip()
+            # Get player ID from 'Player-additional' or '-9999' column (BBRef export formats)
+            player_id = row.get('Player-additional', row.get('-9999', '')).strip()
             if not player_id:
                 continue
             
