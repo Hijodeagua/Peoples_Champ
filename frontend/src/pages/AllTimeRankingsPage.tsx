@@ -1,7 +1,6 @@
-import { useState, useEffect, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useCallback } from "react";
 import SocialGraphicGenerator from "../components/SocialGraphicGenerator";
-import apiClient from "../api/client";
+import { api } from "../api/client";
 
 type RankingSize = 10 | 50 | 100 | 0; // 0 = infinite
 
@@ -27,20 +26,9 @@ interface RankingEntry {
   losses: number;
 }
 
-interface RankingState {
-  ranking_id: number;
-  ranking_size: number;
-  is_complete: boolean;
-  matchups_completed: number;
-  total_matchups: number | null;
-  current_rankings: RankingEntry[];
-  share_slug: string | null;
-}
-
 type GamePhase = "select" | "playing" | "results";
 
 export default function AllTimeRankingsPage() {
-  const navigate = useNavigate();
   const [phase, setPhase] = useState<GamePhase>("select");
   const [rankingSize, setRankingSize] = useState<RankingSize>(10);
   const [loading, setLoading] = useState(false);
@@ -70,7 +58,7 @@ export default function AllTimeRankingsPage() {
     setError(null);
 
     try {
-      const response = await apiClient.post("/all-time/start", {
+      const response = await api.post("/all-time/start", {
         ranking_size: rankingSize,
       }, {
         headers: {
@@ -99,7 +87,7 @@ export default function AllTimeRankingsPage() {
     setError(null);
 
     try {
-      const response = await apiClient.put(`/all-time/${rankingId}/vote`, {
+      const response = await api.put(`/all-time/${rankingId}/vote`, {
         winner_id: winnerId,
       }, {
         headers: {
@@ -131,7 +119,7 @@ export default function AllTimeRankingsPage() {
     setError(null);
 
     try {
-      const response = await apiClient.post(`/all-time/${rankingId}/complete`, {
+      const response = await api.post(`/all-time/${rankingId}/complete`, {
         generate_share_link: true,
       }, {
         headers: {
@@ -452,6 +440,7 @@ export default function AllTimeRankingsPage() {
           title="My All-Time GOAT List"
           subtitle={`Top ${Math.min(rankings.length, 15)} Players`}
           onClose={() => setShowShareModal(false)}
+          shareUrl={shareSlug ? `https://whosyurgoat.app/share/alltime/${shareSlug}` : undefined}
         />
       )}
     </div>

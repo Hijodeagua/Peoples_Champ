@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
-import SortableRankingsTable, { PlayerData } from "../components/SortableRankingsTable";
-import apiClient from "../api/client";
+import SortableRankingsTable, { type PlayerData } from "../components/SortableRankingsTable";
+import { api } from "../api/client";
 
 type ViewMode = "stats" | "rankings";
 
@@ -51,7 +51,7 @@ export default function Top100Page() {
 
       try {
         // Try to load from API
-        const response = await apiClient.get("/players/");
+        const response = await api.get("/players/");
         const playersData = response.data;
 
         // Transform to PlayerData format

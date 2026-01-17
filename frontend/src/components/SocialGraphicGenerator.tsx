@@ -181,7 +181,6 @@ export default function SocialGraphicGenerator({
   };
 
   const shareToTwitter = () => {
-    const playerNames = players.slice(0, 5).map((p) => p.name).join(", ");
     const text = `My ${title}:\n\n${players.slice(0, 5).map((p, i) => `${i + 1}. ${p.name}`).join("\n")}\n\nCreate yours at`;
     const url = shareUrl || "https://whosyurgoat.app";
     const tweetUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`;
