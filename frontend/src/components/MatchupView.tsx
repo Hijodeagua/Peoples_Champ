@@ -52,16 +52,16 @@ function getStatData(stats: PlayerStats | AdvancedStats, statKey: string): {
 }
 
 // Percentile bar component with position rank
-function PercentileBar({ 
-  value, 
-  percentile, 
-  label, 
+function PercentileBar({
+  value,
+  percentile,
+  label,
   posRank,
   posCount,
-  isPercentage = false 
-}: { 
-  value: number | null; 
-  percentile: number | null; 
+  isPercentage = false
+}: {
+  value: number | null;
+  percentile: number | null;
   label: string;
   posRank?: number | null;
   posCount?: number | null;
@@ -69,7 +69,7 @@ function PercentileBar({
 }) {
   const pctl = percentile ?? 0;
   const displayValue = value ?? 0;
-  
+
   // Color based on percentile
   const getBarColor = (p: number) => {
     if (p >= 90) return "bg-emerald-500";
@@ -79,26 +79,26 @@ function PercentileBar({
     return "bg-red-400";
   };
 
-  const formattedValue = isPercentage 
-    ? `${displayValue.toFixed(1)}%` 
+  const formattedValue = isPercentage
+    ? `${displayValue.toFixed(1)}%`
     : displayValue.toFixed(1);
 
   // Format position rank display
   const posRankDisplay = posRank && posCount ? `#${posRank}/${posCount}` : null;
 
   return (
-    <div className="flex items-center gap-2 text-xs">
-      <span className="w-10 text-slate-400 font-medium">{label}</span>
-      <div className="flex-1 h-2 bg-slate-700 rounded-full overflow-hidden">
-        <div 
+    <div className="flex items-center gap-1 sm:gap-2 text-[10px] sm:text-xs">
+      <span className="w-8 sm:w-10 text-slate-400 font-medium shrink-0">{label}</span>
+      <div className="flex-1 min-w-0 h-2 bg-slate-700 rounded-full overflow-hidden">
+        <div
           className={`h-full ${getBarColor(pctl)} transition-all duration-300`}
           style={{ width: `${Math.max(pctl, 2)}%` }}
         />
       </div>
-      <span className="w-12 text-right font-semibold">{formattedValue}</span>
-      <span className="w-10 text-slate-500 text-right">{pctl.toFixed(0)}%</span>
+      <span className="w-10 sm:w-12 text-right font-semibold shrink-0">{formattedValue}</span>
+      <span className="w-8 sm:w-10 text-slate-500 text-right shrink-0">{pctl.toFixed(0)}%</span>
       {posRankDisplay && (
-        <span className="w-14 text-slate-400 text-right text-[10px]">{posRankDisplay}</span>
+        <span className="hidden sm:inline w-14 text-slate-400 text-right text-[10px] shrink-0">{posRankDisplay}</span>
       )}
     </div>
   );
@@ -135,44 +135,44 @@ function PlayerCard({
     <button
       type="button"
       onClick={onClick}
-      className={`w-full text-left rounded-xl p-5 shadow border transition hover:bg-slate-800/50 bg-slate-800/30 backdrop-blur cursor-pointer ${
+      className={`w-full text-left rounded-xl p-3 sm:p-5 shadow border transition hover:bg-slate-800/50 bg-slate-800/30 backdrop-blur cursor-pointer ${
         isSelected ? "border-2 border-emerald-500 ring-2 ring-emerald-500/20" : "border-slate-700"
       }`}
     >
-      <div className="flex items-center gap-4 mb-4">
+      <div className="flex items-center gap-2 sm:gap-4 mb-3 sm:mb-4">
         <img
           src={getPlayerImageUrl(player.name)}
           alt={player.name}
-          className="w-20 h-16 object-cover rounded-lg bg-slate-700"
+          className="w-16 h-12 sm:w-20 sm:h-16 object-cover rounded-lg bg-slate-700 shrink-0"
           onError={(e) => {
             (e.target as HTMLImageElement).style.display = 'none';
           }}
         />
-        <div className="flex-1">
-          <div className="flex items-center justify-between">
-            <p className="text-xl font-bold">{player.name}</p>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center justify-between gap-2">
+            <p className="text-base sm:text-xl font-bold truncate">{player.name}</p>
             {stats?.games && (
-              <span className="text-xs text-slate-500 bg-slate-800 px-2 py-1 rounded">
+              <span className="text-[10px] sm:text-xs text-slate-500 bg-slate-800 px-1.5 sm:px-2 py-0.5 sm:py-1 rounded shrink-0">
                 {stats.games} GP
               </span>
             )}
           </div>
-          <p className="text-sm text-slate-400">
+          <p className="text-xs sm:text-sm text-slate-400 truncate">
             {player.team} {player.position && `• ${player.position}`}
           </p>
         </div>
       </div>
-      
+
       {currentStats && (
-        <div className="space-y-2 mt-4 pt-4 border-t border-slate-700">
+        <div className="space-y-1.5 sm:space-y-2 mt-3 sm:mt-4 pt-3 sm:pt-4 border-t border-slate-700">
           {statsToShow.map((statKey) => {
             const { value, pctl, posRank } = getStatData(currentStats, statKey);
             const label = labelMap[statKey] || statKey.toUpperCase();
             return (
-              <PercentileBar 
+              <PercentileBar
                 key={statKey}
-                label={label} 
-                value={value} 
+                label={label}
+                value={value}
                 percentile={pctl}
                 posRank={!isAdvancedMode ? posRank : null}
                 posCount={!isAdvancedMode ? posCount : null}

@@ -301,16 +301,16 @@ export default function AllTimeRankingsPage() {
         </div>
 
         {/* Matchup View */}
-        <div className="bg-slate-800/50 rounded-xl border border-slate-700 p-6 mb-6">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-xl font-bold text-slate-300">
+        <div className="bg-slate-800/50 rounded-xl border border-slate-700 p-4 sm:p-6 mb-6">
+          <div className="flex items-center justify-between mb-4 sm:mb-6">
+            <h2 className="text-lg sm:text-xl font-bold text-slate-300">
               Who's the better player all-time?
             </h2>
             <button
               onClick={() => setShowStats(!showStats)}
-              className={`px-3 py-1.5 text-sm rounded-lg transition ${
-                showStats 
-                  ? 'bg-amber-500 text-black font-semibold' 
+              className={`px-3 py-1.5 text-xs sm:text-sm rounded-lg transition ${
+                showStats
+                  ? 'bg-amber-500 text-black font-semibold'
                   : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
               }`}
             >
@@ -318,29 +318,36 @@ export default function AllTimeRankingsPage() {
             </button>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          {/* Error Message - Display prominently if present */}
+          {error && (
+            <div className="mb-4 p-3 bg-red-900/60 border-2 border-red-600 text-red-100 rounded-lg text-sm font-medium">
+              ⚠️ {error}
+            </div>
+          )}
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
             {/* Player 1 */}
             <button
               onClick={() => submitVote(currentMatchup.player1_id)}
               disabled={loading}
-              className="p-6 rounded-xl bg-slate-700/50 hover:bg-emerald-600/20 hover:border-emerald-500 border-2 border-transparent transition group disabled:opacity-50"
+              className="p-4 sm:p-6 rounded-xl bg-slate-700/50 hover:bg-emerald-600/20 hover:border-emerald-500 border-2 border-transparent transition group disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <div className="text-center">
                 <img
                   src={getPlayerImageUrlWithFallback(currentMatchup.player1_name, currentMatchup.player1_id)}
                   alt={currentMatchup.player1_name}
-                  className="w-24 h-24 mx-auto mb-3 rounded-full object-cover bg-slate-600"
+                  className="w-20 h-20 sm:w-24 sm:h-24 mx-auto mb-2 sm:mb-3 rounded-full object-cover bg-slate-600"
                   onError={(e) => {
                     (e.target as HTMLImageElement).src = 'https://cdn.nba.com/headshots/nba/latest/1040x760/fallback.png';
                   }}
                 />
-                <div className="text-2xl font-bold mb-2 group-hover:text-emerald-400 transition">
+                <div className="text-xl sm:text-2xl font-bold mb-1 sm:mb-2 group-hover:text-emerald-400 transition">
                   {currentMatchup.player1_name}
                 </div>
-                <div className="text-slate-400">
+                <div className="text-sm sm:text-base text-slate-400">
                   {currentMatchup.player1_team || "—"}
                 </div>
-                <div className="text-sm text-slate-500 mt-1">
+                <div className="text-xs sm:text-sm text-slate-500 mt-1">
                   {currentMatchup.player1_position || "—"}
                 </div>
                 
@@ -394,12 +401,15 @@ export default function AllTimeRankingsPage() {
                     </div>
                     
                     {/* Advanced Stats Toggle */}
-                    <button
+                    <div
                       onClick={(e) => { e.stopPropagation(); setShowAdvancedStats(!showAdvancedStats); }}
-                      className="mt-3 text-xs text-amber-400 hover:text-amber-300 underline"
+                      className="mt-3 text-xs text-amber-400 hover:text-amber-300 underline cursor-pointer"
+                      role="button"
+                      tabIndex={0}
+                      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.stopPropagation(); setShowAdvancedStats(!showAdvancedStats); } }}
                     >
                       {showAdvancedStats ? 'Hide Advanced' : 'See Advanced Stats'}
-                    </button>
+                    </div>
                     
                     {showAdvancedStats && (
                       <div className="mt-2 p-2 bg-slate-800/50 rounded text-xs">
@@ -423,24 +433,24 @@ export default function AllTimeRankingsPage() {
             <button
               onClick={() => submitVote(currentMatchup.player2_id)}
               disabled={loading}
-              className="p-6 rounded-xl bg-slate-700/50 hover:bg-emerald-600/20 hover:border-emerald-500 border-2 border-transparent transition group disabled:opacity-50"
+              className="p-4 sm:p-6 rounded-xl bg-slate-700/50 hover:bg-emerald-600/20 hover:border-emerald-500 border-2 border-transparent transition group disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <div className="text-center">
                 <img
                   src={getPlayerImageUrlWithFallback(currentMatchup.player2_name, currentMatchup.player2_id)}
                   alt={currentMatchup.player2_name}
-                  className="w-24 h-24 mx-auto mb-3 rounded-full object-cover bg-slate-600"
+                  className="w-20 h-20 sm:w-24 sm:h-24 mx-auto mb-2 sm:mb-3 rounded-full object-cover bg-slate-600"
                   onError={(e) => {
                     (e.target as HTMLImageElement).src = 'https://cdn.nba.com/headshots/nba/latest/1040x760/fallback.png';
                   }}
                 />
-                <div className="text-2xl font-bold mb-2 group-hover:text-emerald-400 transition">
+                <div className="text-xl sm:text-2xl font-bold mb-1 sm:mb-2 group-hover:text-emerald-400 transition">
                   {currentMatchup.player2_name}
                 </div>
-                <div className="text-slate-400">
+                <div className="text-sm sm:text-base text-slate-400">
                   {currentMatchup.player2_team || "—"}
                 </div>
-                <div className="text-sm text-slate-500 mt-1">
+                <div className="text-xs sm:text-sm text-slate-500 mt-1">
                   {currentMatchup.player2_position || "—"}
                 </div>
                 
@@ -494,12 +504,15 @@ export default function AllTimeRankingsPage() {
                     </div>
                     
                     {/* Advanced Stats Toggle */}
-                    <button
+                    <div
                       onClick={(e) => { e.stopPropagation(); setShowAdvancedStats(!showAdvancedStats); }}
-                      className="mt-3 text-xs text-amber-400 hover:text-amber-300 underline"
+                      className="mt-3 text-xs text-amber-400 hover:text-amber-300 underline cursor-pointer"
+                      role="button"
+                      tabIndex={0}
+                      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.stopPropagation(); setShowAdvancedStats(!showAdvancedStats); } }}
                     >
                       {showAdvancedStats ? 'Hide Advanced' : 'See Advanced Stats'}
-                    </button>
+                    </div>
                     
                     {showAdvancedStats && (
                       <div className="mt-2 p-2 bg-slate-800/50 rounded text-xs">
@@ -556,13 +569,6 @@ export default function AllTimeRankingsPage() {
                 </div>
               )}
             </div>
-          </div>
-        )}
-
-        {error && (
-          <div className="mt-4 p-3 bg-red-900/40 border border-red-700 text-red-200 rounded-lg text-sm">
-            {error}
-            <FeedbackLink variant="compact" className="mt-2 block" />
           </div>
         )}
       </div>
