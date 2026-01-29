@@ -12,6 +12,14 @@ DATA_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__
 # Historical/advanced stats are in the root data folder
 ROOT_DATA_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__)))), "data")
 
+
+@dataclass
+class RingerRankedPlayer:
+    """A player from the Ringer Top 100 list"""
+    rank: int
+    name: str
+    team: str
+
 @dataclass
 class PlayerPerGameStats:
     """Per-game stats for a player"""
@@ -581,3 +589,77 @@ def get_advanced_stats_with_percentiles(
         # Lower TOV% is better
         "tov_pct_pctl": 100 - calculate_percentile(player_stats.tov_pct, all_tov_pct),
     }
+
+
+# ============== RINGER RANKINGS LOADING ==============
+
+_ringer_cache: Optional[List[RingerRankedPlayer]] = None
+
+
+def load_ringer_rankings() -> List[RingerRankedPlayer]:
+    """
+    Load the Ringer Top 100 rankings from CSV.
+    Returns a list of RingerRankedPlayer sorted by rank.
+    """
+    global _ringer_cache
+
+    if _ringer_cache is not None:
+        return _ringer_cache
+
+    ringer_csv = os.path.join(ROOT_DATA_DIR, "ringer_top_100.csv")
+
+    if not os.path.exists(ringer_csv):
+        print(f"Warning: Ringer rankings CSV not found: {ringer_csv}")
+        return []
+
+    players = []
+
+    with open(ringer_csv, 'r', encoding='utf-8') as file:
+        reader = csv.DictReader(file)
+
+        for row in reader:
+            rank = safe_int(row.get('Rank', '0'))
+            name = row.get('Player', '').strip()
+            team = row.get('Team', '').strip()
+
+            if rank > 0 and name:
+                players.append(RingerRankedPlayer(
+                    rank=rank,
+                    name=name,
+                    team=team,
+                ))
+
+    # Sort by rank
+    players.sort(key=lambda p: p.rank)
+    _ringer_cache = players
+
+    print(f"[StatsLoader] Loaded {len(players)} Ringer ranked players")
+    return players
+
+
+def get_ringer_top_n(n: int = 50) -> List[RingerRankedPlayer]:
+    """
+    Get the top N players from the Ringer rankings.
+
+    Args:
+        n: Number of top players to return (default 50)
+
+    Returns:
+        List of top N RingerRankedPlayer objects
+    """
+    all_players = load_ringer_rankings()
+    return all_players[:n]
+
+
+def get_ringer_player_names(n: int = 50) -> List[str]:
+    """
+    Get just the names of the top N Ringer-ranked players.
+
+    Args:
+        n: Number of top players to return (default 50)
+
+    Returns:
+        List of player names
+    """
+    top_players = get_ringer_top_n(n)
+    return [p.name for p in top_players]

@@ -1,10 +1,17 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import SocialGraphicGenerator from "../components/SocialGraphicGenerator";
 import FeedbackLink from "../components/FeedbackLink";
 import apiClient from "../api/client";
 import { getPlayerImageUrlWithFallback } from "../utils/playerImages";
 
 type RankingSize = 10 | 50 | 100 | 0; // 0 = infinite
+
+interface Preset {
+  id: string;
+  name: string;
+  description: string;
+  player_count: number;
+}
 
 interface StatWithRank {
   value: number;
@@ -58,6 +65,9 @@ export default function AllTimeRankingsPage() {
   const [rankingSize, setRankingSize] = useState<RankingSize>(10);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [presets, setPresets] = useState<Preset[]>([]);
+  const [selectedPreset, setSelectedPreset] = useState<string | null>(null);
+  const [presetsLoading, setPresetsLoading] = useState(true);
 
   // Game state
   const [rankingId, setRankingId] = useState<number | null>(null);
@@ -80,14 +90,35 @@ export default function AllTimeRankingsPage() {
     return sessionId;
   }, []);
 
+  // Fetch available presets on mount
+  useEffect(() => {
+    const fetchPresets = async () => {
+      try {
+        const response = await apiClient.get("/all-time/presets");
+        setPresets(response.data.presets);
+      } catch (err) {
+        console.error("Failed to fetch presets:", err);
+      } finally {
+        setPresetsLoading(false);
+      }
+    };
+    fetchPresets();
+  }, []);
+
   const startRanking = async () => {
     setLoading(true);
     setError(null);
 
     try {
-      const response = await apiClient.post("/all-time/start", {
-        ranking_size: rankingSize,
-      }, {
+      const requestBody: { ranking_size: number; preset_id?: string } = {
+        ranking_size: selectedPreset ? 0 : rankingSize, // Use infinite for presets (full list)
+      };
+
+      if (selectedPreset) {
+        requestBody.preset_id = selectedPreset;
+      }
+
+      const response = await apiClient.post("/all-time/start", requestBody, {
         headers: {
           "X-Session-Id": getSessionId(),
         }
@@ -182,6 +213,7 @@ export default function AllTimeRankingsPage() {
     setTotalMatchups(null);
     setShareSlug(null);
     setError(null);
+    setSelectedPreset(null);
   };
 
   // Selection Phase UI
@@ -195,8 +227,53 @@ export default function AllTimeRankingsPage() {
       </header>
 
       <div className="space-y-6">
+        {/* Preset Selection */}
+        {!presetsLoading && presets.length > 0 && (
+          <div className="bg-slate-800/50 rounded-xl border border-slate-700 p-6">
+            <h2 className="text-xl font-bold mb-2">Preset Rankings</h2>
+            <p className="text-sm text-slate-400 mb-4">Choose a curated list of players</p>
+            <div className="space-y-3">
+              {presets.map((preset) => (
+                <button
+                  key={preset.id}
+                  onClick={() => {
+                    setSelectedPreset(selectedPreset === preset.id ? null : preset.id);
+                  }}
+                  className={`w-full p-4 rounded-lg border-2 transition text-left ${
+                    selectedPreset === preset.id
+                      ? "border-amber-500 bg-amber-500/10"
+                      : "border-slate-600 hover:border-slate-500"
+                  }`}
+                >
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <div className="font-bold text-lg">{preset.name}</div>
+                      <div className="text-sm text-slate-400">{preset.description}</div>
+                    </div>
+                    <div className="text-right">
+                      <div className="text-amber-400 font-semibold">{preset.player_count} players</div>
+                      <div className="text-xs text-slate-500">
+                        {Math.round((preset.player_count * (preset.player_count - 1)) / 2).toLocaleString()} matchups
+                      </div>
+                    </div>
+                  </div>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Divider */}
+        {!presetsLoading && presets.length > 0 && (
+          <div className="flex items-center gap-4">
+            <div className="flex-1 h-px bg-slate-700"></div>
+            <span className="text-slate-500 text-sm">or choose a challenge size</span>
+            <div className="flex-1 h-px bg-slate-700"></div>
+          </div>
+        )}
+
         {/* Mode Selection */}
-        <div className="bg-slate-800/50 rounded-xl border border-slate-700 p-6">
+        <div className={`bg-slate-800/50 rounded-xl border border-slate-700 p-6 ${selectedPreset ? 'opacity-50' : ''}`}>
           <h2 className="text-xl font-bold mb-4">Choose Your Challenge</h2>
           <div className="grid grid-cols-2 gap-4">
             {[
@@ -207,12 +284,16 @@ export default function AllTimeRankingsPage() {
             ].map(({ size, label, desc, time }) => (
               <button
                 key={size}
-                onClick={() => setRankingSize(size as RankingSize)}
+                onClick={() => {
+                  setRankingSize(size as RankingSize);
+                  setSelectedPreset(null); // Clear preset when selecting size
+                }}
+                disabled={!!selectedPreset}
                 className={`p-4 rounded-lg border-2 transition text-left ${
-                  rankingSize === size
+                  rankingSize === size && !selectedPreset
                     ? "border-emerald-500 bg-emerald-500/10"
                     : "border-slate-600 hover:border-slate-500"
-                }`}
+                } ${selectedPreset ? 'cursor-not-allowed' : ''}`}
               >
                 <div className="font-bold text-lg">{label}</div>
                 <div className="text-sm text-slate-400">{desc}</div>
@@ -239,12 +320,18 @@ export default function AllTimeRankingsPage() {
         <button
           onClick={startRanking}
           disabled={loading}
-          className="w-full py-4 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-black font-bold text-lg transition disabled:opacity-50 disabled:cursor-not-allowed"
+          className={`w-full py-4 rounded-xl font-bold text-lg transition disabled:opacity-50 disabled:cursor-not-allowed ${
+            selectedPreset
+              ? 'bg-amber-500 hover:bg-amber-400 text-black'
+              : 'bg-emerald-500 hover:bg-emerald-400 text-black'
+          }`}
         >
           {loading ? (
             <span className="flex items-center justify-center gap-2">
               <span className="animate-spin">⏳</span> Starting...
             </span>
+          ) : selectedPreset ? (
+            `Start ${presets.find(p => p.id === selectedPreset)?.name || 'Preset'} Ranking`
           ) : (
             `Start ${rankingSize === 0 ? "Infinite" : `Top ${rankingSize}`} Ranking`
           )}

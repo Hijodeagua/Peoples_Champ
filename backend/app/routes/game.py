@@ -12,7 +12,7 @@ from sqlalchemy.orm import Session
 
 from ..db.session import get_db
 from .. import models
-from ..services.stats_loader import get_stats_with_percentiles, get_top_stats_for_position, get_advanced_stats_with_percentiles
+from ..services.stats_loader import get_stats_with_percentiles, get_top_stats_for_position, get_advanced_stats_with_percentiles, get_ringer_player_names
 
 
 router = APIRouter(prefix="/game", tags=["game"])
@@ -344,42 +344,87 @@ def get_today(db: Session = Depends(get_db), season: str = "current"):
 
     if not daily_set:
         print(f"[/game/today] No daily set for {today}, creating new one...")
-        # Select exactly 5 players for the daily set, prioritizing top players
+        # Select exactly 5 players for the daily set from Ringer Top 50
         player_count = db.query(models.Player).count()
         print(f"[/game/today] Total players in DB: {player_count}")
-        
-        # Get top 25 players by win shares, then use weighted selection
-        top_players = (
-            db.query(models.Player)
-            .order_by(models.Player.total_ws.desc())
-            .limit(25)
-            .all()
-        )
-        
-        if len(top_players) >= 5:
-            # Use weighted selection favoring top stars
+
+        # Get Ringer Top 50 player names
+        ringer_top_50_names = get_ringer_player_names(50)
+        print(f"[/game/today] Ringer Top 50 names loaded: {len(ringer_top_50_names)}")
+
+        # Find matching players in the database
+        # Use ILIKE for case-insensitive matching
+        ringer_players = []
+        for name in ringer_top_50_names:
+            player = db.query(models.Player).filter(
+                models.Player.name.ilike(f"%{name}%")
+            ).first()
+            if player:
+                ringer_players.append(player)
+
+        print(f"[/game/today] Found {len(ringer_players)} Ringer Top 50 players in DB")
+
+        if len(ringer_players) >= 5:
+            # Use weighted selection favoring higher-ranked Ringer players
             import random
             weights = []
-            for i, player in enumerate(top_players):
-                if i < 10:  # Top 10 superstars
+            for i, player in enumerate(ringer_players):
+                if i < 10:  # Ringer Top 10 superstars
                     weight = 10
-                elif i < 20:  # Next 10 stars
+                elif i < 25:  # Ringer 11-25 stars
                     weight = 5
-                else:  # Remaining players (20-30)
-                    weight = 1
+                else:  # Ringer 26-50
+                    weight = 2
                 weights.append(weight)
-            
-            players = random.choices(top_players, weights=weights, k=5)
-            print(f"[/game/today] Selected {len(players)} weighted top players")
+
+            # Select 5 unique players
+            selected_players = []
+            available_indices = list(range(len(ringer_players)))
+            available_weights = weights.copy()
+
+            while len(selected_players) < 5 and available_indices:
+                chosen_idx = random.choices(available_indices, weights=available_weights, k=1)[0]
+                selected_players.append(ringer_players[chosen_idx])
+                # Remove chosen player from available pool
+                idx_pos = available_indices.index(chosen_idx)
+                available_indices.pop(idx_pos)
+                available_weights.pop(idx_pos)
+
+            players = selected_players
+            print(f"[/game/today] Selected {len(players)} Ringer Top 50 players: {[p.name for p in players]}")
         else:
-            # Fallback to random if not enough top players
-            players = (
+            # Fallback to top 25 by win shares if not enough Ringer players found
+            print(f"[/game/today] Not enough Ringer players, falling back to Win Shares ranking")
+            top_players = (
                 db.query(models.Player)
-                .order_by(func.random())
-                .limit(5)
+                .order_by(models.Player.total_ws.desc())
+                .limit(25)
                 .all()
             )
-            print(f"[/game/today] Selected {len(players)} random players (fallback)")
+
+            if len(top_players) >= 5:
+                import random
+                weights = []
+                for i, player in enumerate(top_players):
+                    if i < 10:
+                        weight = 10
+                    elif i < 20:
+                        weight = 5
+                    else:
+                        weight = 1
+                    weights.append(weight)
+
+                players = random.choices(top_players, weights=weights, k=5)
+                print(f"[/game/today] Selected {len(players)} weighted top players (fallback)")
+            else:
+                # Final fallback to random
+                players = (
+                    db.query(models.Player)
+                    .order_by(func.random())
+                    .limit(5)
+                    .all()
+                )
+                print(f"[/game/today] Selected {len(players)} random players (final fallback)")
         
         if len(players) < 5:
             raise HTTPException(status_code=400, detail=f"Not enough players to build daily set. Found {len(players)}, need 5.")

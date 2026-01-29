@@ -16,6 +16,7 @@ from sqlalchemy.orm import Session
 from ..db.session import get_db
 from .. import models
 from ..core.all_time_players import get_cached_all_time_players, get_all_time_players_dict
+from ..core.goat_presets import get_preset, get_all_presets, get_preset_player_ids, GoatPreset
 
 
 router = APIRouter()
@@ -27,6 +28,7 @@ class StartRankingRequest(BaseModel):
     ranking_size: int  # 10, 50, 100, or 0 for infinite
     player_pool: Optional[List[str]] = None  # Custom list of player IDs
     custom_list_code: Optional[str] = None  # Use existing custom list
+    preset_id: Optional[str] = None  # Use a preset list (e.g., "nba75_mvps")
 
 
 class StartRankingResponse(BaseModel):
@@ -330,6 +332,36 @@ def compute_rankings_from_scores(player_scores: dict, db: Session) -> List[Ranki
 
 # ============ API Endpoints ============
 
+class PresetOut(BaseModel):
+    id: str
+    name: str
+    description: str
+    player_count: int
+
+
+class PresetsResponse(BaseModel):
+    presets: List[PresetOut]
+
+
+@router.get("/presets", response_model=PresetsResponse)
+async def list_presets():
+    """
+    Get all available preset player lists for GOAT rankings.
+    """
+    presets = get_all_presets()
+    return PresetsResponse(
+        presets=[
+            PresetOut(
+                id=p.id,
+                name=p.name,
+                description=p.description,
+                player_count=len(p.player_ids)
+            )
+            for p in presets
+        ]
+    )
+
+
 @router.post("/start", response_model=StartRankingResponse)
 async def start_ranking(
     request: StartRankingRequest,
@@ -345,7 +377,17 @@ async def start_ranking(
     # Determine player pool
     player_ids = []
 
-    if request.custom_list_code:
+    if request.preset_id:
+        # Use a preset list
+        preset_players = get_preset_player_ids(request.preset_id)
+        if not preset_players:
+            raise HTTPException(status_code=404, detail=f"Preset '{request.preset_id}' not found")
+        # Filter to only players that exist in our all-time database
+        all_time_dict = get_all_time_players_dict()
+        player_ids = [pid for pid in preset_players if pid in all_time_dict]
+        if len(player_ids) < 2:
+            raise HTTPException(status_code=400, detail="Not enough valid players in preset")
+    elif request.custom_list_code:
         # Use existing custom list
         custom_list = db.query(models.CustomList).filter(
             models.CustomList.share_code == request.custom_list_code
