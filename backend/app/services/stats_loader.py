@@ -7,10 +7,32 @@ import os
 from typing import Dict, List, Optional
 from dataclasses import dataclass
 
-# Path to data directories
-DATA_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "data")
+# Path to data directories (resolved to absolute paths for security)
+DATA_DIR = os.path.abspath(os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "data"))
 # Historical/advanced stats are in the root data folder
-ROOT_DATA_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__)))), "data")
+ROOT_DATA_DIR = os.path.abspath(os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__)))), "data"))
+
+
+def is_safe_path(base_dir: str, file_path: str) -> bool:
+    """
+    Validate that a file path is within the expected base directory.
+    Prevents path traversal attacks (e.g., ../../../etc/passwd).
+    """
+    # Resolve both paths to absolute paths
+    base_dir = os.path.abspath(base_dir)
+    file_path = os.path.abspath(file_path)
+    # Check if the file path starts with the base directory
+    return file_path.startswith(base_dir + os.sep) or file_path == base_dir
+
+
+def validate_csv_filename(filename: str) -> bool:
+    """
+    Validate that a filename is a safe CSV filename.
+    Only allows alphanumeric characters, underscores, hyphens, and the .csv extension.
+    """
+    import re
+    pattern = re.compile(r'^[a-zA-Z0-9_\-]+\.csv$')
+    return bool(pattern.match(filename))
 
 
 @dataclass
@@ -608,6 +630,11 @@ def load_ringer_rankings() -> List[RingerRankedPlayer]:
 
     ringer_csv = os.path.join(ROOT_DATA_DIR, "ringer_top_100.csv")
 
+    # Security: Validate the path is within expected directory
+    if not is_safe_path(ROOT_DATA_DIR, ringer_csv):
+        print(f"Security Warning: Invalid path for Ringer CSV: {ringer_csv}")
+        return []
+
     if not os.path.exists(ringer_csv):
         print(f"Warning: Ringer rankings CSV not found: {ringer_csv}")
         return []
@@ -622,12 +649,26 @@ def load_ringer_rankings() -> List[RingerRankedPlayer]:
             name = row.get('Player', '').strip()
             team = row.get('Team', '').strip()
 
-            if rank > 0 and name:
-                players.append(RingerRankedPlayer(
-                    rank=rank,
-                    name=name,
-                    team=team,
-                ))
+            # Validate rank is within reasonable bounds
+            if rank <= 0 or rank > 500:
+                continue
+
+            # Validate and sanitize name (allow letters, spaces, hyphens, apostrophes, periods)
+            if not name or len(name) > 100:
+                continue
+            # Remove any potentially dangerous characters
+            import re
+            name = re.sub(r'[<>"\';\\]', '', name)
+
+            # Sanitize team name as well
+            if team:
+                team = re.sub(r'[<>"\';\\]', '', team)[:100]
+
+            players.append(RingerRankedPlayer(
+                rank=rank,
+                name=name,
+                team=team,
+            ))
 
     # Sort by rank
     players.sort(key=lambda p: p.rank)

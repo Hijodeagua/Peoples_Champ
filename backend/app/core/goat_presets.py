@@ -2,8 +2,23 @@
 GOAT preset player lists for the all-time ranking feature.
 These presets provide curated lists of players for common ranking scenarios.
 """
+import re
 from typing import List, Dict, Optional
 from dataclasses import dataclass
+
+
+# Valid player ID pattern (Basketball Reference format: lowercase letters + 2 digits)
+VALID_PLAYER_ID_PATTERN = re.compile(r'^[a-z]{2,10}[a-z0-9]{2}$')
+
+
+def is_valid_player_id(player_id: str) -> bool:
+    """
+    Validate that a player ID matches expected Basketball Reference format.
+    Examples: 'jamesle01', 'jordami01', 'curryst01'
+    """
+    if not player_id or not isinstance(player_id, str):
+        return False
+    return bool(VALID_PLAYER_ID_PATTERN.match(player_id))
 
 
 @dataclass
@@ -12,6 +27,12 @@ class GoatPreset:
     name: str
     description: str
     player_ids: List[str]
+
+    def __post_init__(self):
+        """Validate all player IDs on initialization."""
+        invalid_ids = [pid for pid in self.player_ids if not is_valid_player_id(pid)]
+        if invalid_ids:
+            raise ValueError(f"Invalid player IDs in preset '{self.id}': {invalid_ids[:5]}")
 
 
 # NBA Top 75 Anniversary Team (2021) + Recent MVPs
@@ -172,8 +193,28 @@ GOAT_PRESETS: Dict[str, GoatPreset] = {
 }
 
 
+# Set of allowed preset IDs for validation
+ALLOWED_PRESET_IDS = frozenset(["nba75_mvps", "modern_superstars", "90s_legends"])
+
+
+def is_valid_preset_id(preset_id: str) -> bool:
+    """
+    Validate that a preset ID is in the allowed list.
+    This provides defense-in-depth against arbitrary key access.
+    """
+    return preset_id in ALLOWED_PRESET_IDS
+
+
 def get_preset(preset_id: str) -> Optional[GoatPreset]:
-    """Get a preset by ID."""
+    """
+    Get a preset by ID.
+    Returns None if preset_id is invalid or not found.
+    """
+    if not preset_id or not isinstance(preset_id, str):
+        return None
+    # Only allow access to explicitly defined preset IDs
+    if not is_valid_preset_id(preset_id):
+        return None
     return GOAT_PRESETS.get(preset_id)
 
 
@@ -183,6 +224,12 @@ def get_all_presets() -> List[GoatPreset]:
 
 
 def get_preset_player_ids(preset_id: str) -> Optional[List[str]]:
-    """Get player IDs for a preset."""
+    """
+    Get player IDs for a preset.
+    Returns None if preset_id is invalid or not found.
+    """
     preset = get_preset(preset_id)
-    return preset.player_ids if preset else None
+    if not preset:
+        return None
+    # Return a copy to prevent modification of the original list
+    return list(preset.player_ids)

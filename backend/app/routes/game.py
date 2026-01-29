@@ -13,6 +13,27 @@ from sqlalchemy.orm import Session
 from ..db.session import get_db
 from .. import models
 from ..services.stats_loader import get_stats_with_percentiles, get_top_stats_for_position, get_advanced_stats_with_percentiles, get_ringer_player_names
+import re
+
+
+def sanitize_player_name_for_search(name: str) -> str:
+    """
+    Sanitize a player name for safe use in database ILIKE queries.
+    Escapes SQL LIKE wildcards and removes potentially dangerous characters.
+    """
+    if not name:
+        return ""
+    # First, remove any characters that aren't typically in player names
+    # Allow: letters (including accented), spaces, hyphens, apostrophes, periods
+    sanitized = re.sub(r"[^a-zA-Z\s\-'.À-ÿ]", "", name)
+    # Escape SQL LIKE special characters (%, _, \)
+    sanitized = sanitized.replace("\\", "\\\\")
+    sanitized = sanitized.replace("%", "\\%")
+    sanitized = sanitized.replace("_", "\\_")
+    # Collapse multiple spaces and trim
+    sanitized = re.sub(r'\s+', ' ', sanitized).strip()
+    # Limit length
+    return sanitized[:100] if sanitized else ""
 
 
 router = APIRouter(prefix="/game", tags=["game"])
@@ -353,11 +374,15 @@ def get_today(db: Session = Depends(get_db), season: str = "current"):
         print(f"[/game/today] Ringer Top 50 names loaded: {len(ringer_top_50_names)}")
 
         # Find matching players in the database
-        # Use ILIKE for case-insensitive matching
+        # Use ILIKE for case-insensitive matching with sanitized names
         ringer_players = []
         for name in ringer_top_50_names:
+            # Sanitize the name to prevent SQL injection via LIKE wildcards
+            safe_name = sanitize_player_name_for_search(name)
+            if not safe_name:
+                continue
             player = db.query(models.Player).filter(
-                models.Player.name.ilike(f"%{name}%")
+                models.Player.name.ilike(f"%{safe_name}%")
             ).first()
             if player:
                 ringer_players.append(player)

@@ -4,13 +4,14 @@ Allows users to create and manage their all-time GOAT rankings.
 """
 import json
 import random
+import re
 import secrets
 import hashlib
 from datetime import datetime
 from typing import List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Header
-from pydantic import BaseModel
+from pydantic import BaseModel, field_validator
 from sqlalchemy.orm import Session
 
 from ..db.session import get_db
@@ -22,6 +23,40 @@ from ..core.goat_presets import get_preset, get_all_presets, get_preset_player_i
 router = APIRouter()
 
 
+# ============ Security Validation Helpers ============
+
+# Pattern for valid player IDs (alphanumeric with limited special chars)
+VALID_PLAYER_ID_PATTERN = re.compile(r'^[a-zA-Z0-9_-]{1,50}$')
+# Pattern for valid preset IDs (lowercase alphanumeric with underscores)
+VALID_PRESET_ID_PATTERN = re.compile(r'^[a-z0-9_]{1,30}$')
+# Pattern for share codes/slugs (URL-safe base64 chars)
+VALID_SHARE_CODE_PATTERN = re.compile(r'^[a-zA-Z0-9_-]{1,20}$')
+# Max lengths
+MAX_PLAYER_POOL_SIZE = 500
+MAX_LIST_NAME_LENGTH = 100
+MAX_LIST_DESCRIPTION_LENGTH = 500
+
+
+def validate_player_id(player_id: str) -> bool:
+    """Validate that a player ID matches expected format."""
+    return bool(VALID_PLAYER_ID_PATTERN.match(player_id))
+
+
+def validate_preset_id(preset_id: str) -> bool:
+    """Validate that a preset ID matches expected format."""
+    return bool(VALID_PRESET_ID_PATTERN.match(preset_id))
+
+
+def validate_share_code(code: str) -> bool:
+    """Validate that a share code/slug matches expected format."""
+    return bool(VALID_SHARE_CODE_PATTERN.match(code))
+
+
+def sanitize_player_ids(player_ids: List[str]) -> List[str]:
+    """Filter and return only valid player IDs."""
+    return [pid for pid in player_ids if validate_player_id(pid)]
+
+
 # ============ Pydantic Schemas ============
 
 class StartRankingRequest(BaseModel):
@@ -29,6 +64,38 @@ class StartRankingRequest(BaseModel):
     player_pool: Optional[List[str]] = None  # Custom list of player IDs
     custom_list_code: Optional[str] = None  # Use existing custom list
     preset_id: Optional[str] = None  # Use a preset list (e.g., "nba75_mvps")
+
+    @field_validator('ranking_size')
+    @classmethod
+    def validate_ranking_size(cls, v):
+        if v not in [0, 10, 50, 100]:
+            raise ValueError('ranking_size must be 0, 10, 50, or 100')
+        return v
+
+    @field_validator('preset_id')
+    @classmethod
+    def validate_preset_id(cls, v):
+        if v is not None and not validate_preset_id(v):
+            raise ValueError('Invalid preset_id format')
+        return v
+
+    @field_validator('custom_list_code')
+    @classmethod
+    def validate_custom_list_code(cls, v):
+        if v is not None and not validate_share_code(v):
+            raise ValueError('Invalid custom_list_code format')
+        return v
+
+    @field_validator('player_pool')
+    @classmethod
+    def validate_player_pool(cls, v):
+        if v is not None:
+            if len(v) > MAX_PLAYER_POOL_SIZE:
+                raise ValueError(f'player_pool cannot exceed {MAX_PLAYER_POOL_SIZE} players')
+            invalid_ids = [pid for pid in v if not validate_player_id(pid)]
+            if invalid_ids:
+                raise ValueError(f'Invalid player IDs: {invalid_ids[:3]}')
+        return v
 
 
 class StartRankingResponse(BaseModel):
@@ -73,6 +140,13 @@ class MatchupOut(BaseModel):
 
 class VoteRequest(BaseModel):
     winner_id: str
+
+    @field_validator('winner_id')
+    @classmethod
+    def validate_winner_id(cls, v):
+        if not validate_player_id(v):
+            raise ValueError('Invalid winner_id format')
+        return v
 
 
 class VoteResponse(BaseModel):
@@ -120,6 +194,37 @@ class CreateListRequest(BaseModel):
     description: Optional[str] = None
     player_ids: List[str]
     is_public: bool = False
+
+    @field_validator('name')
+    @classmethod
+    def validate_name(cls, v):
+        if not v or len(v.strip()) == 0:
+            raise ValueError('name cannot be empty')
+        if len(v) > MAX_LIST_NAME_LENGTH:
+            raise ValueError(f'name cannot exceed {MAX_LIST_NAME_LENGTH} characters')
+        # Sanitize name - remove any potential HTML/script tags
+        v = re.sub(r'<[^>]*>', '', v)
+        return v.strip()
+
+    @field_validator('description')
+    @classmethod
+    def validate_description(cls, v):
+        if v is not None:
+            if len(v) > MAX_LIST_DESCRIPTION_LENGTH:
+                raise ValueError(f'description cannot exceed {MAX_LIST_DESCRIPTION_LENGTH} characters')
+            # Sanitize description - remove any potential HTML/script tags
+            v = re.sub(r'<[^>]*>', '', v)
+        return v
+
+    @field_validator('player_ids')
+    @classmethod
+    def validate_player_ids(cls, v):
+        if len(v) > MAX_PLAYER_POOL_SIZE:
+            raise ValueError(f'player_ids cannot exceed {MAX_PLAYER_POOL_SIZE} players')
+        invalid_ids = [pid for pid in v if not validate_player_id(pid)]
+        if invalid_ids:
+            raise ValueError(f'Invalid player IDs: {invalid_ids[:3]}')
+        return v
 
 
 class CreateListResponse(BaseModel):
@@ -371,8 +476,7 @@ async def start_ranking(
     """
     Start a new all-time ranking session.
     """
-    if request.ranking_size not in [0, 10, 50, 100]:
-        raise HTTPException(status_code=400, detail="ranking_size must be 0, 10, 50, or 100")
+    # Note: ranking_size validation is now handled by Pydantic field_validator
 
     # Determine player pool
     player_ids = []
@@ -696,6 +800,10 @@ async def get_shared_ranking(
     """
     Get a shared all-time ranking by its share slug.
     """
+    # Validate share_slug format to prevent injection
+    if not validate_share_code(share_slug):
+        raise HTTPException(status_code=400, detail="Invalid share slug format")
+
     ranking = db.query(models.AllTimeRanking).filter(
         models.AllTimeRanking.share_slug == share_slug
     ).first()
@@ -774,6 +882,10 @@ async def get_custom_list(
     """
     Get a custom list by its share code.
     """
+    # Validate share_code format to prevent injection
+    if not validate_share_code(share_code):
+        raise HTTPException(status_code=400, detail="Invalid share code format")
+
     custom_list = db.query(models.CustomList).filter(
         models.CustomList.share_code == share_code
     ).first()
