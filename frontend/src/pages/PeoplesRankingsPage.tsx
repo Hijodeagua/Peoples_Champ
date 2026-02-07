@@ -112,7 +112,7 @@ export default function PeoplesRankingsPage() {
           };
         });
 
-      const response = await fetch("http://localhost:8000/analysis/generate", {
+      const response = await fetch(`${import.meta.env.VITE_API_URL || ''}/analysis/generate`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ 
@@ -146,7 +146,7 @@ export default function PeoplesRankingsPage() {
     setRating(score);
     
     try {
-      await fetch("http://localhost:8000/analysis/feedback", {
+      await fetch(`${import.meta.env.VITE_API_URL || ''}/analysis/feedback`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ analysis_text: analysis, rating: score }),
@@ -159,9 +159,9 @@ export default function PeoplesRankingsPage() {
 
   if (loading) {
     return (
-      <div className="max-w-6xl mx-auto px-4 py-16 text-center">
-        <div className="text-4xl mb-4">📊</div>
-        <p className="text-xl text-slate-300">Loading rankings...</p>
+      <div className="max-w-6xl mx-auto px-4 py-16 text-center page-enter">
+        <div className="animate-spin rounded-full h-10 w-10 border-2 border-slate-700 border-t-emerald-500 mx-auto mb-4"></div>
+        <p className="text-sm text-slate-500">Loading rankings...</p>
       </div>
     );
   }
@@ -169,19 +169,22 @@ export default function PeoplesRankingsPage() {
   if (error) {
     return (
       <div className="max-w-6xl mx-auto px-4 py-16">
-        <div className="bg-red-900/40 border border-red-700 text-red-200 p-6 rounded-xl text-center">
-          <p className="text-xl font-semibold mb-2">Error</p>
-          <p>{error}</p>
+        <div className="card-elevated p-6 max-w-md mx-auto text-center">
+          <p className="font-semibold text-slate-200 mb-2">Error Loading Rankings</p>
+          <p className="text-sm text-slate-400">{error}</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="max-w-6xl mx-auto px-4 py-8">
+    <div className="max-w-6xl mx-auto px-4 py-8 page-enter">
       <header className="text-center space-y-3 mb-8">
-        <h1 className="text-4xl font-bold">People's Rankings</h1>
-        <p className="text-slate-300 max-w-2xl mx-auto">
+        <p className="text-xs uppercase tracking-[0.2em] text-emerald-400/80 font-semibold">
+          CROWD CONSENSUS
+        </p>
+        <h1 className="text-4xl font-bold">People&apos;s Rankings</h1>
+        <p className="text-slate-400 max-w-2xl mx-auto text-sm">
           Rankings based on simulated head-to-head matchups blending analytics and expert opinion.
         </p>
         

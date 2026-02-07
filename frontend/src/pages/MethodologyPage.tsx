@@ -1,131 +1,151 @@
+import { Link } from "react-router-dom";
+
+const sections = [
+  {
+    title: "Data Sources",
+    color: "emerald",
+    content: (
+      <div className="space-y-3">
+        <p>
+          All player statistics are pulled from{" "}
+          <a
+            href="https://www.basketball-reference.com"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-emerald-400 hover:underline font-medium"
+          >
+            Basketball Reference
+          </a>
+          , the most comprehensive and trusted source for NBA statistics.
+        </p>
+        <p>
+          We focus on <strong className="text-slate-100">regular season statistics</strong> from
+          recent seasons to determine who is the best player right now. This approach
+          captures recent performance while filtering out small sample sizes and recency bias.
+        </p>
+      </div>
+    ),
+  },
+  {
+    title: "The Ringer NBA Top 100",
+    color: "emerald",
+    content: (
+      <div className="space-y-3">
+        <p>
+          We reference{" "}
+          <a
+            href="https://nbarankings.theringer.com/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-emerald-400 hover:underline font-medium"
+          >
+            The Ringer&apos;s NBA Top 100
+          </a>{" "}
+          as an external benchmark for player rankings.
+        </p>
+        <p>
+          The Ringer&apos;s rankings are created by a panel of NBA experts and provide a
+          comparison point for our data-driven approach. When you complete the daily game,
+          we show how your rankings compare to both our internal model and The Ringer&apos;s
+          expert consensus.
+        </p>
+      </div>
+    ),
+  },
+  {
+    title: "ELO and People's Rankings",
+    color: "emerald",
+    content: (
+      <div className="space-y-3">
+        <p>
+          Our ranking system uses an <strong className="text-slate-100">ELO rating algorithm</strong>{" "}
+          similar to those used in chess and competitive gaming. Each player starts with a base
+          rating, and their score adjusts based on head-to-head matchup results from user votes.
+        </p>
+        <p>
+          The <strong className="text-slate-100">People&apos;s Rankings</strong> aggregate all user
+          choices from the daily game across the entire site. Over time, this creates a
+          crowd-sourced ranking that reflects the collective opinion of basketball fans,
+          weighted by statistical performance.
+        </p>
+      </div>
+    ),
+  },
+  {
+    title: "Daily Game Format",
+    color: "emerald",
+    content: (
+      <div className="space-y-3">
+        <p>
+          Each day, we select 5 players and present you with all 10 possible head-to-head
+          matchups between them. Your choices reveal your implicit ranking of those 5 players.
+        </p>
+        <p>
+          This pairwise comparison method is more reliable than asking users to rank players
+          directly, as it forces concrete decisions between specific players rather than
+          abstract rankings.
+        </p>
+        <p>
+          At the end of each daily game, we show how your ranking compares to our ELO model,
+          the site-wide People&apos;s Rankings, and The Ringer&apos;s expert rankings.
+        </p>
+      </div>
+    ),
+  },
+];
+
 export default function MethodologyPage() {
   return (
-    <div className="max-w-4xl mx-auto px-4 py-8">
+    <div className="max-w-3xl mx-auto px-4 py-8 page-enter">
       <header className="text-center space-y-3 mb-10">
+        <p className="text-xs uppercase tracking-[0.2em] text-emerald-400/80 font-semibold">
+          BEHIND THE SCENES
+        </p>
         <h1 className="text-4xl font-bold">Methodology</h1>
-        <p className="text-slate-300">
+        <p className="text-slate-400 text-sm">
           How we determine who the best player is right now
         </p>
       </header>
 
-      <div className="space-y-8 text-slate-200">
-        <section className="bg-slate-800/50 rounded-xl border border-slate-700 p-6 space-y-4">
-          <h2 className="text-2xl font-bold text-emerald-400">Data Sources</h2>
-          <div className="space-y-3">
-            <p>
-              All player statistics are pulled from{" "}
-              <a
-                href="https://www.basketball-reference.com"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-emerald-400 hover:underline"
-              >
-                Basketball Reference
-              </a>
-              , the most comprehensive and trusted source for NBA statistics.
-            </p>
-            <p>
-              We focus exclusively on <strong>regular season statistics</strong> from the{" "}
-              <strong>two seasons prior to the current year</strong>. This approach captures recent
-              performance while filtering out small sample sizes and recency bias.
-            </p>
-            <p>
-              As of November 2024, we are analyzing data from the 2023-24 and 2024-25 seasons to
-              determine who is the best player right now.
-            </p>
-          </div>
-        </section>
+      <div className="space-y-6">
+        {sections.map(({ title, content }, idx) => (
+          <section key={idx} className="card-elevated p-6">
+            <h2 className="text-xl font-bold text-emerald-400 mb-4">{title}</h2>
+            <div className="text-slate-300 text-sm leading-relaxed">
+              {content}
+            </div>
+          </section>
+        ))}
 
-        <section className="bg-slate-800/50 rounded-xl border border-slate-700 p-6 space-y-4">
-          <h2 className="text-2xl font-bold text-emerald-400">The Ringer NBA Top 100</h2>
-          <div className="space-y-3">
+        {/* Feedback Section */}
+        <section className="glass rounded-2xl p-6 border-amber-700/30">
+          <h2 className="text-xl font-bold text-amber-400 mb-3">Feedback & Bug Reports</h2>
+          <div className="text-slate-300 text-sm space-y-3">
             <p>
-              We also reference{" "}
-              <a
-                href="https://nbarankings.theringer.com/"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-emerald-400 hover:underline"
-              >
-                The Ringer's NBA Top 100
-              </a>{" "}
-              as an external benchmark for player rankings.
+              Found a bug? Have a feature request? We&apos;d love to hear from you!
             </p>
-            <p>
-              The Ringer's rankings are created by a panel of NBA experts and provide a valuable
-              comparison point for our data-driven approach. When you complete the daily game, we'll
-              show how your rankings compare to both our internal model and The Ringer's expert
-              consensus.
-            </p>
-          </div>
-        </section>
-
-        <section className="bg-slate-800/50 rounded-xl border border-slate-700 p-6 space-y-4">
-          <h2 className="text-2xl font-bold text-emerald-400">ELO and Peoples Rankings</h2>
-          <div className="space-y-3">
-            <p>
-              Our ranking system uses an <strong>ELO rating algorithm</strong> similar to those used
-              in chess and competitive gaming. Each player starts with a base rating, and their
-              score adjusts based on head-to-head matchup results from user votes.
-            </p>
-            <p>
-              The <strong>Peoples Rankings</strong> aggregate all user choices from the daily game
-              across the entire site. Over time, this creates a crowd-sourced ranking that reflects
-              the collective opinion of basketball fans, weighted by statistical performance.
-            </p>
-            <p>
-              By combining internal ELO calculations with aggregate user data, we create a dynamic
-              ranking system that balances statistical excellence with subjective evaluation—just
-              like real NBA debates.
-            </p>
-          </div>
-        </section>
-
-        <section className="bg-slate-800/50 rounded-xl border border-slate-700 p-6 space-y-4">
-          <h2 className="text-2xl font-bold text-emerald-400">Daily Game Format</h2>
-          <div className="space-y-3">
-            <p>
-              Each day, we select 5 players and present you with all 10 possible head-to-head
-              matchups between them. Your choices reveal your implicit ranking of those 5 players.
-            </p>
-            <p>
-              This pairwise comparison method is more reliable than asking users to rank players
-              directly, as it forces you to make concrete decisions between specific players rather
-              than abstract rankings.
-            </p>
-            <p>
-              At the end of each daily game, we show you how your ranking compares to our ELO model,
-              the site-wide Peoples Rankings, and The Ringer's expert rankings.
-            </p>
-          </div>
-        </section>
-
-        <section className="bg-amber-900/20 rounded-xl border border-amber-700/50 p-6 space-y-4">
-          <h2 className="text-2xl font-bold text-amber-400">Feedback & Bug Reports</h2>
-          <div className="space-y-3">
-            <p>
-              Found a bug? Have a feature request? We'd love to hear from you!
-            </p>
-            <p>
+            <p className="text-slate-500">
               This project is in active development and your feedback helps us improve.
             </p>
             <a
               href="https://forms.gle/xFGFXCDMsxuNAmK57"
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-block px-6 py-3 rounded-xl bg-amber-500 hover:bg-amber-400 text-black font-bold transition"
+              className="btn-gold text-sm inline-block"
             >
-              Submit Feedback 📝
+              Submit Feedback
             </a>
           </div>
         </section>
+      </div>
 
-        <div className="text-center text-sm text-slate-400 pt-6">
-          <p>
-            Questions or feedback? This methodology will continue to evolve as we gather more data
-            and refine our models.
-          </p>
-        </div>
+      <div className="text-center pt-8 space-y-3">
+        <p className="text-xs text-slate-600">
+          This methodology evolves as we gather more data and refine our models.
+        </p>
+        <Link to="/daily" className="btn-primary text-sm inline-block">
+          Play Today&apos;s Game
+        </Link>
       </div>
     </div>
   );

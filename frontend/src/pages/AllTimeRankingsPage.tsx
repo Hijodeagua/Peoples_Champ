@@ -60,6 +60,57 @@ interface RankingEntry {
 
 type GamePhase = "select" | "playing" | "results";
 
+// Stat display component for all-time player cards
+function PlayerStatGrid({ stats, showAdvanced }: { stats: PlayerStats; showAdvanced: boolean }) {
+  return (
+    <div className="mt-4 pt-4 border-t border-slate-600/50 text-left">
+      <div className="text-xs text-slate-500 mb-2">
+        {stats.career_from} - {stats.career_to}
+      </div>
+      <div className="grid grid-cols-2 gap-2 text-sm">
+        {[
+          { label: "G", stat: stats.games },
+          { label: "PTS", stat: stats.points },
+          { label: "REB", stat: stats.rebounds },
+          { label: "AST", stat: stats.assists },
+          { label: "STL", stat: stats.steals },
+          { label: "BLK", stat: stats.blocks },
+          { label: "FG%", stat: stats.fg_pct, isPct: true },
+          { label: "WS", stat: stats.win_shares, isWS: true },
+        ].map(({ label, stat, isPct, isWS }) => (
+          <div key={label}>
+            <span className="text-slate-500">{label}:</span>{' '}
+            <span className={`${isWS ? 'text-amber-400' : 'text-white'} font-medium`}>
+              {isPct ? `${(stat.value * 100).toFixed(1)}%` : stat.value.toLocaleString()}
+            </span>
+            <span className="text-xs text-emerald-400/70 ml-1">#{stat.rank}</span>
+          </div>
+        ))}
+      </div>
+
+      {showAdvanced && (
+        <div className="mt-3 p-2.5 bg-slate-800/60 rounded-lg text-xs">
+          <div className="text-slate-500 mb-1.5 font-medium">Percentiles (vs 200 all-time greats)</div>
+          <div className="grid grid-cols-3 gap-1.5">
+            {[
+              { label: "PTS", pctl: stats.points.percentile },
+              { label: "REB", pctl: stats.rebounds.percentile },
+              { label: "AST", pctl: stats.assists.percentile },
+              { label: "TS%", pctl: stats.ts_pct.percentile },
+              { label: "WS", pctl: stats.win_shares.percentile },
+              { label: "G", pctl: stats.games.percentile },
+            ].map(({ label, pctl }) => (
+              <div key={label}>
+                {label}: <span className="text-amber-400">{pctl}%</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function AllTimeRankingsPage() {
   const [phase, setPhase] = useState<GamePhase>("select");
   const [rankingSize, setRankingSize] = useState<RankingSize>(10);
@@ -75,7 +126,7 @@ export default function AllTimeRankingsPage() {
   const [rankings, setRankings] = useState<RankingEntry[]>([]);
   const [matchupsCompleted, setMatchupsCompleted] = useState(0);
   const [totalMatchups, setTotalMatchups] = useState<number | null>(null);
-  const [_shareSlug, setShareSlug] = useState<string | null>(null);
+  const [shareSlug, setShareSlug] = useState<string | null>(null);
   const [showShareModal, setShowShareModal] = useState(false);
   const [showStats, setShowStats] = useState(false);
   const [showAdvancedStats, setShowAdvancedStats] = useState(false);
@@ -84,7 +135,7 @@ export default function AllTimeRankingsPage() {
   const getSessionId = useCallback(() => {
     let sessionId = localStorage.getItem("alltime_session_id");
     if (!sessionId) {
-      sessionId = `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      sessionId = `session_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`;
       localStorage.setItem("alltime_session_id", sessionId);
     }
     return sessionId;
@@ -111,7 +162,7 @@ export default function AllTimeRankingsPage() {
 
     try {
       const requestBody: { ranking_size: number; preset_id?: string } = {
-        ranking_size: selectedPreset ? 0 : rankingSize, // Use infinite for presets (full list)
+        ranking_size: selectedPreset ? 0 : rankingSize,
       };
 
       if (selectedPreset) {
@@ -119,9 +170,7 @@ export default function AllTimeRankingsPage() {
       }
 
       const response = await apiClient.post("/all-time/start", requestBody, {
-        headers: {
-          "X-Session-Id": getSessionId(),
-        }
+        headers: { "X-Session-Id": getSessionId() }
       });
 
       const data = response.data;
@@ -137,7 +186,7 @@ export default function AllTimeRankingsPage() {
       if (status === 404) {
         setError("API endpoint not found. The backend may not be configured correctly.");
       } else if (status === 502 || status === 503) {
-        setError("Server is starting up. Please wait 30 seconds and try again.");
+        setError("Server is starting up. Please wait a moment and try again.");
       } else {
         setError(detail || `Failed to start ranking (${status || 'network error'})`);
       }
@@ -156,9 +205,7 @@ export default function AllTimeRankingsPage() {
       const response = await apiClient.put(`/all-time/${rankingId}/vote`, {
         winner_id: winnerId,
       }, {
-        headers: {
-          "X-Session-Id": getSessionId(),
-        }
+        headers: { "X-Session-Id": getSessionId() }
       });
 
       const data = response.data;
@@ -188,9 +235,7 @@ export default function AllTimeRankingsPage() {
       const response = await apiClient.post(`/all-time/${rankingId}/complete`, {
         generate_share_link: true,
       }, {
-        headers: {
-          "X-Session-Id": getSessionId(),
-        }
+        headers: { "X-Session-Id": getSessionId() }
       });
 
       const data = response.data;
@@ -214,14 +259,19 @@ export default function AllTimeRankingsPage() {
     setShareSlug(null);
     setError(null);
     setSelectedPreset(null);
+    setShowStats(false);
+    setShowAdvancedStats(false);
   };
 
   // Selection Phase UI
   const renderSelectionPhase = () => (
-    <div className="max-w-2xl mx-auto px-4 py-8">
+    <div className="max-w-2xl mx-auto px-4 py-8 page-enter">
       <header className="text-center space-y-4 mb-10">
-        <h1 className="text-4xl font-bold">All-Time Rankings</h1>
-        <p className="text-slate-300 text-lg">
+        <p className="text-xs uppercase tracking-[0.25em] text-amber-400 font-semibold">
+          BUILD YOUR LIST
+        </p>
+        <h1 className="text-4xl font-black">All-Time Rankings</h1>
+        <p className="text-slate-400 text-lg">
           Build your GOAT list by comparing players head-to-head
         </p>
       </header>
@@ -229,30 +279,28 @@ export default function AllTimeRankingsPage() {
       <div className="space-y-6">
         {/* Preset Selection */}
         {!presetsLoading && presets.length > 0 && (
-          <div className="bg-slate-800/50 rounded-xl border border-slate-700 p-6">
-            <h2 className="text-xl font-bold mb-2">Preset Rankings</h2>
-            <p className="text-sm text-slate-400 mb-4">Choose a curated list of players</p>
+          <div className="card-elevated p-6">
+            <h2 className="text-lg font-bold mb-2">Preset Rankings</h2>
+            <p className="text-sm text-slate-500 mb-4">Choose a curated list of players</p>
             <div className="space-y-3">
               {presets.map((preset) => (
                 <button
                   key={preset.id}
-                  onClick={() => {
-                    setSelectedPreset(selectedPreset === preset.id ? null : preset.id);
-                  }}
-                  className={`w-full p-4 rounded-lg border-2 transition text-left ${
+                  onClick={() => setSelectedPreset(selectedPreset === preset.id ? null : preset.id)}
+                  className={`w-full p-4 rounded-xl border-2 transition-all text-left ${
                     selectedPreset === preset.id
-                      ? "border-amber-500 bg-amber-500/10"
-                      : "border-slate-600 hover:border-slate-500"
+                      ? "border-amber-500 bg-amber-500/10 shadow-lg shadow-amber-500/10"
+                      : "border-slate-700/50 hover:border-slate-600"
                   }`}
                 >
                   <div className="flex justify-between items-start">
                     <div>
                       <div className="font-bold text-lg">{preset.name}</div>
-                      <div className="text-sm text-slate-400">{preset.description}</div>
+                      <div className="text-sm text-slate-500">{preset.description}</div>
                     </div>
-                    <div className="text-right">
+                    <div className="text-right shrink-0 ml-4">
                       <div className="text-amber-400 font-semibold">{preset.player_count} players</div>
-                      <div className="text-xs text-slate-500">
+                      <div className="text-xs text-slate-600">
                         {Math.round((preset.player_count * (preset.player_count - 1)) / 2).toLocaleString()} matchups
                       </div>
                     </div>
@@ -266,16 +314,16 @@ export default function AllTimeRankingsPage() {
         {/* Divider */}
         {!presetsLoading && presets.length > 0 && (
           <div className="flex items-center gap-4">
-            <div className="flex-1 h-px bg-slate-700"></div>
-            <span className="text-slate-500 text-sm">or choose a challenge size</span>
-            <div className="flex-1 h-px bg-slate-700"></div>
+            <div className="flex-1 h-px bg-slate-800"></div>
+            <span className="text-slate-600 text-xs uppercase tracking-wider">or choose a size</span>
+            <div className="flex-1 h-px bg-slate-800"></div>
           </div>
         )}
 
         {/* Mode Selection */}
-        <div className={`bg-slate-800/50 rounded-xl border border-slate-700 p-6 ${selectedPreset ? 'opacity-50' : ''}`}>
-          <h2 className="text-xl font-bold mb-4">Choose Your Challenge</h2>
-          <div className="grid grid-cols-2 gap-4">
+        <div className={`card-elevated p-6 ${selectedPreset ? 'opacity-40 pointer-events-none' : ''}`}>
+          <h2 className="text-lg font-bold mb-4">Choose Your Challenge</h2>
+          <div className="grid grid-cols-2 gap-3">
             {[
               { size: 10, label: "Quick 10", desc: "45 matchups", time: "~5 min" },
               { size: 50, label: "Standard 50", desc: "1,225 matchups", time: "~30 min" },
@@ -284,31 +332,28 @@ export default function AllTimeRankingsPage() {
             ].map(({ size, label, desc, time }) => (
               <button
                 key={size}
-                onClick={() => {
-                  setRankingSize(size as RankingSize);
-                  setSelectedPreset(null); // Clear preset when selecting size
-                }}
+                onClick={() => { setRankingSize(size as RankingSize); setSelectedPreset(null); }}
                 disabled={!!selectedPreset}
-                className={`p-4 rounded-lg border-2 transition text-left ${
+                className={`p-4 rounded-xl border-2 transition-all text-left ${
                   rankingSize === size && !selectedPreset
-                    ? "border-emerald-500 bg-emerald-500/10"
-                    : "border-slate-600 hover:border-slate-500"
-                } ${selectedPreset ? 'cursor-not-allowed' : ''}`}
+                    ? "border-emerald-500 bg-emerald-500/10 shadow-lg shadow-emerald-500/10"
+                    : "border-slate-700/50 hover:border-slate-600"
+                }`}
               >
-                <div className="font-bold text-lg">{label}</div>
-                <div className="text-sm text-slate-400">{desc}</div>
-                <div className="text-xs text-slate-500 mt-1">{time}</div>
+                <div className="font-bold">{label}</div>
+                <div className="text-sm text-slate-500">{desc}</div>
+                <div className="text-xs text-slate-600 mt-1">{time}</div>
               </button>
             ))}
           </div>
         </div>
 
         {/* Info Box */}
-        <div className="bg-slate-800/30 rounded-lg p-4 text-sm text-slate-400">
+        <div className="glass rounded-xl p-4 text-sm text-slate-500">
           <p className="mb-2">
             <strong className="text-slate-300">How it works:</strong>
           </p>
-          <ul className="list-disc list-inside space-y-1">
+          <ul className="list-disc list-inside space-y-1 text-slate-500">
             <li>Compare players head-to-head in matchups</li>
             <li>Your rankings update in real-time using Elo scoring</li>
             <li>Stop anytime to see your current rankings</li>
@@ -320,15 +365,16 @@ export default function AllTimeRankingsPage() {
         <button
           onClick={startRanking}
           disabled={loading}
-          className={`w-full py-4 rounded-xl font-bold text-lg transition disabled:opacity-50 disabled:cursor-not-allowed ${
+          className={`w-full py-4 rounded-xl font-bold text-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.99] ${
             selectedPreset
-              ? 'bg-amber-500 hover:bg-amber-400 text-black'
-              : 'bg-emerald-500 hover:bg-emerald-400 text-black'
+              ? 'bg-amber-500 hover:bg-amber-400 text-black shadow-lg shadow-amber-500/20'
+              : 'bg-emerald-500 hover:bg-emerald-400 text-black shadow-lg shadow-emerald-500/20'
           }`}
         >
           {loading ? (
             <span className="flex items-center justify-center gap-2">
-              <span className="animate-spin">⏳</span> Starting...
+              <span className="animate-spin rounded-full h-5 w-5 border-2 border-black/20 border-t-black"></span>
+              Starting...
             </span>
           ) : selectedPreset ? (
             `Start ${presets.find(p => p.id === selectedPreset)?.name || 'Preset'} Ranking`
@@ -338,7 +384,7 @@ export default function AllTimeRankingsPage() {
         </button>
 
         {error && (
-          <div className="p-3 bg-red-900/40 border border-red-700 text-red-200 rounded-lg text-sm">
+          <div className="p-3 bg-red-900/30 border border-red-700/50 text-red-300 rounded-xl text-sm">
             {error}
             <FeedbackLink variant="compact" className="mt-2 block" />
           </div>
@@ -358,29 +404,29 @@ export default function AllTimeRankingsPage() {
     return (
       <div className="max-w-4xl mx-auto px-4 py-6">
         {/* Progress Header */}
-        <div className="mb-6 text-center">
-          <div className="flex items-center justify-between mb-2">
+        <div className="mb-6">
+          <div className="flex items-center justify-between mb-3">
             <button
               onClick={finishEarly}
-              className="px-4 py-2 text-sm bg-slate-700 hover:bg-slate-600 rounded-lg transition"
+              className="px-4 py-2 text-sm glass-hover rounded-lg font-medium text-slate-300"
             >
-              I'm Done - See Rankings
+              Finish & See Rankings
             </button>
-            <div className="text-slate-400">
-              {matchupsCompleted} matchups completed
+            <div className="text-sm text-slate-500">
+              {matchupsCompleted} completed
               {totalMatchups && ` / ${totalMatchups}`}
             </div>
             <button
               onClick={startOver}
-              className="px-4 py-2 text-sm text-slate-400 hover:text-white transition"
+              className="px-4 py-2 text-sm text-slate-500 hover:text-slate-300 transition"
             >
               Start Over
             </button>
           </div>
           {progress !== null && (
-            <div className="w-full bg-slate-700 rounded-full h-2">
+            <div className="w-full bg-slate-800 rounded-full h-1.5">
               <div
-                className="bg-emerald-500 h-2 rounded-full transition-all duration-300"
+                className="bg-gradient-to-r from-amber-500 to-amber-400 h-1.5 rounded-full transition-all duration-300"
                 style={{ width: `${progress}%` }}
               />
             </div>
@@ -388,21 +434,35 @@ export default function AllTimeRankingsPage() {
         </div>
 
         {/* Matchup View */}
-        <div className="bg-slate-800/50 rounded-xl border border-slate-700 p-6 mb-6">
+        <div className="card-elevated p-6 mb-6">
           <div className="flex items-center justify-between mb-6">
-            <h2 className="text-xl font-bold text-slate-300">
+            <h2 className="text-lg font-bold text-slate-300">
               Who's the better player all-time?
             </h2>
-            <button
-              onClick={() => setShowStats(!showStats)}
-              className={`px-3 py-1.5 text-sm rounded-lg transition ${
-                showStats 
-                  ? 'bg-amber-500 text-black font-semibold' 
-                  : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
-              }`}
-            >
-              {showStats ? 'Hide Stats' : 'See Stats'}
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setShowStats(!showStats)}
+                className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-all ${
+                  showStats
+                    ? 'bg-amber-500 text-black'
+                    : 'glass text-slate-400 hover:text-slate-200'
+                }`}
+              >
+                {showStats ? 'Hide Stats' : 'See Stats'}
+              </button>
+              {showStats && (
+                <button
+                  onClick={() => setShowAdvancedStats(!showAdvancedStats)}
+                  className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-all ${
+                    showAdvancedStats
+                      ? 'bg-purple-500 text-white'
+                      : 'glass text-slate-400 hover:text-slate-200'
+                  }`}
+                >
+                  {showAdvancedStats ? 'Basic' : 'Advanced'}
+                </button>
+              )}
+            </div>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
@@ -410,98 +470,27 @@ export default function AllTimeRankingsPage() {
             <button
               onClick={() => submitVote(currentMatchup.player1_id)}
               disabled={loading}
-              className="p-6 rounded-xl bg-slate-700/50 hover:bg-emerald-600/20 hover:border-emerald-500 border-2 border-transparent transition group disabled:opacity-50"
+              className="p-6 rounded-2xl bg-slate-700/30 hover:bg-emerald-600/10 hover:border-emerald-500/50 border-2 border-transparent transition-all group disabled:opacity-50 active:scale-[0.98]"
             >
               <div className="text-center">
                 <img
                   src={getPlayerImageUrlWithFallback(currentMatchup.player1_name, currentMatchup.player1_id)}
                   alt={currentMatchup.player1_name}
-                  className="w-24 h-24 mx-auto mb-3 rounded-full object-cover bg-slate-600"
-                  onError={(e) => {
-                    (e.target as HTMLImageElement).src = 'https://cdn.nba.com/headshots/nba/latest/1040x760/fallback.png';
-                  }}
+                  className="w-20 h-20 mx-auto mb-3 rounded-full object-cover bg-slate-600/50"
+                  onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
                 />
-                <div className="text-2xl font-bold mb-2 group-hover:text-emerald-400 transition">
+                <div className="text-xl font-bold mb-1 group-hover:text-emerald-400 transition">
                   {currentMatchup.player1_name}
                 </div>
-                <div className="text-slate-400">
+                <div className="text-sm text-slate-500">
                   {currentMatchup.player1_team || "—"}
                 </div>
-                <div className="text-sm text-slate-500 mt-1">
+                <div className="text-xs text-slate-600 mt-0.5">
                   {currentMatchup.player1_position || "—"}
                 </div>
-                
-                {/* Player 1 Stats */}
+
                 {showStats && currentMatchup.player1_stats && (
-                  <div className="mt-4 pt-4 border-t border-slate-600 text-left">
-                    <div className="text-xs text-slate-400 mb-2">
-                      {currentMatchup.player1_stats.career_from} - {currentMatchup.player1_stats.career_to}
-                    </div>
-                    <div className="grid grid-cols-2 gap-2 text-sm">
-                      <div>
-                        <span className="text-slate-500">G:</span>{' '}
-                        <span className="text-white font-medium">{currentMatchup.player1_stats.games.value.toLocaleString()}</span>
-                        <span className="text-xs text-emerald-400 ml-1">#{currentMatchup.player1_stats.games.rank}</span>
-                      </div>
-                      <div>
-                        <span className="text-slate-500">PTS:</span>{' '}
-                        <span className="text-white font-medium">{currentMatchup.player1_stats.points.value.toLocaleString()}</span>
-                        <span className="text-xs text-emerald-400 ml-1">#{currentMatchup.player1_stats.points.rank}</span>
-                      </div>
-                      <div>
-                        <span className="text-slate-500">REB:</span>{' '}
-                        <span className="text-white font-medium">{currentMatchup.player1_stats.rebounds.value.toLocaleString()}</span>
-                        <span className="text-xs text-emerald-400 ml-1">#{currentMatchup.player1_stats.rebounds.rank}</span>
-                      </div>
-                      <div>
-                        <span className="text-slate-500">AST:</span>{' '}
-                        <span className="text-white font-medium">{currentMatchup.player1_stats.assists.value.toLocaleString()}</span>
-                        <span className="text-xs text-emerald-400 ml-1">#{currentMatchup.player1_stats.assists.rank}</span>
-                      </div>
-                      <div>
-                        <span className="text-slate-500">STL:</span>{' '}
-                        <span className="text-white font-medium">{currentMatchup.player1_stats.steals.value.toLocaleString()}</span>
-                        <span className="text-xs text-emerald-400 ml-1">#{currentMatchup.player1_stats.steals.rank}</span>
-                      </div>
-                      <div>
-                        <span className="text-slate-500">BLK:</span>{' '}
-                        <span className="text-white font-medium">{currentMatchup.player1_stats.blocks.value.toLocaleString()}</span>
-                        <span className="text-xs text-emerald-400 ml-1">#{currentMatchup.player1_stats.blocks.rank}</span>
-                      </div>
-                      <div>
-                        <span className="text-slate-500">FG%:</span>{' '}
-                        <span className="text-white font-medium">{(currentMatchup.player1_stats.fg_pct.value * 100).toFixed(1)}%</span>
-                        <span className="text-xs text-emerald-400 ml-1">#{currentMatchup.player1_stats.fg_pct.rank}</span>
-                      </div>
-                      <div>
-                        <span className="text-slate-500">WS:</span>{' '}
-                        <span className="text-amber-400 font-medium">{currentMatchup.player1_stats.win_shares.value.toFixed(1)}</span>
-                        <span className="text-xs text-emerald-400 ml-1">#{currentMatchup.player1_stats.win_shares.rank}</span>
-                      </div>
-                    </div>
-                    
-                    {/* Advanced Stats Toggle */}
-                    <button
-                      onClick={(e) => { e.stopPropagation(); setShowAdvancedStats(!showAdvancedStats); }}
-                      className="mt-3 text-xs text-amber-400 hover:text-amber-300 underline"
-                    >
-                      {showAdvancedStats ? 'Hide Advanced' : 'See Advanced Stats'}
-                    </button>
-                    
-                    {showAdvancedStats && (
-                      <div className="mt-2 p-2 bg-slate-800/50 rounded text-xs">
-                        <div className="text-slate-400 mb-1">Percentiles (vs 200 all-time greats)</div>
-                        <div className="grid grid-cols-3 gap-1">
-                          <div>PTS: <span className="text-amber-400">{currentMatchup.player1_stats.points.percentile}%</span></div>
-                          <div>REB: <span className="text-amber-400">{currentMatchup.player1_stats.rebounds.percentile}%</span></div>
-                          <div>AST: <span className="text-amber-400">{currentMatchup.player1_stats.assists.percentile}%</span></div>
-                          <div>TS%: <span className="text-amber-400">{currentMatchup.player1_stats.ts_pct.percentile}%</span></div>
-                          <div>WS: <span className="text-amber-400">{currentMatchup.player1_stats.win_shares.percentile}%</span></div>
-                          <div>G: <span className="text-amber-400">{currentMatchup.player1_stats.games.percentile}%</span></div>
-                        </div>
-                      </div>
-                    )}
-                  </div>
+                  <PlayerStatGrid stats={currentMatchup.player1_stats} showAdvanced={showAdvancedStats} />
                 )}
               </div>
             </button>
@@ -510,135 +499,64 @@ export default function AllTimeRankingsPage() {
             <button
               onClick={() => submitVote(currentMatchup.player2_id)}
               disabled={loading}
-              className="p-6 rounded-xl bg-slate-700/50 hover:bg-emerald-600/20 hover:border-emerald-500 border-2 border-transparent transition group disabled:opacity-50"
+              className="p-6 rounded-2xl bg-slate-700/30 hover:bg-emerald-600/10 hover:border-emerald-500/50 border-2 border-transparent transition-all group disabled:opacity-50 active:scale-[0.98]"
             >
               <div className="text-center">
                 <img
                   src={getPlayerImageUrlWithFallback(currentMatchup.player2_name, currentMatchup.player2_id)}
                   alt={currentMatchup.player2_name}
-                  className="w-24 h-24 mx-auto mb-3 rounded-full object-cover bg-slate-600"
-                  onError={(e) => {
-                    (e.target as HTMLImageElement).src = 'https://cdn.nba.com/headshots/nba/latest/1040x760/fallback.png';
-                  }}
+                  className="w-20 h-20 mx-auto mb-3 rounded-full object-cover bg-slate-600/50"
+                  onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
                 />
-                <div className="text-2xl font-bold mb-2 group-hover:text-emerald-400 transition">
+                <div className="text-xl font-bold mb-1 group-hover:text-emerald-400 transition">
                   {currentMatchup.player2_name}
                 </div>
-                <div className="text-slate-400">
+                <div className="text-sm text-slate-500">
                   {currentMatchup.player2_team || "—"}
                 </div>
-                <div className="text-sm text-slate-500 mt-1">
+                <div className="text-xs text-slate-600 mt-0.5">
                   {currentMatchup.player2_position || "—"}
                 </div>
-                
-                {/* Player 2 Stats */}
+
                 {showStats && currentMatchup.player2_stats && (
-                  <div className="mt-4 pt-4 border-t border-slate-600 text-left">
-                    <div className="text-xs text-slate-400 mb-2">
-                      {currentMatchup.player2_stats.career_from} - {currentMatchup.player2_stats.career_to}
-                    </div>
-                    <div className="grid grid-cols-2 gap-2 text-sm">
-                      <div>
-                        <span className="text-slate-500">G:</span>{' '}
-                        <span className="text-white font-medium">{currentMatchup.player2_stats.games.value.toLocaleString()}</span>
-                        <span className="text-xs text-emerald-400 ml-1">#{currentMatchup.player2_stats.games.rank}</span>
-                      </div>
-                      <div>
-                        <span className="text-slate-500">PTS:</span>{' '}
-                        <span className="text-white font-medium">{currentMatchup.player2_stats.points.value.toLocaleString()}</span>
-                        <span className="text-xs text-emerald-400 ml-1">#{currentMatchup.player2_stats.points.rank}</span>
-                      </div>
-                      <div>
-                        <span className="text-slate-500">REB:</span>{' '}
-                        <span className="text-white font-medium">{currentMatchup.player2_stats.rebounds.value.toLocaleString()}</span>
-                        <span className="text-xs text-emerald-400 ml-1">#{currentMatchup.player2_stats.rebounds.rank}</span>
-                      </div>
-                      <div>
-                        <span className="text-slate-500">AST:</span>{' '}
-                        <span className="text-white font-medium">{currentMatchup.player2_stats.assists.value.toLocaleString()}</span>
-                        <span className="text-xs text-emerald-400 ml-1">#{currentMatchup.player2_stats.assists.rank}</span>
-                      </div>
-                      <div>
-                        <span className="text-slate-500">STL:</span>{' '}
-                        <span className="text-white font-medium">{currentMatchup.player2_stats.steals.value.toLocaleString()}</span>
-                        <span className="text-xs text-emerald-400 ml-1">#{currentMatchup.player2_stats.steals.rank}</span>
-                      </div>
-                      <div>
-                        <span className="text-slate-500">BLK:</span>{' '}
-                        <span className="text-white font-medium">{currentMatchup.player2_stats.blocks.value.toLocaleString()}</span>
-                        <span className="text-xs text-emerald-400 ml-1">#{currentMatchup.player2_stats.blocks.rank}</span>
-                      </div>
-                      <div>
-                        <span className="text-slate-500">FG%:</span>{' '}
-                        <span className="text-white font-medium">{(currentMatchup.player2_stats.fg_pct.value * 100).toFixed(1)}%</span>
-                        <span className="text-xs text-emerald-400 ml-1">#{currentMatchup.player2_stats.fg_pct.rank}</span>
-                      </div>
-                      <div>
-                        <span className="text-slate-500">WS:</span>{' '}
-                        <span className="text-amber-400 font-medium">{currentMatchup.player2_stats.win_shares.value.toFixed(1)}</span>
-                        <span className="text-xs text-emerald-400 ml-1">#{currentMatchup.player2_stats.win_shares.rank}</span>
-                      </div>
-                    </div>
-                    
-                    {/* Advanced Stats Toggle */}
-                    <button
-                      onClick={(e) => { e.stopPropagation(); setShowAdvancedStats(!showAdvancedStats); }}
-                      className="mt-3 text-xs text-amber-400 hover:text-amber-300 underline"
-                    >
-                      {showAdvancedStats ? 'Hide Advanced' : 'See Advanced Stats'}
-                    </button>
-                    
-                    {showAdvancedStats && (
-                      <div className="mt-2 p-2 bg-slate-800/50 rounded text-xs">
-                        <div className="text-slate-400 mb-1">Percentiles (vs 200 all-time greats)</div>
-                        <div className="grid grid-cols-3 gap-1">
-                          <div>PTS: <span className="text-amber-400">{currentMatchup.player2_stats.points.percentile}%</span></div>
-                          <div>REB: <span className="text-amber-400">{currentMatchup.player2_stats.rebounds.percentile}%</span></div>
-                          <div>AST: <span className="text-amber-400">{currentMatchup.player2_stats.assists.percentile}%</span></div>
-                          <div>TS%: <span className="text-amber-400">{currentMatchup.player2_stats.ts_pct.percentile}%</span></div>
-                          <div>WS: <span className="text-amber-400">{currentMatchup.player2_stats.win_shares.percentile}%</span></div>
-                          <div>G: <span className="text-amber-400">{currentMatchup.player2_stats.games.percentile}%</span></div>
-                        </div>
-                      </div>
-                    )}
-                  </div>
+                  <PlayerStatGrid stats={currentMatchup.player2_stats} showAdvanced={showAdvancedStats} />
                 )}
               </div>
             </button>
           </div>
 
           {loading && (
-            <div className="text-center mt-4 text-slate-400">
-              <span className="animate-pulse">Processing...</span>
+            <div className="text-center mt-4">
+              <span className="text-sm text-slate-500 animate-pulse">Processing...</span>
             </div>
           )}
         </div>
 
         {/* Live Rankings Sidebar */}
         {rankings.length > 0 && (
-          <div className="bg-slate-800/30 rounded-xl border border-slate-700 p-4">
-            <h3 className="text-lg font-semibold mb-3 text-slate-300">
+          <div className="glass rounded-xl p-4">
+            <h3 className="text-sm font-semibold mb-3 text-slate-400 uppercase tracking-wider">
               Current Rankings
             </h3>
-            <div className="space-y-2 max-h-60 overflow-y-auto">
+            <div className="space-y-1.5 max-h-60 overflow-y-auto">
               {rankings.slice(0, 10).map((entry) => (
                 <div
                   key={entry.player_id}
-                  className="flex items-center justify-between p-2 bg-slate-700/30 rounded-lg"
+                  className="flex items-center justify-between p-2 bg-slate-700/20 rounded-lg"
                 >
                   <div className="flex items-center gap-3">
-                    <span className="w-6 text-center font-bold text-emerald-400">
+                    <span className="w-6 text-center font-bold text-sm text-emerald-400">
                       #{entry.rank}
                     </span>
-                    <span>{entry.player_name}</span>
+                    <span className="text-sm">{entry.player_name}</span>
                   </div>
-                  <div className="text-sm text-slate-400">
+                  <div className="text-xs text-slate-500">
                     {entry.wins}-{entry.losses}
                   </div>
                 </div>
               ))}
               {rankings.length > 10 && (
-                <div className="text-center text-sm text-slate-500 pt-2">
+                <div className="text-center text-xs text-slate-600 pt-2">
                   +{rankings.length - 10} more...
                 </div>
               )}
@@ -647,7 +565,7 @@ export default function AllTimeRankingsPage() {
         )}
 
         {error && (
-          <div className="mt-4 p-3 bg-red-900/40 border border-red-700 text-red-200 rounded-lg text-sm">
+          <div className="mt-4 p-3 bg-red-900/30 border border-red-700/50 text-red-300 rounded-xl text-sm">
             {error}
             <FeedbackLink variant="compact" className="mt-2 block" />
           </div>
@@ -658,68 +576,72 @@ export default function AllTimeRankingsPage() {
 
   // Results Phase UI
   const renderResultsPhase = () => (
-    <div className="max-w-3xl mx-auto px-4 py-8">
-      <header className="text-center space-y-4 mb-8">
-        <div className="text-5xl mb-2">🏆</div>
-        <h1 className="text-4xl font-bold">Your All-Time Rankings</h1>
-        <p className="text-slate-400">
+    <div className="max-w-3xl mx-auto px-4 py-8 page-enter">
+      <header className="text-center space-y-3 mb-8">
+        <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-amber-500/20 to-amber-600/10 border border-amber-500/20 flex items-center justify-center mx-auto">
+          <svg className="w-8 h-8 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
+          </svg>
+        </div>
+        <h1 className="text-3xl font-black">Your All-Time Rankings</h1>
+        <p className="text-slate-500 text-sm">
           Based on {matchupsCompleted} head-to-head comparisons
         </p>
       </header>
 
       {/* Action Buttons */}
-      <div className="flex justify-center gap-4 mb-8">
+      <div className="flex justify-center gap-3 mb-8">
         <button
           onClick={() => setShowShareModal(true)}
-          className="px-6 py-3 bg-emerald-500 hover:bg-emerald-400 text-black font-bold rounded-lg transition"
+          className="btn-primary"
         >
-          Share Rankings 📤
+          Share Rankings
         </button>
         <button
           onClick={startOver}
-          className="px-6 py-3 bg-slate-700 hover:bg-slate-600 text-white font-medium rounded-lg transition"
+          className="btn-secondary"
         >
-          Start New Ranking
+          New Ranking
         </button>
       </div>
 
       {/* Rankings List */}
-      <div className="bg-slate-800/50 rounded-xl border border-slate-700 p-6">
-        <div className="space-y-3">
+      <div className="card-elevated p-6">
+        <div className="space-y-2">
           {rankings.map((entry, idx) => (
             <div
               key={entry.player_id}
-              className={`flex items-center gap-4 p-4 rounded-lg transition ${
+              className={`flex items-center gap-4 p-3 rounded-xl transition ${
                 idx < 3
-                  ? "bg-gradient-to-r from-yellow-900/30 to-transparent border border-yellow-600/30"
-                  : "bg-slate-700/30"
+                  ? "bg-gradient-to-r from-amber-900/20 to-transparent border border-amber-700/20"
+                  : "bg-slate-700/20"
               }`}
             >
               <span
-                className={`w-10 h-10 flex items-center justify-center rounded-full font-bold ${
+                className={`w-9 h-9 flex items-center justify-center rounded-lg font-bold text-sm ${
                   idx === 0
                     ? "bg-yellow-500 text-black"
                     : idx === 1
                     ? "bg-slate-400 text-black"
                     : idx === 2
                     ? "bg-amber-600 text-black"
-                    : "bg-slate-600 text-white"
+                    : "bg-slate-700 text-slate-300"
                 }`}
               >
                 {entry.rank}
               </span>
-              <div className="flex-1">
-                <div className="font-semibold text-lg">{entry.player_name}</div>
-                <div className="text-sm text-slate-400">
-                  {entry.team || "—"} • {entry.position || "—"}
+              <div className="flex-1 min-w-0">
+                <div className="font-semibold truncate">{entry.player_name}</div>
+                <div className="text-xs text-slate-500">
+                  {entry.team || "—"} · {entry.position || "—"}
                 </div>
               </div>
-              <div className="text-right">
-                <div className="font-bold text-emerald-400">
+              <div className="text-right shrink-0">
+                <div className="font-bold text-emerald-400 text-sm">
                   {Math.round(entry.score)}
                 </div>
-                <div className="text-xs text-slate-500">
-                  {entry.wins}W - {entry.losses}L
+                <div className="text-[10px] text-slate-600">
+                  {entry.wins}W-{entry.losses}L
                 </div>
               </div>
             </div>
@@ -741,6 +663,12 @@ export default function AllTimeRankingsPage() {
           onClose={() => setShowShareModal(false)}
           style="rushmore"
         />
+      )}
+
+      {shareSlug && (
+        <p className="text-center text-xs text-slate-600 mt-4">
+          Share link available
+        </p>
       )}
     </div>
   );

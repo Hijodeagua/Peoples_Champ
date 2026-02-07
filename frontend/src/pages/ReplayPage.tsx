@@ -2,8 +2,6 @@ import { useCallback, useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { getDayGame, type GameTodayResponse, type Player, type SeasonOption, type PlayerStats, type AdvancedStats } from "../api/game";
 import { submitVote } from "../api/voting";
-import FeedbackLink from "../components/FeedbackLink";
-
 // Stat label mapping for per-game stats
 const STAT_LABELS: Record<string, string> = {
   pts: "PTS",
@@ -247,10 +245,10 @@ export default function ReplayPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-500 mx-auto mb-4"></div>
-          <p className="text-slate-300">Loading game from {formattedDate}...</p>
+      <div className="flex items-center justify-center min-h-[400px] page-enter">
+        <div className="text-center space-y-3">
+          <div className="animate-spin rounded-full h-10 w-10 border-2 border-slate-700 border-t-emerald-500 mx-auto"></div>
+          <p className="text-sm text-slate-500">Loading game from {formattedDate}...</p>
         </div>
       </div>
     );
@@ -259,17 +257,13 @@ export default function ReplayPage() {
   if (error) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[400px] space-y-4">
-        <div className="bg-red-900/40 border border-red-700 text-red-200 p-4 rounded-lg max-w-md text-center">
-          <p className="font-semibold mb-2">Error Loading Game</p>
-          <p className="text-sm">{error}</p>
+        <div className="card-elevated p-6 max-w-md text-center">
+          <p className="font-semibold text-slate-200 mb-2">Error Loading Game</p>
+          <p className="text-sm text-slate-400 mb-4">{error}</p>
+          <Link to="/archive" className="btn-secondary text-sm inline-block">
+            Back to Archive
+          </Link>
         </div>
-        <Link
-          to="/archive"
-          className="px-4 py-2 rounded-lg bg-slate-700 text-slate-200 font-semibold hover:bg-slate-600 transition"
-        >
-          Back to Archive
-        </Link>
-        <FeedbackLink variant="compact" className="mt-4" />
       </div>
     );
   }
@@ -441,9 +435,9 @@ export default function ReplayPage() {
         </>
       )}
 
-      <p className="mt-8 text-xs text-slate-400 text-center">
-        * Stats pulled from Basketball Reference. 
-        {selectedSeason === "current" ? " Showing 2025-26 season only." : " Showing combined 2024-25 & 2025-26 stats."}
+      <p className="mt-8 text-[10px] text-slate-600 text-center">
+        Stats from Basketball Reference.
+        {selectedSeason === "current" ? " Current season." : " Combined two-season stats."}
       </p>
     </div>
   );

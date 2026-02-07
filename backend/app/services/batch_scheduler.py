@@ -96,8 +96,16 @@ class BatchScheduler:
                         weight = 1
                     weights.append(weight)
                 
-                # Use weighted selection to favor top players
-                selected_players = random.choices(available_players, weights=weights, k=5)
+                # Use weighted selection to favor top players, ensuring unique selections
+                selected_players = []
+                remaining_players = list(available_players)
+                remaining_weights = list(weights)
+                for _ in range(min(5, len(remaining_players))):
+                    chosen = random.choices(remaining_players, weights=remaining_weights, k=1)[0]
+                    idx = remaining_players.index(chosen)
+                    selected_players.append(chosen)
+                    remaining_players.pop(idx)
+                    remaining_weights.pop(idx)
                 selected_ids = [p.id for p in selected_players]
                 
                 schedule[date_str] = selected_ids

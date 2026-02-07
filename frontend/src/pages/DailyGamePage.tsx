@@ -30,9 +30,9 @@ export default function DailyGamePage() {
         const myVotes = await getMyVotes();
         if (myVotes.completed) {
           setActiveTab("rankings");
+          setCompletedToday(true);
         }
       } catch (err) {
-        // If endpoint fails, default to matchups tab
         console.error("Failed to check voting status:", err);
       } finally {
         setHasCheckedCompletion(true);
@@ -48,19 +48,22 @@ export default function DailyGamePage() {
   // Show loading state while checking completion
   if (!hasCheckedCompletion) {
     return (
-      <div className="flex items-center justify-center min-h-[200px]">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-500"></div>
+      <div className="flex items-center justify-center min-h-[300px] page-enter">
+        <div className="text-center space-y-3">
+          <div className="animate-spin rounded-full h-10 w-10 border-2 border-slate-700 border-t-emerald-500 mx-auto"></div>
+          <p className="text-sm text-slate-500">Loading game...</p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
-      {/* Returning User Message - show if not completed today but has previous data */}
+    <div className="space-y-6 page-enter">
+      {/* Returning User Banner */}
       {userProgress && userProgress.lastAgreementPercentage !== null && !completedToday && (
-        <div className="bg-slate-800/50 border border-slate-700 rounded-lg px-4 py-3 text-center max-w-lg mx-auto">
+        <div className="glass rounded-xl px-5 py-3 text-center max-w-lg mx-auto animate-fade-in">
           <p className="text-sm text-slate-400">
-            Last time you agreed with{" "}
+            Last agreement with{" "}
             <span className="text-slate-200 font-medium">
               {userProgress.lastBenchmarkUsed || "The Ringer"}
             </span>
@@ -70,8 +73,8 @@ export default function DailyGamePage() {
             </span>
           </p>
           {currentStreak > 0 && (
-            <p className="text-sm text-amber-400 font-medium mt-1">
-              🔥 {currentStreak === 1 ? "Keep your streak going!" : `Current streak: ${currentStreak} days`}
+            <p className="text-sm text-amber-400 font-semibold mt-1">
+              {currentStreak === 1 ? "Keep your streak going!" : `${currentStreak} day streak`}
             </p>
           )}
         </div>
@@ -79,26 +82,26 @@ export default function DailyGamePage() {
 
       {/* Tab Navigation */}
       <div className="flex justify-center">
-        <div className="flex items-center gap-1 bg-slate-800/50 rounded-xl p-1">
+        <div className="flex items-center gap-1 glass rounded-xl p-1">
           <button
             onClick={() => setActiveTab("matchups")}
-            className={`px-6 py-2.5 rounded-lg text-sm font-medium transition ${
+            className={`px-6 py-2.5 rounded-lg text-sm font-semibold transition-all duration-200 ${
               activeTab === "matchups"
-                ? "bg-emerald-500 text-black"
-                : "text-slate-300 hover:bg-slate-700"
+                ? "bg-emerald-500 text-black shadow-lg shadow-emerald-500/20"
+                : "text-slate-400 hover:text-slate-200 hover:bg-slate-700/50"
             }`}
           >
             Daily Matchups
           </button>
           <button
             onClick={() => setActiveTab("rankings")}
-            className={`px-6 py-2.5 rounded-lg text-sm font-medium transition ${
+            className={`px-6 py-2.5 rounded-lg text-sm font-semibold transition-all duration-200 ${
               activeTab === "rankings"
-                ? "bg-amber-500 text-black"
-                : "text-slate-300 hover:bg-slate-700"
+                ? "bg-amber-500 text-black shadow-lg shadow-amber-500/20"
+                : "text-slate-400 hover:text-slate-200 hover:bg-slate-700/50"
             }`}
           >
-            Today's Global Rankings
+            Today's Rankings
           </button>
         </div>
       </div>
