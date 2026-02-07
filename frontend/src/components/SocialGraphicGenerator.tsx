@@ -71,16 +71,37 @@ const TEAM_COLORS: Record<string, [string, string]> = {
   CHH: ["#1D1160", "#00788C"],
 };
 
-// Get primary team from team string (first 3-letter code)
+// Get primary team from team string (handles "GSW | HOU | LAC" or legacy "GSWHOULAC")
 function getPrimaryTeam(teamStr: string | null | undefined): string {
   if (!teamStr) return "UNK";
-  // Team string might be like "CLELALMIA" - take first 3 chars
-  return teamStr.substring(0, 3).toUpperCase();
+  // New format: "GSW | HOU | LAC" — take last team (most recent)
+  if (teamStr.includes(" | ")) {
+    const teams = teamStr.split(" | ");
+    return teams[teams.length - 1].trim().toUpperCase();
+  }
+  // Legacy concatenated format — take last 3 chars
+  if (teamStr.length > 3) {
+    return teamStr.slice(-3).toUpperCase();
+  }
+  return teamStr.toUpperCase();
 }
 
 function getTeamColors(teamStr: string | null | undefined): [string, string] {
   const team = getPrimaryTeam(teamStr);
   return TEAM_COLORS[team] || ["#374151", "#6B7280"]; // Default gray
+}
+
+// Preload the banner background image
+const BANNER_BG_URL = "/images/banner_bg.png";
+
+function loadImage(src: string): Promise<HTMLImageElement> {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.crossOrigin = "anonymous";
+    img.onload = () => resolve(img);
+    img.onerror = () => reject(new Error(`Failed to load image: ${src}`));
+    img.src = src;
+  });
 }
 
 export default function SocialGraphicGenerator({
@@ -94,6 +115,7 @@ export default function SocialGraphicGenerator({
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [format, setFormat] = useState<ImageFormat>("twitter");
   const [copied, setCopied] = useState(false);
+  const bgImageRef = useRef<HTMLImageElement | null>(null);
 
   // Draw a basketball jersey shape (tank top style)
   const drawBasketballJersey = (
@@ -186,27 +208,48 @@ export default function SocialGraphicGenerator({
     ctx.fillRect(x, y, width, height);
   };
 
+  // Draw background image with dark overlay, or fallback gradient
+  const drawBackground = (ctx: CanvasRenderingContext2D, width: number, height: number, overlayOpacity = 0.65) => {
+    if (bgImageRef.current) {
+      const img = bgImageRef.current;
+      // Cover the canvas while maintaining aspect ratio
+      const imgRatio = img.width / img.height;
+      const canvasRatio = width / height;
+      let drawW = width;
+      let drawH = height;
+      let drawX = 0;
+      let drawY = 0;
+      if (imgRatio > canvasRatio) {
+        drawH = height;
+        drawW = height * imgRatio;
+        drawX = (width - drawW) / 2;
+      } else {
+        drawW = width;
+        drawH = width / imgRatio;
+        drawY = (height - drawH) / 2;
+      }
+      ctx.drawImage(img, drawX, drawY, drawW, drawH);
+      // Dark overlay for text readability
+      ctx.fillStyle = `rgba(15, 23, 42, ${overlayOpacity})`;
+      ctx.fillRect(0, 0, width, height);
+    } else {
+      // Fallback gradient
+      const gradient = ctx.createLinearGradient(0, 0, 0, height);
+      gradient.addColorStop(0, "#0f172a");
+      gradient.addColorStop(0.5, "#1e293b");
+      gradient.addColorStop(1, "#0f172a");
+      ctx.fillStyle = gradient;
+      ctx.fillRect(0, 0, width, height);
+    }
+  };
+
   // Generate PODIUM style graphic (for daily rankings)
   const generatePodiumGraphic = (ctx: CanvasRenderingContext2D, width: number, height: number) => {
     const scale = format === "instagram" ? 1.5 : format === "square" ? 1.2 : 1;
     const isVertical = format === "instagram";
 
-    // Background gradient (dark theme)
-    const gradient = ctx.createLinearGradient(0, 0, 0, height);
-    gradient.addColorStop(0, "#0f172a"); // slate-900
-    gradient.addColorStop(0.5, "#1e293b"); // slate-800
-    gradient.addColorStop(1, "#0f172a"); // slate-900
-    ctx.fillStyle = gradient;
-    ctx.fillRect(0, 0, width, height);
-
-    // Decorative circles
-    ctx.fillStyle = "rgba(16, 185, 129, 0.1)";
-    ctx.beginPath();
-    ctx.arc(width * 0.9, height * 0.1, 200, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.beginPath();
-    ctx.arc(width * 0.1, height * 0.9, 150, 0, Math.PI * 2);
-    ctx.fill();
+    // Background with banner image
+    drawBackground(ctx, width, height, 0.6);
 
     // Title
     ctx.fillStyle = "#10b981";
@@ -282,16 +325,11 @@ export default function SocialGraphicGenerator({
     const scale = format === "instagram" ? 1.5 : format === "square" ? 1.2 : 1;
     const isVertical = format === "instagram";
 
-    // Background - light court color
-    const bgGradient = ctx.createLinearGradient(0, 0, 0, height);
-    bgGradient.addColorStop(0, "#e2e8f0");
-    bgGradient.addColorStop(0.5, "#f1f5f9");
-    bgGradient.addColorStop(1, "#e2e8f0");
-    ctx.fillStyle = bgGradient;
-    ctx.fillRect(0, 0, width, height);
+    // Background with banner image
+    drawBackground(ctx, width, height, 0.55);
 
-    // Court lines decoration
-    ctx.strokeStyle = "rgba(148, 163, 184, 0.3)";
+    // Court lines decoration (subtle on top of background)
+    ctx.strokeStyle = "rgba(148, 163, 184, 0.15)";
     ctx.lineWidth = 2;
     ctx.beginPath();
     ctx.arc(width / 2, height * 0.45, Math.min(width, height) * 0.35, 0, Math.PI * 2);
@@ -317,7 +355,7 @@ export default function SocialGraphicGenerator({
     ctx.font = `bold ${32 * scale}px -apple-system, BlinkMacSystemFont, sans-serif`;
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
-    ctx.fillText("🐐 GOAT MT RUSHMORE 🐐", width / 2, bannerHeight / 2 + 5);
+    ctx.fillText("GOAT MT RUSHMORE", width / 2, bannerHeight / 2 + 5);
 
     // Top 4 players with jerseys
     const top4 = players.slice(0, 4);
@@ -328,8 +366,6 @@ export default function SocialGraphicGenerator({
     const caseHeight = jerseyHeight + 40;
     const spacing = (width - caseWidth * 4) / 5;
 
-    const rankColors = ["#3B82F6", "#8B5CF6", "#10B981", "#EF4444"];
-
     for (let i = 0; i < Math.min(4, top4.length); i++) {
       const player = top4[i];
       const caseX = spacing + i * (caseWidth + spacing);
@@ -337,7 +373,7 @@ export default function SocialGraphicGenerator({
 
       drawTrophyCase(ctx, caseX, caseY, caseWidth, caseHeight);
 
-      ctx.fillStyle = rankColors[i];
+      ctx.fillStyle = "#fbbf24";
       ctx.font = `bold ${36 * scale}px -apple-system, BlinkMacSystemFont, sans-serif`;
       ctx.textAlign = "center";
       ctx.fillText(`${i + 1}`, caseX + caseWidth / 2, caseY - 15);
@@ -346,7 +382,7 @@ export default function SocialGraphicGenerator({
       const jerseyNum = player.jerseyNumber ?? (i + 1);
       drawBasketballJersey(ctx, caseX + 15, caseY + 15, jerseyWidth, jerseyHeight, primary, secondary, jerseyNum);
 
-      ctx.fillStyle = "#1e293b";
+      ctx.fillStyle = "#ffffff";
       ctx.font = `bold ${18 * scale}px -apple-system, BlinkMacSystemFont, sans-serif`;
       ctx.textAlign = "center";
       const nameParts = player.name.split(" ");
@@ -371,12 +407,12 @@ export default function SocialGraphicGenerator({
         const x = col === 0 ? col1X : col2X;
         const y = listStartY + row * itemHeight;
 
-        ctx.fillStyle = "#64748b";
+        ctx.fillStyle = "#94a3b8";
         ctx.font = `${16 * scale}px -apple-system, BlinkMacSystemFont, sans-serif`;
         ctx.textAlign = "right";
         ctx.fillText(`${rank}.`, x - 10, y);
 
-        ctx.fillStyle = "#334155";
+        ctx.fillStyle = "#e2e8f0";
         ctx.textAlign = "left";
         ctx.fillText(player.name, x, y);
       }
@@ -387,7 +423,7 @@ export default function SocialGraphicGenerator({
         const rank = i + 5;
         const y = listStartY + i * itemHeight;
 
-        ctx.fillStyle = "#64748b";
+        ctx.fillStyle = "#e2e8f0";
         ctx.font = `${20 * scale}px -apple-system, BlinkMacSystemFont, sans-serif`;
         ctx.textAlign = "center";
         ctx.fillText(`${rank}. ${player.name}`, width / 2, y);
@@ -413,6 +449,16 @@ export default function SocialGraphicGenerator({
 
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
+
+    // Try to load background image if not already loaded
+    if (!bgImageRef.current) {
+      try {
+        bgImageRef.current = await loadImage(BANNER_BG_URL);
+      } catch {
+        // Fallback to gradient if image not available
+        console.warn("[SocialGraphic] Banner background not found, using gradient fallback");
+      }
+    }
 
     const { width, height } = FORMATS[format];
     canvas.width = width;

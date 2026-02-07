@@ -100,6 +100,48 @@ JERSEY_NUMBERS: Dict[str, int] = {
 }
     
 
+def parse_team_string(raw_team: str) -> str:
+    """
+    Parse concatenated 3-letter team abbreviations from BBRef CSV.
+    e.g. 'GSWHOULACNOHNOKOKCPHOSAS' -> 'GSW | HOU | LAC | NOH | NOK | OKC | PHO | SAS'
+    Returns the team with the most recent/last appearance (last in string)
+    as the primary, but joins all with ' | '.
+    """
+    if not raw_team or len(raw_team) <= 3:
+        return raw_team
+    
+    # Known 3-letter NBA team abbreviations (current + historical)
+    KNOWN_TEAMS = {
+        "ATL", "BOS", "BRK", "CHA", "CHI", "CLE", "DAL", "DEN", "DET",
+        "GSW", "HOU", "IND", "LAC", "LAL", "MEM", "MIA", "MIL", "MIN",
+        "NOP", "NYK", "OKC", "ORL", "PHI", "PHO", "POR", "SAC", "SAS",
+        "TOR", "UTA", "WAS",
+        # Historical
+        "SEA", "NJN", "VAN", "WSB", "NOH", "NOK", "KCK", "SDC", "CHH",
+        "BUF", "CIN", "KCO", "SDR", "STL", "BAL", "CAP", "CHZ", "NYN",
+        "SFW", "PHW", "SYR", "ROC", "FTW", "MNL", "TRI", "INO", "AND",
+        "WAT", "SHE", "DNN", "MLH",
+    }
+    
+    teams = []
+    i = 0
+    while i < len(raw_team):
+        if i + 3 <= len(raw_team):
+            chunk = raw_team[i:i+3]
+            if chunk in KNOWN_TEAMS:
+                if chunk not in teams:
+                    teams.append(chunk)
+                i += 3
+                continue
+        # Skip unknown character
+        i += 1
+    
+    if not teams:
+        return raw_team
+    
+    return " | ".join(teams)
+
+
 def load_all_time_players() -> List[AllTimePlayer]:
     """
     Load all-time players from CSV file.
@@ -123,7 +165,8 @@ def load_all_time_players() -> List[AllTimePlayer]:
                 
                 name = row.get('Player', '').strip()
                 position = row.get('Pos', '').strip() or None
-                team = row.get('Team', '').strip()
+                raw_team = row.get('Team', '').strip()
+                team = parse_team_string(raw_team)
                 career_from = row.get('From', '').strip()
                 career_to = row.get('To', '').strip()
                 
