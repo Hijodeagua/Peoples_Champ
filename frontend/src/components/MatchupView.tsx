@@ -32,17 +32,16 @@ const ADV_STAT_LABELS: Record<string, string> = {
   dbpm: "DBPM",
 };
 
-// Stats view mode: "pergame" or "advanced"
+// Stats view mode
 type StatsViewMode = "pergame" | "advanced";
 
 // Get stat value, percentile, and position rank from stats object
-function getStatData(stats: PlayerStats | AdvancedStats, statKey: string): { 
-  value: number | null; 
-  pctl: number | null; 
+function getStatData(stats: PlayerStats | AdvancedStats, statKey: string): {
+  value: number | null;
+  pctl: number | null;
   posRank: number | null;
 } {
   const value = stats[statKey as keyof typeof stats] as number | null;
-  // For percentage stats like "efg_pct", the percentile key is "efg_pctl" (not "efg_pct_pctl")
   const baseKey = statKey.replace(/_pct$/, '');
   const pctlKey = `${baseKey}_pctl` as keyof typeof stats;
   const pctl = stats[pctlKey] as number | null;
@@ -52,16 +51,16 @@ function getStatData(stats: PlayerStats | AdvancedStats, statKey: string): {
 }
 
 // Percentile bar component with position rank
-function PercentileBar({ 
-  value, 
-  percentile, 
-  label, 
+function PercentileBar({
+  value,
+  percentile,
+  label,
   posRank,
   posCount,
-  isPercentage = false 
-}: { 
-  value: number | null; 
-  percentile: number | null; 
+  isPercentage = false
+}: {
+  value: number | null;
+  percentile: number | null;
   label: string;
   posRank?: number | null;
   posCount?: number | null;
@@ -69,110 +68,118 @@ function PercentileBar({
 }) {
   const pctl = percentile ?? 0;
   const displayValue = value ?? 0;
-  
-  // Color based on percentile
+
   const getBarColor = (p: number) => {
     if (p >= 90) return "bg-emerald-500";
-    if (p >= 75) return "bg-emerald-400";
-    if (p >= 50) return "bg-yellow-400";
-    if (p >= 25) return "bg-orange-400";
-    return "bg-red-400";
+    if (p >= 75) return "bg-emerald-400/80";
+    if (p >= 50) return "bg-yellow-400/80";
+    if (p >= 25) return "bg-orange-400/80";
+    return "bg-red-400/80";
   };
 
-  const formattedValue = isPercentage 
-    ? `${displayValue.toFixed(1)}%` 
+  const formattedValue = isPercentage
+    ? `${displayValue.toFixed(1)}%`
     : displayValue.toFixed(1);
 
-  // Format position rank display
   const posRankDisplay = posRank && posCount ? `#${posRank}/${posCount}` : null;
 
   return (
-    <div className="flex items-center gap-2 text-xs">
-      <span className="w-10 text-slate-400 font-medium">{label}</span>
-      <div className="flex-1 h-2 bg-slate-700 rounded-full overflow-hidden">
-        <div 
-          className={`h-full ${getBarColor(pctl)} transition-all duration-300`}
-          style={{ width: `${Math.max(pctl, 2)}%` }}
+    <div className="flex items-center gap-2 text-xs group">
+      <span className="w-10 text-slate-500 font-medium">{label}</span>
+      <div className="flex-1 h-1.5 bg-slate-700/50 rounded-full overflow-hidden">
+        <div
+          className={`h-full ${getBarColor(pctl)} stat-bar`}
+          style={{ width: `${Math.max(pctl, 3)}%` }}
         />
       </div>
-      <span className="w-12 text-right font-semibold">{formattedValue}</span>
-      <span className="w-10 text-slate-500 text-right">{pctl.toFixed(0)}%</span>
+      <span className="w-12 text-right font-semibold text-slate-200">{formattedValue}</span>
+      <span className="w-9 text-slate-600 text-right text-[10px]">{pctl.toFixed(0)}%</span>
       {posRankDisplay && (
-        <span className="w-14 text-slate-400 text-right text-[10px]">{posRankDisplay}</span>
+        <span className="w-14 text-slate-600 text-right text-[10px] hidden sm:inline">{posRankDisplay}</span>
       )}
     </div>
   );
 }
 
 // Player card with stats
-function PlayerCard({ 
-  player, 
-  isSelected, 
+function PlayerCard({
+  player,
+  isSelected,
   onClick,
   statsViewMode = "pergame",
-}: { 
-  player: Player; 
-  isSelected: boolean; 
+}: {
+  player: Player;
+  isSelected: boolean;
   onClick: () => void;
   statsViewMode?: StatsViewMode;
 }) {
   const stats = player.stats;
   const advanced = player.advanced;
-  
-  // Determine which stats to show based on mode
+
   const isAdvancedMode = statsViewMode === "advanced";
-  const statsToShow = isAdvancedMode 
+  const statsToShow = isAdvancedMode
     ? ["per", "ts_pct", "ws", "ws_48", "bpm", "vorp"]
     : ["pts", "reb", "ast", "stl", "blk", "efg_pct", "three_pct"];
-  
+
   const currentStats = isAdvancedMode ? advanced : stats;
   const labelMap = isAdvancedMode ? ADV_STAT_LABELS : STAT_LABELS;
   const posCount = stats?.pos_count ?? null;
-  
+
   const isPercentageStat = (key: string) => key.includes("pct") || key === "ws_48";
-  
+
   return (
     <button
       type="button"
       onClick={onClick}
-      className={`w-full text-left rounded-xl p-5 shadow border transition hover:bg-slate-800/50 bg-slate-800/30 backdrop-blur cursor-pointer ${
-        isSelected ? "border-2 border-emerald-500 ring-2 ring-emerald-500/20" : "border-slate-700"
+      className={`w-full text-left rounded-2xl p-5 transition-all duration-200 cursor-pointer ${
+        isSelected
+          ? "card-elevated border-2 !border-emerald-500 ring-2 ring-emerald-500/20 shadow-lg shadow-emerald-500/10"
+          : "card-elevated hover:border-slate-600/50 hover:shadow-2xl"
       }`}
     >
       <div className="flex items-center gap-4 mb-4">
-        <img
-          src={getPlayerImageUrl(player.name)}
-          alt={player.name}
-          className="w-20 h-16 object-cover rounded-lg bg-slate-700"
-          onError={(e) => {
-            (e.target as HTMLImageElement).style.display = 'none';
-          }}
-        />
-        <div className="flex-1">
-          <div className="flex items-center justify-between">
-            <p className="text-xl font-bold">{player.name}</p>
+        <div className="relative">
+          <img
+            src={getPlayerImageUrl(player.name)}
+            alt={player.name}
+            className="w-16 h-14 object-cover rounded-xl bg-slate-700/50"
+            onError={(e) => {
+              (e.target as HTMLImageElement).style.display = 'none';
+            }}
+          />
+          {isSelected && (
+            <div className="absolute -top-1 -right-1 w-5 h-5 bg-emerald-500 rounded-full flex items-center justify-center">
+              <svg className="w-3 h-3 text-black" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+              </svg>
+            </div>
+          )}
+        </div>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center justify-between gap-2">
+            <p className="text-lg font-bold truncate">{player.name}</p>
             {stats?.games && (
-              <span className="text-xs text-slate-500 bg-slate-800 px-2 py-1 rounded">
+              <span className="text-[10px] text-slate-500 bg-slate-700/50 px-2 py-0.5 rounded-full shrink-0">
                 {stats.games} GP
               </span>
             )}
           </div>
-          <p className="text-sm text-slate-400">
-            {player.team} {player.position && `• ${player.position}`}
+          <p className="text-sm text-slate-500">
+            {player.team} {player.position && `· ${player.position}`}
           </p>
         </div>
       </div>
-      
+
       {currentStats && (
-        <div className="space-y-2 mt-4 pt-4 border-t border-slate-700">
+        <div className="space-y-1.5 mt-3 pt-3 border-t border-slate-700/50">
           {statsToShow.map((statKey) => {
             const { value, pctl, posRank } = getStatData(currentStats, statKey);
             const label = labelMap[statKey] || statKey.toUpperCase();
             return (
-              <PercentileBar 
+              <PercentileBar
                 key={statKey}
-                label={label} 
-                value={value} 
+                label={label}
+                value={value}
                 percentile={pctl}
                 posRank={!isAdvancedMode ? posRank : null}
                 posCount={!isAdvancedMode ? posCount : null}
@@ -211,29 +218,27 @@ export default function MatchupView() {
         total_matchups: myVotes.total_matchups,
         completed: myVotes.completed
       });
-      
+
       // Restore previous votes from server
       setVotes(myVotes.votes);
-      
-      // If user has already voted, skip to the first unvoted matchup
+
+      // Skip to first unvoted matchup
       if (Object.keys(myVotes.votes).length > 0 && game.matchups) {
         const firstUnvotedIndex = game.matchups.findIndex(m => !myVotes.votes[m.id]);
         if (firstUnvotedIndex >= 0) {
           setCurrentMatchupIndex(firstUnvotedIndex);
         } else if (myVotes.completed) {
-          // All matchups voted, show last one
           setCurrentMatchupIndex(game.matchups.length - 1);
         }
       }
     } catch (err: unknown) {
       console.error("[MatchupView] Load error:", err);
-      // Handle axios errors which have response.data
       if (err && typeof err === 'object' && 'response' in err) {
         const axiosErr = err as { response?: { data?: { detail?: string }, status?: number } };
         const detail = axiosErr.response?.data?.detail;
         const status = axiosErr.response?.status;
         if (status === 502 || status === 503) {
-          setError("Server is starting up. Please wait 30 seconds and try again.");
+          setError("Server is starting up. Please wait a moment and try again.");
         } else if (detail) {
           setError(detail);
         } else {
@@ -259,25 +264,23 @@ export default function MatchupView() {
 
   const handleSubmit = async () => {
     if (!gameData || !selectedPlayerId) return;
-    
+
     const currentMatchup = gameData.matchups[currentMatchupIndex];
     if (!currentMatchup) return;
-    
+
     try {
       await submitVote(currentMatchup.id, selectedPlayerId);
-      
-      // Store the vote locally
+
       const newVotes = { ...votes, [currentMatchup.id]: selectedPlayerId };
       setVotes(newVotes);
-      
-      // Update voting status
+
       const votesCount = Object.keys(newVotes).length;
       setVotingStatus({
         votes_today: votesCount,
         total_matchups: gameData.matchups.length,
         completed: votesCount >= gameData.matchups.length
       });
-      
+
       // Move to next matchup
       const nextIndex = currentMatchupIndex + 1;
       if (nextIndex < gameData.matchups.length) {
@@ -312,9 +315,9 @@ export default function MatchupView() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-500 mx-auto mb-4"></div>
-          <p className="text-slate-300">Loading today's matchups...</p>
+        <div className="text-center space-y-3">
+          <div className="animate-spin rounded-full h-10 w-10 border-2 border-slate-700 border-t-emerald-500 mx-auto"></div>
+          <p className="text-sm text-slate-500">Loading today's matchups...</p>
         </div>
       </div>
     );
@@ -323,16 +326,21 @@ export default function MatchupView() {
   if (error) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[400px] space-y-4">
-        <div className="bg-red-900/40 border border-red-700 text-red-200 p-4 rounded-lg max-w-md text-center">
-          <p className="font-semibold mb-2">Error Loading Game</p>
-          <p className="text-sm">{error}</p>
+        <div className="card-elevated p-6 max-w-md text-center">
+          <div className="w-12 h-12 rounded-full bg-red-500/10 border border-red-500/20 flex items-center justify-center mx-auto mb-4">
+            <svg className="w-6 h-6 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
+            </svg>
+          </div>
+          <p className="font-semibold text-slate-200 mb-2">Error Loading Game</p>
+          <p className="text-sm text-slate-400 mb-4">{error}</p>
+          <button
+            onClick={() => loadGameData(selectedSeason)}
+            className="btn-primary text-sm px-5 py-2"
+          >
+            Try Again
+          </button>
         </div>
-        <button
-          onClick={() => window.location.reload()}
-          className="px-4 py-2 rounded-lg bg-emerald-500 text-black font-semibold hover:bg-emerald-400 transition"
-        >
-          Try Again
-        </button>
       </div>
     );
   }
@@ -340,43 +348,39 @@ export default function MatchupView() {
   if (!gameData || !votingStatus) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[400px] space-y-6">
-        <div className="text-6xl">🏀</div>
-        <div className="text-center space-y-2">
-          <h2 className="text-2xl font-bold text-slate-200">No Matchups Available</h2>
-          <p className="text-slate-400 max-w-md">
-            We couldn't load today's matchups. The server might be waking up - please try again in a moment.
+        <div className="card-elevated p-8 max-w-md text-center">
+          <div className="w-16 h-16 rounded-2xl bg-slate-700/50 flex items-center justify-center mx-auto mb-4">
+            <svg className="w-8 h-8 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            </svg>
+          </div>
+          <h2 className="text-xl font-bold text-slate-200 mb-2">No Matchups Available</h2>
+          <p className="text-slate-500 text-sm mb-4">
+            The server might be starting up. Please try again shortly.
           </p>
+          <button
+            onClick={() => loadGameData(selectedSeason)}
+            className="btn-primary text-sm"
+          >
+            Retry
+          </button>
         </div>
-        <button
-          onClick={() => loadGameData(selectedSeason)}
-          className="px-6 py-3 rounded-xl bg-emerald-500 text-black font-bold hover:bg-emerald-400 transition"
-        >
-          Retry Loading
-        </button>
-        <p className="text-xs text-slate-500">
-          If this persists, the backend server may be starting up (takes ~30 seconds).
-        </p>
       </div>
     );
   }
 
-  // Defensive check for empty matchups array
   if (!gameData.matchups || gameData.matchups.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[400px] space-y-6">
-        <div className="text-6xl">📅</div>
-        <div className="text-center space-y-2">
-          <h2 className="text-2xl font-bold text-slate-200">No Matchups Scheduled</h2>
-          <p className="text-slate-400 max-w-md">
-            There are no matchups scheduled for today. Check back tomorrow or visit the Archive to replay past games.
+        <div className="card-elevated p-8 max-w-md text-center">
+          <h2 className="text-xl font-bold text-slate-200 mb-2">No Matchups Scheduled</h2>
+          <p className="text-slate-500 text-sm mb-4">
+            Check back tomorrow or visit the Archive to replay past games.
           </p>
+          <a href="/archive" className="btn-gold text-sm">
+            View Archive
+          </a>
         </div>
-        <a
-          href="/archive"
-          className="px-6 py-3 rounded-xl bg-amber-500 text-black font-bold hover:bg-amber-400 transition"
-        >
-          View Archive
-        </a>
       </div>
     );
   }
@@ -385,12 +389,8 @@ export default function MatchupView() {
   if (!currentMatchup) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[400px] space-y-4">
-        <div className="text-6xl">❓</div>
-        <p className="text-slate-300 text-lg">Matchup not found.</p>
-        <button
-          onClick={() => setCurrentMatchupIndex(0)}
-          className="px-4 py-2 rounded-lg bg-slate-700 text-slate-200 hover:bg-slate-600 transition"
-        >
+        <p className="text-slate-400">Matchup not found.</p>
+        <button onClick={() => setCurrentMatchupIndex(0)} className="btn-secondary text-sm">
           Go to First Matchup
         </button>
       </div>
@@ -401,70 +401,73 @@ export default function MatchupView() {
   const player2 = gameData.players.find(p => p.id === currentMatchup.player_b_id);
   const isCompleted = votingStatus.completed;
   const hasVotedOnCurrent = currentMatchup && votes[currentMatchup.id];
+  const progressPercent = gameData.matchups.length > 0
+    ? Math.round((Object.keys(votes).length / gameData.matchups.length) * 100)
+    : 0;
 
   return (
-    <div className="space-y-8">
-      <header className="text-center space-y-3">
-        <p className="text-sm uppercase tracking-[0.2em] text-emerald-400 font-semibold">
-          WHO'S YUR GOAT
+    <div className="space-y-6">
+      <header className="text-center space-y-2">
+        <p className="text-xs uppercase tracking-[0.2em] text-emerald-400/80 font-semibold">
+          PEOPLES CHAMP
         </p>
-        <h1 className="text-4xl font-bold">Who is the best player right now?</h1>
-        <p className="text-slate-300 max-w-3xl mx-auto leading-relaxed">
-          We are using regular season stats from the two seasons before this year to decide which star has the stronger case. Pick the season you think was better.
+        <h1 className="text-3xl md:text-4xl font-bold">Who is the best player right now?</h1>
+        <p className="text-slate-500 max-w-2xl mx-auto text-sm leading-relaxed">
+          Compare stats from recent seasons and pick your winner.
         </p>
       </header>
 
       {error && (
-        <div className="bg-red-900/40 border border-red-700 text-red-200 p-3 rounded">
+        <div className="glass rounded-xl p-3 text-red-300 text-sm text-center">
           {error}
           <FeedbackLink variant="compact" className="mt-2 block" />
         </div>
       )}
 
-      {/* Season and Stats Toggle Controls */}
-      <div className="flex flex-wrap items-center justify-center gap-4">
+      {/* Controls */}
+      <div className="flex flex-wrap items-center justify-center gap-3">
         {/* Season Toggle */}
-        <div className="flex items-center gap-2 bg-slate-800/50 rounded-lg p-1">
+        <div className="flex items-center gap-1 glass rounded-lg p-1">
           <button
             onClick={() => handleSeasonChange("current")}
-            className={`px-3 py-1.5 rounded-md text-sm font-medium transition ${
+            className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-all ${
               selectedSeason === "current"
-                ? "bg-emerald-500 text-black"
-                : "text-slate-300 hover:bg-slate-700"
+                ? "bg-emerald-500 text-black shadow-sm"
+                : "text-slate-400 hover:text-slate-200"
             }`}
           >
             This Year
           </button>
           <button
             onClick={() => handleSeasonChange("combined")}
-            className={`px-3 py-1.5 rounded-md text-sm font-medium transition ${
+            className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-all ${
               selectedSeason === "combined"
-                ? "bg-emerald-500 text-black"
-                : "text-slate-300 hover:bg-slate-700"
+                ? "bg-emerald-500 text-black shadow-sm"
+                : "text-slate-400 hover:text-slate-200"
             }`}
           >
-            This Year and Last
+            Two Seasons
           </button>
         </div>
 
         {/* Stats View Toggle */}
-        <div className="flex items-center gap-2 bg-slate-800/50 rounded-lg p-1">
+        <div className="flex items-center gap-1 glass rounded-lg p-1">
           <button
             onClick={() => setStatsViewMode("pergame")}
-            className={`px-3 py-1.5 rounded-md text-sm font-medium transition ${
+            className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-all ${
               statsViewMode === "pergame"
-                ? "bg-purple-500 text-white"
-                : "text-slate-300 hover:bg-slate-700"
+                ? "bg-purple-500 text-white shadow-sm"
+                : "text-slate-400 hover:text-slate-200"
             }`}
           >
             Per Game
           </button>
           <button
             onClick={() => setStatsViewMode("advanced")}
-            className={`px-3 py-1.5 rounded-md text-sm font-medium transition ${
+            className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-all ${
               statsViewMode === "advanced"
-                ? "bg-amber-500 text-black"
-                : "text-slate-300 hover:bg-slate-700"
+                ? "bg-amber-500 text-black shadow-sm"
+                : "text-slate-400 hover:text-slate-200"
             }`}
           >
             Advanced
@@ -472,79 +475,94 @@ export default function MatchupView() {
         </div>
       </div>
 
+      {/* Progress Bar */}
       {!isCompleted && (
-        <p className="text-center text-sm text-slate-400 font-medium">
-          Matchup {currentMatchupIndex + 1} of {gameData.matchups.length} • {votingStatus.votes_today} votes submitted
-        </p>
+        <div className="max-w-md mx-auto space-y-2">
+          <div className="flex items-center justify-between text-xs text-slate-500">
+            <span>Matchup {currentMatchupIndex + 1} of {gameData.matchups.length}</span>
+            <span>{votingStatus.votes_today} votes submitted</span>
+          </div>
+          <div className="w-full h-1.5 bg-slate-800 rounded-full overflow-hidden">
+            <div
+              className="h-full bg-gradient-to-r from-emerald-500 to-emerald-400 rounded-full transition-all duration-500 ease-out"
+              style={{ width: `${progressPercent}%` }}
+            />
+          </div>
+        </div>
       )}
 
       {isCompleted ? (
-        <div className="max-w-2xl mx-auto text-center py-12 space-y-6">
-          <div className="text-6xl mb-4">🏆</div>
-          <h2 className="text-3xl font-bold text-emerald-400">You&apos;re done for today!</h2>
-          <p className="text-slate-300 text-lg">
-            You&apos;ve completed all {gameData.matchups.length} matchups. Come back tomorrow for more!
-          </p>
-          
-          {/* Agreement Indicator */}
+        <div className="max-w-lg mx-auto text-center py-12 space-y-6 animate-fade-in">
+          <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-amber-500/20 to-amber-600/10 border border-amber-500/20 flex items-center justify-center mx-auto">
+            <svg className="w-10 h-10 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </div>
+          <div>
+            <h2 className="text-2xl font-bold text-emerald-400 mb-2">You&apos;re done for today!</h2>
+            <p className="text-slate-400">
+              All {gameData.matchups.length} matchups completed. Come back tomorrow!
+            </p>
+          </div>
+
           <div className="max-w-sm mx-auto">
             <AgreementIndicator />
           </div>
-          
-          <div className="bg-slate-800/60 border border-slate-700 rounded-xl p-4 max-w-md mx-auto">
-            <p className="text-emerald-400 font-semibold mb-2">✓ Your votes have been saved!</p>
-            <p className="text-slate-400 text-sm">
-              Your votes are now part of the People&apos;s Rankings. View the combined results on the Rankings page.
+
+          <div className="glass rounded-xl p-4 max-w-sm mx-auto">
+            <p className="text-emerald-400 font-semibold text-sm mb-1">Your votes have been saved</p>
+            <p className="text-slate-500 text-xs">
+              Your picks are now part of the People&apos;s Rankings.
             </p>
           </div>
-          <a
-            href="/rankings"
-            className="inline-block px-6 py-3 rounded-xl bg-emerald-500 text-black font-bold hover:bg-emerald-400 transition"
-          >
+          <a href="/rankings" className="btn-primary inline-block">
             View People&apos;s Rankings
           </a>
         </div>
       ) : (
         <>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 max-w-5xl mx-auto">
-            <div>
-              {player1 && (
-                <PlayerCard
-                  player={player1}
-                  isSelected={selectedPlayerId === player1.id}
-                  onClick={() => setSelectedPlayerId(player1.id)}
-                  statsViewMode={statsViewMode}
-                />
-              )}
+          {/* Matchup Cards with VS divider */}
+          <div className="relative max-w-5xl mx-auto">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-8">
+              <div>
+                {player1 && (
+                  <PlayerCard
+                    player={player1}
+                    isSelected={selectedPlayerId === player1.id}
+                    onClick={() => setSelectedPlayerId(player1.id)}
+                    statsViewMode={statsViewMode}
+                  />
+                )}
+              </div>
+              <div>
+                {player2 && (
+                  <PlayerCard
+                    player={player2}
+                    isSelected={selectedPlayerId === player2.id}
+                    onClick={() => setSelectedPlayerId(player2.id)}
+                    statsViewMode={statsViewMode}
+                  />
+                )}
+              </div>
             </div>
-
-            <div>
-              {player2 && (
-                <PlayerCard
-                  player={player2}
-                  isSelected={selectedPlayerId === player2.id}
-                  onClick={() => setSelectedPlayerId(player2.id)}
-                  statsViewMode={statsViewMode}
-                />
-              )}
+            {/* VS Badge */}
+            <div className="hidden lg:flex absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-10">
+              <div className="vs-badge">VS</div>
             </div>
           </div>
 
+          {/* Action Buttons */}
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
             <button
               type="button"
               onClick={handleSubmit}
               disabled={!selectedPlayerId || loading}
-              className="px-6 py-3 rounded-xl bg-emerald-500 text-black font-bold shadow-lg hover:bg-emerald-400 transition disabled:opacity-60 disabled:cursor-not-allowed"
+              className="btn-primary disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:shadow-none"
             >
               {hasVotedOnCurrent ? "Update Vote" : "Submit Vote"}
             </button>
             {currentMatchupIndex > 0 && (
-              <button
-                type="button"
-                onClick={handlePrevious}
-                className="px-5 py-2.5 rounded-xl border border-slate-600 text-slate-200 hover:bg-slate-800 transition"
-              >
+              <button type="button" onClick={handlePrevious} className="btn-secondary text-sm px-5 py-2.5">
                 Previous
               </button>
             )}
@@ -553,7 +571,7 @@ export default function MatchupView() {
                 type="button"
                 onClick={handleSkip}
                 disabled={loading}
-                className="px-5 py-2.5 rounded-xl border border-slate-600 text-slate-200 hover:bg-slate-800 transition disabled:opacity-60 disabled:cursor-not-allowed"
+                className="btn-secondary text-sm px-5 py-2.5 disabled:opacity-40"
               >
                 Skip
               </button>
@@ -562,9 +580,9 @@ export default function MatchupView() {
         </>
       )}
 
-      <p className="mt-8 text-xs text-slate-400 text-center">
-        * Stats pulled from Basketball Reference. 
-        {selectedSeason === "current" ? " Showing 2025-26 season only." : " Showing combined 2024-25 & 2025-26 stats."}
+      <p className="text-[10px] text-slate-600 text-center">
+        Stats from Basketball Reference.
+        {selectedSeason === "current" ? " Current season." : " Combined two-season stats."}
       </p>
     </div>
   );
