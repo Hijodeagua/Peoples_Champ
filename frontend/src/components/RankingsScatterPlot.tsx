@@ -85,44 +85,43 @@ export function RankingsScatterPlot({ rankings, h2hVotes, simulatedH2H, useSimul
   const yScale = (rank: number) => padding + ((rank - 1) / 99) * innerHeight;
 
   return (
-    <div className="w-full max-w-md mx-auto bg-slate-800/50 p-4 rounded-xl border border-slate-700">
-      <h3 className="text-xl font-bold text-center mb-2">Rankings Comparison</h3>
-      
+    <div className="w-full max-w-md mx-auto bg-slate-800/50 p-3 sm:p-4 rounded-xl border border-slate-700">
+      <h3 className="text-lg sm:text-xl font-bold text-center mb-2">Rankings Comparison</h3>
+
       {/* Axis Selection Controls */}
-      <div className="flex flex-wrap justify-center gap-4 mb-4">
+      <div className="flex flex-col sm:flex-row justify-center gap-2 sm:gap-4 mb-3 sm:mb-4">
         <div className="flex items-center gap-2">
-          <label className="text-sm text-slate-400">X-Axis:</label>
+          <label className="text-xs sm:text-sm text-slate-400">X:</label>
           <select
             value={xAxis}
             onChange={(e) => setXAxis(e.target.value as MetricOption)}
-            className="bg-slate-700 text-white text-sm rounded px-2 py-1 border border-slate-600"
+            className="bg-slate-700 text-white text-xs sm:text-sm rounded px-2 py-1.5 sm:py-1 border border-slate-600 flex-1 sm:flex-none"
           >
-            <option value="elo">Our ELO Model</option>
-            <option value="h2h">Head-to-Head Score</option>
+            <option value="elo">ELO Model</option>
+            <option value="h2h">H2H Score</option>
             <option value="ringer">Ringer Rank</option>
           </select>
         </div>
         <div className="flex items-center gap-2">
-          <label className="text-sm text-slate-400">Y-Axis:</label>
+          <label className="text-xs sm:text-sm text-slate-400">Y:</label>
           <select
             value={yAxis}
             onChange={(e) => setYAxis(e.target.value as MetricOption)}
-            className="bg-slate-700 text-white text-sm rounded px-2 py-1 border border-slate-600"
+            className="bg-slate-700 text-white text-xs sm:text-sm rounded px-2 py-1.5 sm:py-1 border border-slate-600 flex-1 sm:flex-none"
           >
-            <option value="elo">Our ELO Model</option>
-            <option value="h2h">Head-to-Head Score</option>
+            <option value="elo">ELO Model</option>
+            <option value="h2h">H2H Score</option>
             <option value="ringer">Ringer Rank</option>
           </select>
         </div>
       </div>
 
-      <p className="text-xs text-slate-400 text-center mb-4">
-        Comparing {metricLabels[yAxis]} (Y) vs {metricLabels[xAxis]} (X). 
-        <span className="text-emerald-400 ml-1">Below</span> = Y higher. 
-        <span className="text-red-400 ml-1">Above</span> = Y lower.
+      <p className="text-[10px] sm:text-xs text-slate-400 text-center mb-3 sm:mb-4">
+        <span className="text-emerald-400">Below line</span> = Y higher.
+        <span className="text-red-400 ml-1">Above line</span> = Y lower.
       </p>
-      
-      <div className="relative aspect-square w-full max-w-[400px] mx-auto">
+
+      <div className="relative aspect-square w-full max-w-[400px] mx-auto touch-none">
         <svg viewBox={`0 0 ${width} ${height}`} className="w-full h-full overflow-visible">
           {/* Background Grid */}
           <line x1={padding} y1={height - padding} x2={width - padding} y2={height - padding} stroke="#475569" strokeWidth="2" />
@@ -206,12 +205,18 @@ export function RankingsScatterPlot({ rankings, h2hVotes, simulatedH2H, useSimul
                 className="transition-all duration-200 cursor-pointer hover:opacity-100 opacity-80"
                 onMouseEnter={() => {
                   setHoveredPlayer(player);
-                  setHoverPos({ 
-                    x: cx,
-                    y: cy
-                  });
+                  setHoverPos({ x: cx, y: cy });
                 }}
                 onMouseLeave={() => setHoveredPlayer(null)}
+                onTouchStart={(e) => {
+                  e.preventDefault();
+                  if (hoveredPlayer?.player.id === player.player.id) {
+                    setHoveredPlayer(null);
+                  } else {
+                    setHoveredPlayer(player);
+                    setHoverPos({ x: cx, y: cy });
+                  }
+                }}
               />
             );
           })}

@@ -131,18 +131,19 @@ function PlayerCard({
     <button
       type="button"
       onClick={onClick}
-      className={`w-full text-left rounded-2xl p-5 transition-all duration-200 cursor-pointer ${
+      className={`w-full text-left rounded-2xl p-4 sm:p-5 transition-all duration-200 cursor-pointer active:scale-[0.99] ${
         isSelected
           ? "card-elevated border-2 !border-emerald-500 ring-2 ring-emerald-500/20 shadow-lg shadow-emerald-500/10"
           : "card-elevated hover:border-slate-600/50 hover:shadow-2xl"
       }`}
+      style={{ touchAction: "manipulation" }}
     >
-      <div className="flex items-center gap-4 mb-4">
-        <div className="relative">
+      <div className="flex items-center gap-3 sm:gap-4 mb-3 sm:mb-4">
+        <div className="relative shrink-0">
           <img
             src={getPlayerImageUrl(player.name)}
             alt={player.name}
-            className="w-16 h-14 object-cover rounded-xl bg-slate-700/50"
+            className="w-14 h-12 sm:w-16 sm:h-14 object-cover rounded-xl bg-slate-700/50"
             onError={(e) => {
               (e.target as HTMLImageElement).style.display = 'none';
             }}
@@ -157,14 +158,14 @@ function PlayerCard({
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center justify-between gap-2">
-            <p className="text-lg font-bold truncate">{player.name}</p>
+            <p className="text-base sm:text-lg font-bold truncate">{player.name}</p>
             {stats?.games && (
               <span className="text-[10px] text-slate-500 bg-slate-700/50 px-2 py-0.5 rounded-full shrink-0">
                 {stats.games} GP
               </span>
             )}
           </div>
-          <p className="text-sm text-slate-500">
+          <p className="text-xs sm:text-sm text-slate-500">
             {player.team} {player.position && `· ${player.position}`}
           </p>
         </div>
@@ -406,13 +407,13 @@ export default function MatchupView() {
     : 0;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       <header className="text-center space-y-2">
         <p className="text-xs uppercase tracking-[0.2em] text-emerald-400/80 font-semibold">
           PEOPLES CHAMP
         </p>
-        <h1 className="text-3xl md:text-4xl font-bold">Who is the best player right now?</h1>
-        <p className="text-slate-500 max-w-2xl mx-auto text-sm leading-relaxed">
+        <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold">Who is the best player right now?</h1>
+        <p className="text-slate-500 max-w-2xl mx-auto text-sm leading-relaxed hidden sm:block">
           Compare stats from recent seasons and pick your winner.
         </p>
       </header>
@@ -425,12 +426,12 @@ export default function MatchupView() {
       )}
 
       {/* Controls */}
-      <div className="flex flex-wrap items-center justify-center gap-3">
+      <div className="flex items-center justify-center gap-2 sm:gap-3">
         {/* Season Toggle */}
-        <div className="flex items-center gap-1 glass rounded-lg p-1">
+        <div className="flex items-center gap-0.5 glass rounded-lg p-0.5 sm:p-1">
           <button
             onClick={() => handleSeasonChange("current")}
-            className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-all ${
+            className={`px-2.5 sm:px-3 py-2 sm:py-1.5 rounded-md text-xs font-semibold transition-all ${
               selectedSeason === "current"
                 ? "bg-emerald-500 text-black shadow-sm"
                 : "text-slate-400 hover:text-slate-200"
@@ -440,7 +441,7 @@ export default function MatchupView() {
           </button>
           <button
             onClick={() => handleSeasonChange("combined")}
-            className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-all ${
+            className={`px-2.5 sm:px-3 py-2 sm:py-1.5 rounded-md text-xs font-semibold transition-all ${
               selectedSeason === "combined"
                 ? "bg-emerald-500 text-black shadow-sm"
                 : "text-slate-400 hover:text-slate-200"
@@ -451,10 +452,10 @@ export default function MatchupView() {
         </div>
 
         {/* Stats View Toggle */}
-        <div className="flex items-center gap-1 glass rounded-lg p-1">
+        <div className="flex items-center gap-0.5 glass rounded-lg p-0.5 sm:p-1">
           <button
             onClick={() => setStatsViewMode("pergame")}
-            className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-all ${
+            className={`px-2.5 sm:px-3 py-2 sm:py-1.5 rounded-md text-xs font-semibold transition-all ${
               statsViewMode === "pergame"
                 ? "bg-purple-500 text-white shadow-sm"
                 : "text-slate-400 hover:text-slate-200"
@@ -464,7 +465,7 @@ export default function MatchupView() {
           </button>
           <button
             onClick={() => setStatsViewMode("advanced")}
-            className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-all ${
+            className={`px-2.5 sm:px-3 py-2 sm:py-1.5 rounded-md text-xs font-semibold transition-all ${
               statsViewMode === "advanced"
                 ? "bg-amber-500 text-black shadow-sm"
                 : "text-slate-400 hover:text-slate-200"
@@ -523,7 +524,7 @@ export default function MatchupView() {
         <>
           {/* Matchup Cards with VS divider */}
           <div className="relative max-w-5xl mx-auto">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-8">
               <div>
                 {player1 && (
                   <PlayerCard
@@ -534,6 +535,12 @@ export default function MatchupView() {
                   />
                 )}
               </div>
+
+              {/* Mobile VS Badge */}
+              <div className="flex md:hidden justify-center -my-1.5 relative z-10">
+                <div className="vs-badge-mobile">VS</div>
+              </div>
+
               <div>
                 {player2 && (
                   <PlayerCard
@@ -545,33 +552,33 @@ export default function MatchupView() {
                 )}
               </div>
             </div>
-            {/* VS Badge */}
-            <div className="hidden lg:flex absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-10">
+            {/* Desktop VS Badge */}
+            <div className="hidden md:flex absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-10">
               <div className="vs-badge">VS</div>
             </div>
           </div>
 
           {/* Action Buttons */}
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+          <div className="flex items-center justify-center gap-3 px-4 sm:px-0">
+            {currentMatchupIndex > 0 && (
+              <button type="button" onClick={handlePrevious} className="btn-secondary text-sm px-4 py-2.5 sm:px-5">
+                Prev
+              </button>
+            )}
             <button
               type="button"
               onClick={handleSubmit}
               disabled={!selectedPlayerId || loading}
-              className="btn-primary disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:shadow-none"
+              className="btn-primary flex-1 sm:flex-none max-w-[200px] disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:shadow-none"
             >
               {hasVotedOnCurrent ? "Update Vote" : "Submit Vote"}
             </button>
-            {currentMatchupIndex > 0 && (
-              <button type="button" onClick={handlePrevious} className="btn-secondary text-sm px-5 py-2.5">
-                Previous
-              </button>
-            )}
             {currentMatchupIndex < gameData.matchups.length - 1 && (
               <button
                 type="button"
                 onClick={handleSkip}
                 disabled={loading}
-                className="btn-secondary text-sm px-5 py-2.5 disabled:opacity-40"
+                className="btn-secondary text-sm px-4 py-2.5 sm:px-5 disabled:opacity-40"
               >
                 Skip
               </button>

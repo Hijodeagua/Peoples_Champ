@@ -93,10 +93,10 @@ export default function GlobalRankings({ onPlayGame }: GlobalRankingsProps) {
   const topPlayers = data.rankings.slice(0, 5);
 
   return (
-    <div className="space-y-6 animate-fade-in">
+    <div className="space-y-4 sm:space-y-6 animate-fade-in">
       {/* Summary Bar */}
-      <div className="glass rounded-xl p-4 text-center">
-        <div className="flex items-center justify-center gap-6 text-sm">
+      <div className="glass rounded-xl p-3 sm:p-4 text-center">
+        <div className="flex items-center justify-center gap-4 sm:gap-6 text-xs sm:text-sm">
           <div>
             <span className="text-slate-500">Date: </span>
             <span className="text-slate-200 font-medium">{data.date}</span>
@@ -114,7 +114,7 @@ export default function GlobalRankings({ onPlayGame }: GlobalRankingsProps) {
 
       {/* Podium - Top 3 */}
       {data.rankings.length >= 3 && (
-        <div className="flex items-end justify-center gap-4 py-6">
+        <div className="flex items-end justify-center gap-2 sm:gap-4 py-4 sm:py-6">
           <PodiumEntry ranking={data.rankings[1]} position={2} />
           <PodiumEntry ranking={data.rankings[0]} position={1} />
           <PodiumEntry ranking={data.rankings[2]} position={3} />
@@ -123,12 +123,12 @@ export default function GlobalRankings({ onPlayGame }: GlobalRankingsProps) {
 
       {/* Full Rankings Table */}
       <div className="card-elevated overflow-hidden">
-        <div className="p-4 border-b border-slate-700/50">
+        <div className="p-3 sm:p-4 border-b border-slate-700/50">
           <div className="flex items-center justify-between">
-            <h3 className="font-semibold text-slate-300">Today's Global Rankings</h3>
+            <h3 className="font-semibold text-sm sm:text-base text-slate-300">Today's Rankings</h3>
             <button
               onClick={() => setShowShareModal(true)}
-              className="px-4 py-1.5 text-xs font-semibold glass-hover rounded-lg text-slate-300"
+              className="px-3 sm:px-4 py-1.5 text-xs font-semibold glass-hover rounded-lg text-slate-300"
             >
               Share
             </button>
@@ -139,10 +139,10 @@ export default function GlobalRankings({ onPlayGame }: GlobalRankingsProps) {
           {data.rankings.map((ranking, idx) => (
             <div
               key={ranking.id}
-              className="flex items-center gap-4 px-4 py-3 hover:bg-slate-700/20 transition"
+              className="flex items-center gap-3 sm:gap-4 px-3 sm:px-4 py-2.5 sm:py-3 hover:bg-slate-700/20 transition"
             >
               <span
-                className={`w-8 h-8 flex items-center justify-center rounded-lg font-bold text-xs ${
+                className={`w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center rounded-lg font-bold text-xs shrink-0 ${
                   idx === 0
                     ? "bg-yellow-500 text-black"
                     : idx === 1
@@ -158,21 +158,21 @@ export default function GlobalRankings({ onPlayGame }: GlobalRankingsProps) {
               <img
                 src={getPlayerThumbnailUrl(ranking.name)}
                 alt={ranking.name}
-                className="w-10 h-8 object-cover rounded bg-slate-700/50"
+                className="w-8 h-7 sm:w-10 sm:h-8 object-cover rounded bg-slate-700/50 shrink-0"
                 onError={(e) => {
                   (e.target as HTMLImageElement).style.display = 'none';
                 }}
               />
 
               <div className="flex-1 min-w-0">
-                <div className="font-semibold text-sm truncate">{ranking.name}</div>
-                <div className="text-xs text-slate-500">
+                <div className="font-semibold text-xs sm:text-sm truncate">{ranking.name}</div>
+                <div className="text-[10px] sm:text-xs text-slate-500">
                   {ranking.team || "---"} {ranking.position && `· ${ranking.position}`}
                 </div>
               </div>
 
               <div className="text-right shrink-0">
-                <div className="text-sm font-bold text-emerald-400">
+                <div className="text-xs sm:text-sm font-bold text-emerald-400">
                   {ranking.win_percentage.toFixed(0)}%
                 </div>
                 <div className="text-[10px] text-slate-600">
@@ -203,7 +203,7 @@ export default function GlobalRankings({ onPlayGame }: GlobalRankingsProps) {
 }
 
 function PodiumEntry({ ranking, position }: { ranking: PlayerRanking; position: 1 | 2 | 3 }) {
-  const heights = { 1: "h-28", 2: "h-20", 3: "h-16" };
+  const heights = { 1: "h-24 sm:h-28", 2: "h-16 sm:h-20", 3: "h-12 sm:h-16" };
   const colors = {
     1: "from-yellow-500/20 to-yellow-600/5 border-yellow-500/30",
     2: "from-slate-400/20 to-slate-500/5 border-slate-400/30",
@@ -220,19 +220,19 @@ function PodiumEntry({ ranking, position }: { ranking: PlayerRanking; position: 
       <img
         src={getPlayerThumbnailUrl(ranking.name)}
         alt={ranking.name}
-        className="w-14 h-12 object-cover rounded-xl bg-slate-700/50 mb-2"
+        className="w-12 h-10 sm:w-14 sm:h-12 object-cover rounded-xl bg-slate-700/50 mb-1.5 sm:mb-2"
         onError={(e) => {
           (e.target as HTMLImageElement).style.display = 'none';
         }}
       />
-      <span className={`w-7 h-7 flex items-center justify-center rounded-full text-xs font-bold mb-2 ${badgeColors[position]}`}>
+      <span className={`w-6 h-6 sm:w-7 sm:h-7 flex items-center justify-center rounded-full text-[10px] sm:text-xs font-bold mb-1.5 sm:mb-2 ${badgeColors[position]}`}>
         {position}
       </span>
-      <div className="text-center mb-2">
-        <div className="font-bold text-sm truncate max-w-[100px]">{ranking.name}</div>
-        <div className="text-[10px] text-slate-500">{ranking.win_percentage.toFixed(0)}% wins</div>
+      <div className="text-center mb-1.5 sm:mb-2">
+        <div className="font-bold text-xs sm:text-sm truncate max-w-[80px] sm:max-w-[120px]">{ranking.name}</div>
+        <div className="text-[9px] sm:text-[10px] text-slate-500">{ranking.win_percentage.toFixed(0)}% wins</div>
       </div>
-      <div className={`w-24 ${heights[position]} rounded-t-xl bg-gradient-to-t ${colors[position]} border-t border-x`} />
+      <div className={`w-20 sm:w-24 ${heights[position]} rounded-t-xl bg-gradient-to-t ${colors[position]} border-t border-x`} />
     </div>
   );
 }

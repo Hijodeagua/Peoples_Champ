@@ -178,42 +178,42 @@ export default function PeoplesRankingsPage() {
   }
 
   return (
-    <div className="max-w-6xl mx-auto px-4 py-8 page-enter">
-      <header className="text-center space-y-3 mb-8">
+    <div className="max-w-6xl mx-auto px-4 py-6 sm:py-8 page-enter">
+      <header className="text-center space-y-3 mb-6 sm:mb-8">
         <p className="text-xs uppercase tracking-[0.2em] text-emerald-400/80 font-semibold">
           CROWD CONSENSUS
         </p>
-        <h1 className="text-4xl font-bold">People&apos;s Rankings</h1>
-        <p className="text-slate-400 max-w-2xl mx-auto text-sm">
+        <h1 className="text-3xl sm:text-4xl font-bold">People&apos;s Rankings</h1>
+        <p className="text-slate-400 max-w-2xl mx-auto text-sm hidden sm:block">
           Rankings based on simulated head-to-head matchups blending analytics and expert opinion.
         </p>
-        
+
         {/* Ranking View Toggle */}
-        <div className="flex justify-center gap-2 pt-4">
-          <span className="text-sm text-slate-400 mr-2">Sort by:</span>
+        <div className="flex flex-wrap justify-center gap-2 pt-3 sm:pt-4">
+          <span className="text-xs sm:text-sm text-slate-400 mr-1 sm:mr-2 self-center">Sort:</span>
           {(['h2h', 'elo', 'ringer'] as const).map((type) => (
             <button
               key={type}
               onClick={() => setPrimaryRanking(type)}
-              className={`px-3 py-1.5 rounded-lg text-sm font-medium transition ${
+              className={`px-3 py-2 sm:py-1.5 rounded-lg text-xs sm:text-sm font-medium transition ${
                 primaryRanking === type
                   ? 'bg-emerald-500 text-black'
                   : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
               }`}
             >
-              {type === 'h2h' ? "People's Score" : type === 'elo' ? 'ELO Model' : 'Ringer'}
+              {type === 'h2h' ? "People's" : type === 'elo' ? 'ELO' : 'Ringer'}
             </button>
           ))}
         </div>
       </header>
 
-      <div className="bg-slate-800/50 rounded-xl border border-slate-700 p-6">
-        <div className="flex justify-end mb-4">
+      <div className="bg-slate-800/50 rounded-xl border border-slate-700 p-3 sm:p-6">
+        <div className="flex justify-end mb-3 sm:mb-4">
           <button
             onClick={() => setShowChart(!showChart)}
-            className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-500 transition-colors"
+            className="flex items-center gap-2 px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-500 transition-colors"
           >
-            {showChart ? "Hide Chart" : "Plot the Differences"}
+            {showChart ? "Hide Chart" : "Plot Differences"}
           </button>
         </div>
 
@@ -264,7 +264,7 @@ export default function PeoplesRankingsPage() {
                   <div className="mb-4 p-4 bg-slate-800/50 rounded-lg">
                     <h4 className="text-sm font-semibold text-slate-200 mb-3">{currentAnalysis.title}</h4>
                     
-                    <div className="grid grid-cols-2 gap-4 text-xs mb-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs mb-4">
                       <div>
                         <p className="text-emerald-400 font-medium mb-2">Undervalued Players</p>
                         {currentAnalysis.biggestUndervalued.slice(0, 3).map((p, i) => (
@@ -364,26 +364,24 @@ export default function PeoplesRankingsPage() {
           </div>
         )}
 
-        <div className="mb-4 p-4 bg-blue-900/20 border border-blue-700/50 rounded-lg">
-          <p className="text-blue-200 text-sm">
-            <strong>Model-Based Rankings:</strong> These rankings are calculated using advanced
-            statistics from Basketball Reference (Win Shares, BPM, VORP, PER). Compare with The
-            Ringer's expert rankings to see where our model agrees and disagrees.
+        <div className="mb-3 sm:mb-4 p-3 sm:p-4 bg-blue-900/20 border border-blue-700/50 rounded-lg">
+          <p className="text-blue-200 text-xs sm:text-sm">
+            <strong>Model-Based Rankings:</strong> Calculated using advanced stats (WS, BPM, VORP, PER) from Basketball Reference.
           </p>
         </div>
 
-        <div className="overflow-x-auto">
-          <table className="w-full">
+        <div className="overflow-x-auto -mx-3 sm:mx-0">
+          <table className="w-full min-w-0">
             <thead>
               <tr className="border-b border-slate-700">
-                <th className="text-left py-3 px-4 text-sm font-semibold text-slate-300">
-                  {primaryRanking === 'h2h' ? "People's Rank" : primaryRanking === 'ringer' ? 'Ringer Rank' : 'ELO Rank'}
+                <th className="text-left py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-semibold text-slate-300">
+                  #
                 </th>
-                <th className="text-left py-3 px-4 text-sm font-semibold text-slate-300">Player</th>
-                <th className="text-left py-3 px-4 text-sm font-semibold text-slate-300">Team</th>
-                <th className="text-left py-3 px-4 text-sm font-semibold text-slate-300">ELO Score</th>
-                <th className="text-left py-3 px-4 text-sm font-semibold text-slate-300">H2H Record</th>
-                <th className="text-left py-3 px-4 text-sm font-semibold text-slate-300">Ringer</th>
+                <th className="text-left py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-semibold text-slate-300">Player</th>
+                <th className="text-left py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-semibold text-slate-300 hidden md:table-cell">Team</th>
+                <th className="text-left py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-semibold text-slate-300 hidden sm:table-cell">ELO</th>
+                <th className="text-left py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-semibold text-slate-300">H2H</th>
+                <th className="text-left py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm font-semibold text-slate-300 hidden sm:table-cell">Ringer</th>
               </tr>
             </thead>
             <tbody>
@@ -423,38 +421,41 @@ export default function PeoplesRankingsPage() {
                 
                 return (
                   <tr key={ranking.player.id} className="border-b border-slate-700/50 hover:bg-slate-700/30">
-                    <td className="py-3 px-4 text-emerald-400 font-bold">#{displayRank}</td>
-                    <td className="py-3 px-4">
-                      <div className="flex items-center gap-3">
+                    <td className="py-2 sm:py-3 px-2 sm:px-4 text-emerald-400 font-bold text-xs sm:text-sm">#{displayRank}</td>
+                    <td className="py-2 sm:py-3 px-2 sm:px-4">
+                      <div className="flex items-center gap-2 sm:gap-3">
                         <img
                           src={getPlayerThumbnailUrl(ranking.player.name)}
                           alt={ranking.player.name}
-                          className="w-10 h-8 object-cover rounded bg-slate-700"
+                          className="w-8 h-6 sm:w-10 sm:h-8 object-cover rounded bg-slate-700 shrink-0"
                           onError={(e) => {
                             (e.target as HTMLImageElement).style.display = 'none';
                           }}
                         />
-                        <div>
-                          <div className="font-semibold">{ranking.player.name}</div>
-                          <div className="text-xs text-slate-400">{ranking.player.season}</div>
+                        <div className="min-w-0">
+                          <div className="font-semibold text-xs sm:text-sm truncate">{ranking.player.name}</div>
+                          <div className="text-[10px] sm:text-xs text-slate-400">
+                            <span className="md:hidden">{ranking.player.team} · </span>
+                            {ranking.player.season}
+                          </div>
                         </div>
                       </div>
                     </td>
-                    <td className="py-3 px-4 text-slate-300">{ranking.player.team}</td>
-                    <td className="py-3 px-4 text-slate-300">
-                      #{ranking.rank} <span className="text-xs text-slate-500">({ranking.compositeScore.toFixed(1)})</span>
+                    <td className="py-2 sm:py-3 px-2 sm:px-4 text-slate-300 text-xs sm:text-sm hidden md:table-cell">{ranking.player.team}</td>
+                    <td className="py-2 sm:py-3 px-2 sm:px-4 text-slate-300 text-xs sm:text-sm hidden sm:table-cell">
+                      #{ranking.rank} <span className="text-[10px] sm:text-xs text-slate-500">({ranking.compositeScore.toFixed(1)})</span>
                     </td>
-                    <td className="py-3 px-4">
+                    <td className="py-2 sm:py-3 px-2 sm:px-4">
                       {displayVotes ? (
-                        <span className="text-yellow-400">
+                        <span className="text-yellow-400 text-xs sm:text-sm whitespace-nowrap">
                           {displayVotes.wins}W-{displayVotes.losses}L
-                          {useSimulated && <span className="text-xs text-slate-500 ml-1">*</span>}
+                          {useSimulated && <span className="text-[10px] sm:text-xs text-slate-500 ml-0.5 sm:ml-1">*</span>}
                         </span>
                       ) : (
                         <span className="text-slate-500">—</span>
                       )}
                     </td>
-                    <td className="py-3 px-4 text-slate-300">
+                    <td className="py-2 sm:py-3 px-2 sm:px-4 text-slate-300 text-xs sm:text-sm hidden sm:table-cell">
                       {ranking.ringerRank ? `#${ranking.ringerRank}` : "—"}
                     </td>
                   </tr>

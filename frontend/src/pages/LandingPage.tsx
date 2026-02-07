@@ -38,28 +38,28 @@ export default function LandingPage() {
       )}
 
       {/* Hero Section */}
-      <section className="text-center py-16 md:py-24 space-y-8">
-        <div className="space-y-4 animate-slide-up">
-          <p className="text-sm uppercase tracking-[0.25em] text-emerald-400 font-semibold">
+      <section className="text-center py-10 sm:py-16 md:py-24 space-y-6 sm:space-y-8">
+        <div className="space-y-3 sm:space-y-4 animate-slide-up">
+          <p className="text-xs sm:text-sm uppercase tracking-[0.25em] text-emerald-400 font-semibold">
             NBA Player Rankings
           </p>
-          <h1 className="text-5xl md:text-7xl font-black leading-[1.1] tracking-tight">
+          <h1 className="text-4xl sm:text-5xl md:text-7xl font-black leading-[1.1] tracking-tight">
             Who's Yur{" "}
             <span className="text-gradient-gold">GOAT</span>
             <span className="text-amber-400">?</span>
           </h1>
-          <p className="text-lg md:text-xl text-slate-400 max-w-2xl mx-auto leading-relaxed">
+          <p className="text-base sm:text-lg md:text-xl text-slate-400 max-w-2xl mx-auto leading-relaxed">
             Rank the best basketball players using real stats, head-to-head matchups,
             and see how your picks stack up against the crowd.
           </p>
         </div>
 
         {/* Two Game Mode Cards */}
-        <div className="pt-6 grid grid-cols-1 md:grid-cols-2 gap-6 max-w-3xl mx-auto">
+        <div className="pt-4 sm:pt-6 grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 max-w-3xl mx-auto">
           {/* Daily Game Card */}
           <Link
             to="/daily"
-            className="group relative overflow-hidden rounded-2xl p-8 text-left transition-all duration-300 hover:scale-[1.02] hover:-translate-y-1 bg-gradient-to-br from-emerald-600/90 to-emerald-900 border border-emerald-500/20 shadow-xl hover:shadow-emerald-500/20"
+            className="group relative overflow-hidden rounded-2xl p-6 sm:p-8 text-left transition-all duration-300 hover:scale-[1.02] hover:-translate-y-1 active:scale-[0.99] bg-gradient-to-br from-emerald-600/90 to-emerald-900 border border-emerald-500/20 shadow-xl hover:shadow-emerald-500/20"
           >
             <div className="absolute inset-0 bg-gradient-to-br from-emerald-400/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
             <div className="absolute top-0 right-0 w-40 h-40 bg-emerald-400/10 rounded-full -translate-y-1/2 translate-x-1/2 blur-xl" />
@@ -83,7 +83,7 @@ export default function LandingPage() {
           {/* All-Time Card */}
           <Link
             to="/alltime"
-            className="group relative overflow-hidden rounded-2xl p-8 text-left transition-all duration-300 hover:scale-[1.02] hover:-translate-y-1 bg-gradient-to-br from-amber-600/90 to-amber-900 border border-amber-500/20 shadow-xl hover:shadow-amber-500/20"
+            className="group relative overflow-hidden rounded-2xl p-6 sm:p-8 text-left transition-all duration-300 hover:scale-[1.02] hover:-translate-y-1 active:scale-[0.99] bg-gradient-to-br from-amber-600/90 to-amber-900 border border-amber-500/20 shadow-xl hover:shadow-amber-500/20"
           >
             <div className="absolute inset-0 bg-gradient-to-br from-amber-400/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
             <div className="absolute top-0 right-0 w-40 h-40 bg-amber-400/10 rounded-full -translate-y-1/2 translate-x-1/2 blur-xl" />
@@ -107,9 +107,9 @@ export default function LandingPage() {
       </section>
 
       {/* How It Works */}
-      <section className="py-16 border-t border-slate-800">
-        <h2 className="text-2xl font-bold text-center mb-10 text-slate-200">How It Works</h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+      <section className="py-10 sm:py-16 border-t border-slate-800">
+        <h2 className="text-xl sm:text-2xl font-bold text-center mb-8 sm:mb-10 text-slate-200">How It Works</h2>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8">
           {[
             {
               step: "1",
@@ -139,12 +139,12 @@ export default function LandingPage() {
       </section>
 
       {/* CTA */}
-      <section className="py-12 border-t border-slate-800">
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-          <Link to="/daily" className="btn-primary text-lg px-10 py-4">
+      <section className="py-8 sm:py-12 border-t border-slate-800">
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4">
+          <Link to="/daily" className="btn-primary text-base sm:text-lg px-8 sm:px-10 py-3.5 sm:py-4 w-full sm:w-auto text-center">
             Play Today's Game
           </Link>
-          <Link to="/rankings" className="btn-secondary text-lg px-10 py-4">
+          <Link to="/rankings" className="btn-secondary text-base sm:text-lg px-8 sm:px-10 py-3.5 sm:py-4 w-full sm:w-auto text-center">
             View Rankings
           </Link>
         </div>
