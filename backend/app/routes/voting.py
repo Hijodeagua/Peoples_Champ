@@ -16,7 +16,6 @@ router = APIRouter(prefix="/voting", tags=["voting"])
 class VoteRequest(BaseModel):
     matchup_id: int
     winner_player_id: str
-    session_id: Optional[str] = None  # For anonymous users
 
 
 class VoteResponse(BaseModel):
@@ -106,8 +105,8 @@ def submit_vote(
     if vote.winner_player_id not in {matchup.player1_id, matchup.player2_id}:
         raise HTTPException(status_code=400, detail="Winner must be one of the matchup players")
     
-    # Handle session for anonymous users
-    session_id = vote.session_id or get_or_create_session_id(request, response)
+    # Always rely on server-managed session cookie for identity
+    session_id = get_or_create_session_id(request, response)
     
     # Check if vote already exists for this session/matchup
     existing_vote = db.query(models.UserChoice).filter(

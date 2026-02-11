@@ -1,13 +1,27 @@
 from datetime import date, timedelta
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, Header, HTTPException
 from sqlalchemy.orm import Session
 from ..db.session import get_db
 from ..services.player_loader import load_players_from_csv, get_top_players_by_ranking
 from ..services.scheduler import GameScheduler
 from ..services.batch_scheduler import BatchScheduler
+from ..core.config import settings
 import os
 
-router = APIRouter(prefix="/admin", tags=["admin"])
+
+def verify_admin_access(x_admin_key: str | None = Header(default=None)) -> None:
+    if not settings.is_production:
+        return
+
+    expected_key = settings.admin_api_key
+    if not expected_key:
+        raise HTTPException(status_code=403, detail="Admin endpoints disabled")
+
+    if x_admin_key != expected_key:
+        raise HTTPException(status_code=403, detail="Forbidden")
+
+
+router = APIRouter(prefix="/admin", tags=["admin"], dependencies=[Depends(verify_admin_access)])
 
 @router.post("/load-players")
 def load_players_endpoint(db: Session = Depends(get_db)):

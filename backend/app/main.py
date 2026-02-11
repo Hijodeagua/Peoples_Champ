@@ -1,136 +1,149 @@
+import os
+import threading
+from contextlib import asynccontextmanager
+from logging import getLogger
+
+from dotenv import load_dotenv
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from dotenv import load_dotenv
+from fastapi.responses import JSONResponse
 
 # Load environment variables from .env file
 load_dotenv()
 
-from .routes import auth, daily_set, game, players, analysis, voting, admin, all_time
-from .db.session import engine
 from .db.base import Base
+from .db.session import engine
+from .routes import admin, all_time, analysis, auth, daily_set, game, players, voting
 
-app = FastAPI(title="Who's Yur GOAT API")
-
-# --- CORS setup so the React frontend can call the API ---
-origins = [
-    "http://localhost:5173",
-    "http://127.0.0.1:5173",
-    "http://localhost:5174",
-    "http://127.0.0.1:5174",
-    "https://whosyurgoat.app",
-    "https://www.whosyurgoat.app",
-    "https://whosyurgoat.com",
-    "https://www.whosyurgoat.com",
-    "https://peoples-champ.vercel.app",
-    "https://peoples-champ-frontend.onrender.com",
-]
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=origins,
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-# --------------------------------------------------------------------------
+logger = getLogger(__name__)
 
 
-@app.on_event("startup")
-def create_tables():
-    """Create database tables on startup"""
-    Base.metadata.create_all(bind=engine)
+def _get_cors_origins() -> list[str]:
+    env_origins = os.getenv("CORS_ALLOW_ORIGINS", "").strip()
+    if env_origins:
+        return [origin.strip() for origin in env_origins.split(",") if origin.strip()]
+
+    return [
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+        "http://localhost:5174",
+        "http://127.0.0.1:5174",
+        "https://whosyurgoat.app",
+        "https://www.whosyurgoat.app",
+        "https://whosyurgoat.com",
+        "https://www.whosyurgoat.com",
+        "https://peoples-champ.vercel.app",
+        "https://peoples-champ-frontend.onrender.com",
+    ]
 
 
-@app.on_event("startup") 
-def initialize_data():
-    """Initialize database with players and schedule on first startup"""
+def _run_heavy_startup(app: FastAPI) -> None:
     from .db.session import SessionLocal
-    from .services.player_loader import load_players_from_csv
+    from .models import DailySet, Player
     from .services.batch_scheduler import BatchScheduler
-    from .models import Player
-    import os
-    
+    from .services.player_loader import load_players_from_csv
+
     db = SessionLocal()
     try:
-        # Check if players already exist
-        try:
-            player_count = db.query(Player).count()
-            print(f"Found {player_count} players in database")
-        except Exception as e:
-            print(f"Error checking player count: {e}")
-            db.rollback()
-            player_count = 0
-        
+        player_count = db.query(Player).count()
+        logger.info("Found %s players in database", player_count)
+
         if player_count == 0:
-            print("No players found. Attempting to load from CSV...")
-            
-            # Get the directory where this file is located
+            logger.info("No players found. Attempting to load from CSV")
             base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-            
-            # Try to find and load CSV using relative paths from backend directory
             possible_paths = [
                 os.path.join(base_dir, "data", "Bbref_Adv_25-26.csv"),
                 os.path.join(base_dir, "..", "data", "Bbref_Adv_25-26.csv"),
                 os.path.join(base_dir, "..", "frontend", "public", "data", "Bbref_Adv_25-26.csv"),
                 "data/Bbref_Adv_25-26.csv",
             ]
-            
-            csv_path = None
-            for path in possible_paths:
-                print(f"Checking path: {path}")
-                if os.path.exists(path):
-                    csv_path = path
-                    break
-            
+
+            csv_path = next((path for path in possible_paths if os.path.exists(path)), None)
             if csv_path:
-                try:
-                    players = load_players_from_csv(db, csv_path)
-                    print(f"Loaded {len(players)} players from {csv_path}")
-                except Exception as e:
-                    print(f"Failed to load players: {e}")
-                    db.rollback()
+                players_loaded = load_players_from_csv(db, csv_path)
+                logger.info("Loaded %s players from %s", len(players_loaded), csv_path)
             else:
-                print("No CSV file found for player data")
-        
-        # Check if schedule needs to be generated (with fresh session if needed)
-        try:
-            from datetime import date
-            from .models import DailySet
-            
-            batch_scheduler = BatchScheduler(db)
-            status = batch_scheduler.get_schedule_status()
-            
-            # Check if today has a daily set
-            today = date.today()
-            today_set = db.query(DailySet).filter(DailySet.date == today).first()
-            
-            if status["total_daily_sets"] == 0 or not today_set:
-                print(f"No schedule for today ({today}). Generating schedule...")
-                try:
-                    result = batch_scheduler.generate_next_batch(manual_override=True)
-                    if result.get("success"):
-                        print(f"Generated schedule: {result['message']}")
-                    else:
-                        print(f"Failed to generate schedule: {result.get('error')}")
-                except Exception as e:
-                    print(f"Error generating schedule: {e}")
-                    db.rollback()
+                logger.warning("No CSV file found for player data")
+
+        batch_scheduler = BatchScheduler(db)
+        status = batch_scheduler.get_schedule_status()
+        from datetime import date
+
+        today = date.today()
+        today_set = db.query(DailySet).filter(DailySet.date == today).first()
+
+        if status["total_daily_sets"] == 0 or not today_set:
+            logger.info("No schedule for today (%s). Generating schedule...", today)
+            result = batch_scheduler.generate_next_batch(manual_override=True)
+            if result.get("success"):
+                logger.info("Generated schedule: %s", result["message"])
             else:
-                print(f"Schedule exists: {status['total_daily_sets']} daily sets, {status['days_remaining']} days remaining")
-        except Exception as e:
-            print(f"Error with schedule operations: {e}")
-            db.rollback()
-            
-    except Exception as e:
-        print(f"Startup initialization error: {e}")
+                logger.error("Failed to generate schedule: %s", result.get("error"))
+        else:
+            logger.info(
+                "Schedule exists: %s daily sets, %s days remaining",
+                status["total_daily_sets"],
+                status["days_remaining"],
+            )
+
+        app.state.startup_ready = True
+        app.state.startup_error = None
+    except Exception as exc:  # pragma: no cover
         db.rollback()
+        app.state.startup_ready = False
+        app.state.startup_error = str(exc)
+        logger.exception("Background startup initialization failed")
     finally:
         db.close()
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    app.state.startup_ready = False
+    app.state.startup_error = None
+
+    # Keep DB metadata creation synchronous. This is generally fast and avoids early query failures.
+    Base.metadata.create_all(bind=engine)
+
+    startup_thread = threading.Thread(target=_run_heavy_startup, args=(app,), daemon=True)
+    startup_thread.start()
+
+    yield
+
+
+app = FastAPI(title="Who's Yur GOAT API", lifespan=lifespan)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=_get_cors_origins(),
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
 @app.get("/", tags=["health"])
 def read_root():
     return {"status": "ok"}
+
+
+@app.get("/health/live", tags=["health"])
+def liveness_check():
+    return {"status": "live"}
+
+
+@app.get("/health/ready", tags=["health"])
+def readiness_check():
+    if app.state.startup_ready:
+        return {"status": "ready"}
+
+    return JSONResponse(
+        status_code=503,
+        content={
+            "status": "starting",
+            "error": app.state.startup_error,
+        },
+    )
 
 
 app.include_router(players.router, prefix="/players", tags=["players"])

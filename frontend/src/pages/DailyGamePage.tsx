@@ -51,7 +51,8 @@ export default function DailyGamePage() {
       <div className="flex items-center justify-center min-h-[300px] page-enter">
         <div className="text-center space-y-3">
           <div className="animate-spin rounded-full h-10 w-10 border-2 border-slate-700 border-t-emerald-500 mx-auto"></div>
-          <p className="text-sm text-slate-500">Loading game...</p>
+          <p className="text-sm text-slate-400">Loading game...</p>
+          <p className="text-xs text-slate-500">Waking the server if needed. This can take up to a minute on first visit.</p>
         </div>
       </div>
     );

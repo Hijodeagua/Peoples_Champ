@@ -3,6 +3,7 @@ import random
 from datetime import date
 from functools import cmp_to_key
 from itertools import combinations
+from logging import getLogger
 from typing import Dict, List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -13,9 +14,33 @@ from sqlalchemy.orm import Session
 from ..db.session import get_db
 from .. import models
 from ..services.stats_loader import get_stats_with_percentiles, get_top_stats_for_position, get_advanced_stats_with_percentiles, get_ringer_player_names
+from ..core.config import settings
 
 
 router = APIRouter(prefix="/game", tags=["game"])
+logger = getLogger(__name__)
+
+
+def _normalize_name(name: str) -> str:
+    """Normalize player names for fuzzy matching across data sources."""
+    return "".join(ch for ch in name.lower() if ch.isalnum() or ch.isspace()).strip()
+
+
+def _weighted_unique_sample(players: List[models.Player], weights: List[int], k: int) -> List[models.Player]:
+    """Select k unique players using weighted sampling without replacement."""
+    if k <= 0:
+        return []
+
+    selected: List[models.Player] = []
+    available_players = players[:]
+    available_weights = weights[:]
+
+    while len(selected) < k and available_players:
+        idx = random.choices(range(len(available_players)), weights=available_weights, k=1)[0]
+        selected.append(available_players.pop(idx))
+        available_weights.pop(idx)
+
+    return selected
 
 
 class PlayerStats(BaseModel):
@@ -304,6 +329,8 @@ def compute_final_ranking(
 @router.get("/debug/schedule")
 def debug_schedule(db: Session = Depends(get_db)):
     """Debug endpoint to check schedule status"""
+    if settings.is_production and not settings.enable_debug_endpoints:
+        raise HTTPException(status_code=404, detail="Not found")
     from datetime import datetime
     
     try:
@@ -337,36 +364,43 @@ def get_today(db: Session = Depends(get_db), season: str = "current"):
     if season not in ["current", "combined"]:
         season = "current"
     today = date.today()
-    print(f"[/game/today] Server date.today() = {today}")
+    logger.info("/game/today called for date=%s season=%s", today, season)
     
     daily_set = db.query(models.DailySet).filter(models.DailySet.date == today).first()
-    print(f"[/game/today] Found existing daily_set: {daily_set is not None}")
+    logger.info("/game/today existing daily_set=%s", daily_set is not None)
 
     if not daily_set:
-        print(f"[/game/today] No daily set for {today}, creating new one...")
+        logger.info("No daily set found for %s; creating one", today)
         # Select exactly 5 players for the daily set from Ringer Top 50
         player_count = db.query(models.Player).count()
-        print(f"[/game/today] Total players in DB: {player_count}")
+        logger.info("Total players in DB: %s", player_count)
 
         # Get Ringer Top 50 player names
         ringer_top_50_names = get_ringer_player_names(50)
-        print(f"[/game/today] Ringer Top 50 names loaded: {len(ringer_top_50_names)}")
+        logger.info("Loaded %s names from Ringer Top 50", len(ringer_top_50_names))
 
-        # Find matching players in the database
-        # Use ILIKE for case-insensitive matching
-        ringer_players = []
+        # Build a fast normalized-name lookup once instead of running 50 DB ILIKE queries.
+        all_players = db.query(models.Player).all()
+        player_by_normalized_name = {_normalize_name(p.name): p for p in all_players}
+        ringer_players: List[models.Player] = []
+
         for name in ringer_top_50_names:
-            player = db.query(models.Player).filter(
-                models.Player.name.ilike(f"%{name}%")
-            ).first()
+            normalized = _normalize_name(name)
+            player = player_by_normalized_name.get(normalized)
             if player:
                 ringer_players.append(player)
+                continue
 
-        print(f"[/game/today] Found {len(ringer_players)} Ringer Top 50 players in DB")
+            # Fallback: tolerate abbreviated/extended names with substring matching.
+            for key, candidate in player_by_normalized_name.items():
+                if normalized in key or key in normalized:
+                    ringer_players.append(candidate)
+                    break
+
+        logger.info("Matched %s Ringer players in DB", len(ringer_players))
 
         if len(ringer_players) >= 5:
             # Use weighted selection favoring higher-ranked Ringer players
-            import random
             weights = []
             for i, player in enumerate(ringer_players):
                 if i < 10:  # Ringer Top 10 superstars
@@ -377,24 +411,11 @@ def get_today(db: Session = Depends(get_db), season: str = "current"):
                     weight = 2
                 weights.append(weight)
 
-            # Select 5 unique players
-            selected_players = []
-            available_indices = list(range(len(ringer_players)))
-            available_weights = weights.copy()
-
-            while len(selected_players) < 5 and available_indices:
-                chosen_idx = random.choices(available_indices, weights=available_weights, k=1)[0]
-                selected_players.append(ringer_players[chosen_idx])
-                # Remove chosen player from available pool
-                idx_pos = available_indices.index(chosen_idx)
-                available_indices.pop(idx_pos)
-                available_weights.pop(idx_pos)
-
-            players = selected_players
-            print(f"[/game/today] Selected {len(players)} Ringer Top 50 players: {[p.name for p in players]}")
+            players = _weighted_unique_sample(ringer_players, weights, k=5)
+            logger.info("Selected %s Ringer players for daily set", len(players))
         else:
             # Fallback to top 25 by win shares if not enough Ringer players found
-            print(f"[/game/today] Not enough Ringer players, falling back to Win Shares ranking")
+            logger.warning("Not enough Ringer players matched; falling back to win shares")
             top_players = (
                 db.query(models.Player)
                 .order_by(models.Player.total_ws.desc())
@@ -403,7 +424,6 @@ def get_today(db: Session = Depends(get_db), season: str = "current"):
             )
 
             if len(top_players) >= 5:
-                import random
                 weights = []
                 for i, player in enumerate(top_players):
                     if i < 10:
@@ -414,8 +434,8 @@ def get_today(db: Session = Depends(get_db), season: str = "current"):
                         weight = 1
                     weights.append(weight)
 
-                players = random.choices(top_players, weights=weights, k=5)
-                print(f"[/game/today] Selected {len(players)} weighted top players (fallback)")
+                players = _weighted_unique_sample(top_players, weights, k=5)
+                logger.info("Selected %s weighted top players (fallback)", len(players))
             else:
                 # Final fallback to random
                 players = (
@@ -424,7 +444,7 @@ def get_today(db: Session = Depends(get_db), season: str = "current"):
                     .limit(5)
                     .all()
                 )
-                print(f"[/game/today] Selected {len(players)} random players (final fallback)")
+                logger.info("Selected %s random players (final fallback)", len(players))
         
         if len(players) < 5:
             raise HTTPException(status_code=400, detail=f"Not enough players to build daily set. Found {len(players)}, need 5.")
@@ -433,7 +453,7 @@ def get_today(db: Session = Depends(get_db), season: str = "current"):
             daily_set = models.DailySet(date=today)
             db.add(daily_set)
             db.flush()
-            print(f"[/game/today] Created daily_set with id={daily_set.id}")
+            logger.info("Created daily_set with id=%s", daily_set.id)
 
             # Add all 5 players to the daily set
             for player in players:
@@ -460,11 +480,17 @@ def get_today(db: Session = Depends(get_db), season: str = "current"):
 
             db.commit()
             db.refresh(daily_set)
-            print(f"[/game/today] Successfully created daily set with {len(daily_set.matchups)} matchups")
+            logger.info("Created daily set id=%s with %s matchups", daily_set.id, len(daily_set.matchups))
         except Exception as e:
-            print(f"[/game/today] ERROR creating daily set: {e}")
             db.rollback()
-            raise HTTPException(status_code=500, detail=f"Failed to create daily set: {str(e)}")
+            # Handle race condition where another request created today's daily set first.
+            maybe_existing = db.query(models.DailySet).filter(models.DailySet.date == today).first()
+            if maybe_existing:
+                logger.warning("Daily set creation race detected; using existing set id=%s", maybe_existing.id)
+                daily_set = maybe_existing
+            else:
+                logger.exception("Failed creating daily set for %s", today)
+                raise HTTPException(status_code=500, detail="Failed to create daily set")
 
     players = [dsp.player for dsp in daily_set.players]
     matchups = sorted(daily_set.matchups, key=lambda m: m.order_index or 0)

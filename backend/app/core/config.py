@@ -8,6 +8,8 @@ class Settings(BaseSettings):
     openai_api_key: str = ""
     # Environment detection
     environment: str = os.getenv("ENVIRONMENT", "development")
+    admin_api_key: str = os.getenv("ADMIN_API_KEY", "")
+    enable_debug_endpoints: bool = os.getenv("ENABLE_DEBUG_ENDPOINTS", "false").lower() == "true"
 
     class Config:
         env_file = ".env"
