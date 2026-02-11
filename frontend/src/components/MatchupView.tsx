@@ -4,6 +4,7 @@ import { submitVote, type UserVotesResponse } from "../api/voting";
 import { getPlayerImageUrl } from "../utils/playerImages";
 import AgreementIndicator from "./AgreementIndicator";
 import FeedbackLink from "./FeedbackLink";
+import { formatDailyTopFiveShareText, rankPlayersFromVotes } from "../utils/dailyShare";
 
 // Stat label mapping for per-game stats
 const STAT_LABELS: Record<string, string> = {
@@ -204,6 +205,8 @@ export default function MatchupView() {
   const [votes, setVotes] = useState<Record<number, string>>({});
   const [selectedSeason, setSelectedSeason] = useState<SeasonOption>("current");
   const [statsViewMode, setStatsViewMode] = useState<StatsViewMode>("pergame");
+  const [shareMessage, setShareMessage] = useState<string | null>(null);
+  const [manualShareText, setManualShareText] = useState<string | null>(null);
 
   const loadGameData = useCallback(async (season: SeasonOption = "current") => {
     setLoading(true);
@@ -263,6 +266,48 @@ export default function MatchupView() {
     setSelectedSeason(season);
   };
 
+  const getShareText = () => {
+    if (!gameData) return null;
+
+    const rankedPlayers = rankPlayersFromVotes(gameData.players, gameData.matchups, votes);
+    const topFiveNames = rankedPlayers.slice(0, 5).map((player) => player.name);
+    return formatDailyTopFiveShareText(topFiveNames);
+  };
+
+  const handleShareTopFive = async () => {
+    const shareText = getShareText();
+    if (!shareText) {
+      return;
+    }
+
+    const shareUrl = typeof window !== "undefined" ? window.location.origin : "";
+
+    try {
+      if (typeof navigator !== "undefined" && navigator.share) {
+        await navigator.share({
+          text: `${shareText}\n\n${shareUrl}`.trim(),
+          title: "My Daily Top 5",
+        });
+        setShareMessage("Shared successfully.");
+        setManualShareText(null);
+        return;
+      }
+
+      if (typeof navigator !== "undefined" && navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(`${shareText}\n\n${shareUrl}`.trim());
+        setShareMessage("Copied to clipboard.");
+        setManualShareText(null);
+        return;
+      }
+
+      setManualShareText(`${shareText}\n\n${shareUrl}`.trim());
+      setShareMessage("Copy the text below.");
+    } catch (err) {
+      setManualShareText(`${shareText}\n\n${shareUrl}`.trim());
+      setShareMessage("Copy the text below.");
+    }
+  };
+
   const handleSubmit = async () => {
     if (!gameData || !selectedPlayerId) return;
 
@@ -318,7 +363,8 @@ export default function MatchupView() {
       <div className="flex items-center justify-center min-h-[400px]">
         <div className="text-center space-y-3">
           <div className="animate-spin rounded-full h-10 w-10 border-2 border-slate-700 border-t-emerald-500 mx-auto"></div>
-          <p className="text-sm text-slate-500">Loading today's matchups...</p>
+          <p className="text-sm text-slate-400">Loading today's matchups...</p>
+          <p className="text-xs text-slate-500">Waking the server if needed. This can take up to a minute on first visit.</p>
         </div>
       </div>
     );
@@ -516,6 +562,21 @@ export default function MatchupView() {
               Your picks are now part of the People&apos;s Rankings.
             </p>
           </div>
+
+          <div className="space-y-2">
+            <button type="button" onClick={handleShareTopFive} className="btn-secondary inline-block">
+              Share My Top 5
+            </button>
+            {shareMessage && <p className="text-xs text-slate-400">{shareMessage}</p>}
+            {manualShareText && (
+              <textarea
+                readOnly
+                value={manualShareText}
+                className="w-full max-w-md mx-auto min-h-32 glass rounded-xl p-3 text-sm text-slate-200"
+              />
+            )}
+          </div>
+
           <a href="/rankings" className="btn-primary inline-block">
             View People&apos;s Rankings
           </a>

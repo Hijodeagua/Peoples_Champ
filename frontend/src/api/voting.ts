@@ -3,7 +3,6 @@ import { api } from "./client";
 export interface VoteRequest {
   matchup_id: number;
   winner_player_id: string;
-  session_id?: string;
 }
 
 export interface VoteResponse {
