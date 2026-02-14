@@ -20,11 +20,7 @@ export default function LandingPage() {
       {userProgress && userProgress.lastAgreementPercentage !== null && (
         <div className="glass rounded-xl px-5 py-3 mb-8 text-center animate-fade-in">
           <p className="text-sm text-slate-400">
-            Last agreement with{" "}
-            <span className="text-slate-200 font-medium">
-              {userProgress.lastBenchmarkUsed || "The Ringer"}
-            </span>
-            :{" "}
+            Your last agreement score (from your picks):{" "}
             <span className="text-emerald-400 font-bold text-base">
               {userProgress.lastAgreementPercentage}%
             </span>
