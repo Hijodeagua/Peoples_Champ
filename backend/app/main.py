@@ -13,6 +13,7 @@ load_dotenv()
 
 from .db.base import Base
 from .db.session import engine
+from .core.config import settings
 from .routes import admin, all_time, analysis, auth, daily_set, game, players, voting
 
 logger = getLogger(__name__)
