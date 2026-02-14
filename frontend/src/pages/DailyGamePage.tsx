@@ -64,11 +64,7 @@ export default function DailyGamePage() {
       {userProgress && userProgress.lastAgreementPercentage !== null && !completedToday && (
         <div className="glass rounded-xl px-5 py-3 text-center max-w-lg mx-auto animate-fade-in">
           <p className="text-sm text-slate-400">
-            Last agreement with{" "}
-            <span className="text-slate-200 font-medium">
-              {userProgress.lastBenchmarkUsed || "The Ringer"}
-            </span>
-            :{" "}
+            Your last agreement score (from your picks):{" "}
             <span className="text-emerald-400 font-bold">
               {userProgress.lastAgreementPercentage}%
             </span>
