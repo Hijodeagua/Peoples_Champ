@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { getGlobalRankings, type GlobalRankingsResponse, type PlayerRanking } from "../api/voting";
 import { getPlayerThumbnailUrl } from "../utils/playerImages";
 import SocialGraphicGenerator from "./SocialGraphicGenerator";
+import { trackViewRankings } from "../utils/analytics";
 
 interface GlobalRankingsProps {
   onPlayGame?: () => void;
@@ -20,6 +21,9 @@ export default function GlobalRankings({ onPlayGame }: GlobalRankingsProps) {
         setLoading(true);
         const response = await getGlobalRankings();
         setData(response);
+        if (response.total_voters > 0) {
+          trackViewRankings(response.total_voters);
+        }
       } catch (err) {
         console.error("Failed to load rankings:", err);
         setError("Failed to load rankings. Please try again.");

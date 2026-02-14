@@ -1,11 +1,18 @@
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta
 from typing import List, Dict, Optional
+from zoneinfo import ZoneInfo
 from sqlalchemy.orm import Session
 from .scheduler import GameScheduler
 from ..models import DailySet
 import logging
 
 logger = logging.getLogger(__name__)
+
+EST = ZoneInfo("America/New_York")
+
+
+def _est_today() -> date:
+    return datetime.now(EST).date()
 
 class BatchScheduler:
     def __init__(self, db: Session, top_n_players: int = 25):
@@ -29,7 +36,7 @@ class BatchScheduler:
         if not last_date:
             return 0
         
-        today = date.today()
+        today = _est_today()
         return (last_date - today).days
     
     def needs_new_batch(self, buffer_days: int = 5) -> bool:
@@ -54,7 +61,7 @@ class BatchScheduler:
             start_date = last_date + timedelta(days=1)
         else:
             # If no schedule exists, start from today
-            start_date = date.today()
+            start_date = _est_today()
         
         # Generate 30-day schedule
         scheduler = GameScheduler(self.db)
@@ -145,7 +152,7 @@ class BatchScheduler:
                 "days_remaining": days_remaining,
                 "needs_new_batch": needs_batch,
                 "batch_size": self.batch_size,
-                "current_date": date.today().isoformat()
+                "current_date": _est_today().isoformat()
             }
         except Exception as e:
             logger.error(f"Error getting schedule status: {e}")
@@ -156,6 +163,6 @@ class BatchScheduler:
                 "days_remaining": 0,
                 "needs_new_batch": True,
                 "batch_size": self.batch_size,
-                "current_date": date.today().isoformat(),
+                "current_date": _est_today().isoformat(),
                 "error": str(e)
             }

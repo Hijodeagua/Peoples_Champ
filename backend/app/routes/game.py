@@ -1,10 +1,11 @@
 import json
 import random
-from datetime import date
+from datetime import date, datetime, timedelta
 from functools import cmp_to_key
 from itertools import combinations
 from logging import getLogger
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Set
+from zoneinfo import ZoneInfo
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
@@ -19,6 +20,28 @@ from ..core.config import settings
 
 router = APIRouter(prefix="/game", tags=["game"])
 logger = getLogger(__name__)
+
+EST = ZoneInfo("America/New_York")
+
+
+def get_est_today() -> date:
+    """Return the current date in US Eastern time, regardless of server timezone."""
+    return datetime.now(EST).date()
+
+
+def _get_recent_player_ids(db: Session, today: date, lookback_days: int = 7) -> Set[str]:
+    """Return the set of player IDs used in daily sets over the past `lookback_days` days."""
+    cutoff = today - timedelta(days=lookback_days)
+    recent_sets = (
+        db.query(models.DailySet)
+        .filter(models.DailySet.date >= cutoff, models.DailySet.date < today)
+        .all()
+    )
+    recent_ids: Set[str] = set()
+    for ds in recent_sets:
+        for dsp in ds.players:
+            recent_ids.add(dsp.player_id)
+    return recent_ids
 
 
 def _normalize_name(name: str) -> str:
@@ -331,28 +354,32 @@ def debug_schedule(db: Session = Depends(get_db)):
     """Debug endpoint to check schedule status"""
     if settings.is_production and not settings.enable_debug_endpoints:
         raise HTTPException(status_code=404, detail="Not found")
-    from datetime import datetime
-    
+
     try:
         utc_now = datetime.utcnow()
-        today_utc = date.today()
-        
+        est_now = datetime.now(EST)
+        today_est = get_est_today()
+
         # Get recent daily sets
         recent_sets = db.query(models.DailySet).order_by(models.DailySet.date.desc()).limit(5).all()
-        
+
         sets_info = []
         for ds in recent_sets:
             sets_info.append({
-                "id": ds.id, 
+                "id": ds.id,
                 "date": str(ds.date),
                 "player_count": len(ds.players) if ds.players else 0,
                 "matchup_count": len(ds.matchups) if ds.matchups else 0
             })
-        
+
+        recent_ids = _get_recent_player_ids(db, today_est)
+
         return {
             "server_utc_now": str(utc_now),
-            "server_date_today": str(today_utc),
-            "recent_daily_sets": sets_info
+            "server_est_now": str(est_now),
+            "today_est": str(today_est),
+            "recent_daily_sets": sets_info,
+            "recent_7day_player_count": len(recent_ids),
         }
     except Exception as e:
         return {"error": str(e)}
@@ -363,21 +390,25 @@ def get_today(db: Session = Depends(get_db), season: str = "current"):
     """Get today's game with player stats. Season can be 'current' (25-26) or 'combined' (24-25 + 25-26)"""
     if season not in ["current", "combined"]:
         season = "current"
-    today = date.today()
-    logger.info("/game/today called for date=%s season=%s", today, season)
-    
+    today = get_est_today()
+    logger.info("/game/today called for EST date=%s (UTC=%s) season=%s", today, date.today(), season)
+
     daily_set = db.query(models.DailySet).filter(models.DailySet.date == today).first()
-    logger.info("/game/today existing daily_set=%s", daily_set is not None)
+    logger.info("/game/today existing daily_set=%s for date=%s", daily_set is not None, today)
 
     if not daily_set:
-        logger.info("No daily set found for %s; creating one", today)
+        logger.info("ROTATION: No daily set found for %s; creating one", today)
         # Select exactly 5 players for the daily set from Ringer Top 50
         player_count = db.query(models.Player).count()
-        logger.info("Total players in DB: %s", player_count)
+        logger.info("ROTATION: Total players in DB: %s", player_count)
+
+        # Get player IDs used in the last 7 days to ensure uniqueness
+        recent_player_ids = _get_recent_player_ids(db, today, lookback_days=7)
+        logger.info("ROTATION: %s unique players used in last 7 days", len(recent_player_ids))
 
         # Get Ringer Top 50 player names
         ringer_top_50_names = get_ringer_player_names(50)
-        logger.info("Loaded %s names from Ringer Top 50", len(ringer_top_50_names))
+        logger.info("ROTATION: Loaded %s names from Ringer Top 50", len(ringer_top_50_names))
 
         # Build a fast normalized-name lookup once instead of running 50 DB ILIKE queries.
         all_players = db.query(models.Player).all()
@@ -397,25 +428,60 @@ def get_today(db: Session = Depends(get_db), season: str = "current"):
                     ringer_players.append(candidate)
                     break
 
-        logger.info("Matched %s Ringer players in DB", len(ringer_players))
+        logger.info("ROTATION: Matched %s Ringer players in DB", len(ringer_players))
 
         if len(ringer_players) >= 5:
-            # Use weighted selection favoring higher-ranked Ringer players
-            weights = []
-            for i, player in enumerate(ringer_players):
-                if i < 10:  # Ringer Top 10 superstars
-                    weight = 10
-                elif i < 25:  # Ringer 11-25 stars
-                    weight = 5
-                else:  # Ringer 26-50
-                    weight = 2
-                weights.append(weight)
+            # Separate players into fresh (not in last 7 days) and recent
+            fresh_players = [p for p in ringer_players if p.id not in recent_player_ids]
+            logger.info(
+                "ROTATION: %s fresh players available (not seen in last 7 days), %s recently used",
+                len(fresh_players),
+                len(ringer_players) - len(fresh_players),
+            )
 
-            players = _weighted_unique_sample(ringer_players, weights, k=5)
-            logger.info("Selected %s Ringer players for daily set", len(players))
+            if len(fresh_players) >= 5:
+                # Prefer fresh players with weighted selection
+                weights = []
+                for i, player in enumerate(fresh_players):
+                    # Preserve original rank-based weighting
+                    orig_idx = next(
+                        (j for j, rp in enumerate(ringer_players) if rp.id == player.id), i
+                    )
+                    if orig_idx < 10:
+                        weight = 10
+                    elif orig_idx < 25:
+                        weight = 5
+                    else:
+                        weight = 2
+                    weights.append(weight)
+
+                players = _weighted_unique_sample(fresh_players, weights, k=5)
+                logger.info(
+                    "ROTATION: Selected 5 fresh players: %s",
+                    [p.name for p in players],
+                )
+            else:
+                # Not enough fresh players — fall back to full pool but still weight fresh ones higher
+                logger.warning(
+                    "ROTATION: Only %s fresh players; mixing in recent players",
+                    len(fresh_players),
+                )
+                weights = []
+                for i, player in enumerate(ringer_players):
+                    base = 10 if i < 10 else (5 if i < 25 else 2)
+                    # Penalize recently-used players
+                    if player.id in recent_player_ids:
+                        base = max(1, base // 3)
+                    weights.append(base)
+
+                players = _weighted_unique_sample(ringer_players, weights, k=5)
+                logger.info(
+                    "ROTATION: Selected 5 players (mixed fresh/recent): %s",
+                    [p.name for p in players],
+                )
         else:
             # Fallback to top 25 by win shares if not enough Ringer players found
-            logger.warning("Not enough Ringer players matched; falling back to win shares")
+            logger.warning("ROTATION: Not enough Ringer players matched; falling back to win shares")
             top_players = (
                 db.query(models.Player)
                 .order_by(models.Player.total_ws.desc())
@@ -426,16 +492,13 @@ def get_today(db: Session = Depends(get_db), season: str = "current"):
             if len(top_players) >= 5:
                 weights = []
                 for i, player in enumerate(top_players):
-                    if i < 10:
-                        weight = 10
-                    elif i < 20:
-                        weight = 5
-                    else:
-                        weight = 1
-                    weights.append(weight)
+                    base = 10 if i < 10 else (5 if i < 20 else 1)
+                    if player.id in recent_player_ids:
+                        base = max(1, base // 3)
+                    weights.append(base)
 
                 players = _weighted_unique_sample(top_players, weights, k=5)
-                logger.info("Selected %s weighted top players (fallback)", len(players))
+                logger.info("ROTATION: Selected %s weighted top players (fallback): %s", len(players), [p.name for p in players])
             else:
                 # Final fallback to random
                 players = (
@@ -444,8 +507,8 @@ def get_today(db: Session = Depends(get_db), season: str = "current"):
                     .limit(5)
                     .all()
                 )
-                logger.info("Selected %s random players (final fallback)", len(players))
-        
+                logger.info("ROTATION: Selected %s random players (final fallback)", len(players))
+
         if len(players) < 5:
             raise HTTPException(status_code=400, detail=f"Not enough players to build daily set. Found {len(players)}, need 5.")
 
@@ -453,7 +516,7 @@ def get_today(db: Session = Depends(get_db), season: str = "current"):
             daily_set = models.DailySet(date=today)
             db.add(daily_set)
             db.flush()
-            logger.info("Created daily_set with id=%s", daily_set.id)
+            logger.info("ROTATION: Created daily_set id=%s for date=%s", daily_set.id, today)
 
             # Add all 5 players to the daily set
             for player in players:
@@ -480,16 +543,22 @@ def get_today(db: Session = Depends(get_db), season: str = "current"):
 
             db.commit()
             db.refresh(daily_set)
-            logger.info("Created daily set id=%s with %s matchups", daily_set.id, len(daily_set.matchups))
+            logger.info(
+                "ROTATION: Created daily set id=%s for %s with %s matchups, players=%s",
+                daily_set.id,
+                today,
+                len(daily_set.matchups),
+                [p.name for p in players],
+            )
         except Exception as e:
             db.rollback()
             # Handle race condition where another request created today's daily set first.
             maybe_existing = db.query(models.DailySet).filter(models.DailySet.date == today).first()
             if maybe_existing:
-                logger.warning("Daily set creation race detected; using existing set id=%s", maybe_existing.id)
+                logger.warning("ROTATION: Race detected; using existing set id=%s", maybe_existing.id)
                 daily_set = maybe_existing
             else:
-                logger.exception("Failed creating daily set for %s", today)
+                logger.exception("ROTATION: Failed creating daily set for %s", today)
                 raise HTTPException(status_code=500, detail="Failed to create daily set")
 
     players = [dsp.player for dsp in daily_set.players]
@@ -530,7 +599,7 @@ def submit_game(request: GameSubmitRequest, db: Session = Depends(get_db)):
     daily_set = db.query(models.DailySet).filter(models.DailySet.id == request.daily_set_id).first()
     if not daily_set:
         raise HTTPException(status_code=404, detail="Daily set not found")
-    if daily_set.date != date.today():
+    if daily_set.date != get_est_today():
         raise HTTPException(status_code=400, detail="Submission must be for today's game")
 
     if len(request.answers) != len(daily_set.matchups):
@@ -629,7 +698,7 @@ def get_shared_result(share_slug: str, db: Session = Depends(get_db)):
         score_summary = "Custom People’s Champ ranking"
 
     return SharedResultResponse(
-        date=daily_set.date if daily_set else date.today(),
+        date=daily_set.date if daily_set else get_est_today(),
         mode=submission.mode,
         final_ranking=final_ranking_entries,
         score_summary=score_summary,
@@ -639,17 +708,15 @@ def get_shared_result(share_slug: str, db: Session = Depends(get_db)):
 @router.get("/day/{target_date}", response_model=GameTodayResponse)
 def get_day(target_date: str, db: Session = Depends(get_db), season: str = "current"):
     """Get a specific day's game for replay. Only allows access to past 7 days."""
-    from datetime import datetime, timedelta
-    
     if season not in ["current", "combined"]:
         season = "current"
-    
+
     try:
         game_date = datetime.strptime(target_date, "%Y-%m-%d").date()
     except ValueError:
         raise HTTPException(status_code=400, detail="Invalid date format. Use YYYY-MM-DD")
-    
-    today = date.today()
+
+    today = get_est_today()
     seven_days_ago = today - timedelta(days=7)
     
     # Only allow access to past 7 days (vault access)
@@ -699,9 +766,7 @@ def get_day(target_date: str, db: Session = Depends(get_db), season: str = "curr
 @router.get("/archive", response_model=ArchiveResponse)
 def get_archive(db: Session = Depends(get_db)):
     """Get archive of past daily sets (limited to 7 days for vault access)"""
-    from datetime import timedelta
-    
-    today = date.today()
+    today = get_est_today()
     seven_days_ago = today - timedelta(days=7)
     
     # Only show past 7 days for vault access
@@ -718,7 +783,7 @@ def get_archive(db: Session = Depends(get_db)):
         ).count()
         
         # Check if voting is completed (arbitrary threshold)
-        is_completed = total_votes > 0 or daily_set.date < date.today()
+        is_completed = total_votes > 0 or daily_set.date < get_est_today()
         
         archives.append(ArchiveEntry(
             date=daily_set.date,

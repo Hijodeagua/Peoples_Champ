@@ -1,6 +1,7 @@
-from datetime import date
+from datetime import date, datetime
 from typing import Optional
 from uuid import uuid4
+from zoneinfo import ZoneInfo
 
 from fastapi import APIRouter, Depends, HTTPException, Request, Response
 from pydantic import BaseModel
@@ -11,6 +12,12 @@ from .. import models
 from ..core.config import settings
 
 router = APIRouter(prefix="/voting", tags=["voting"])
+
+_EST = ZoneInfo("America/New_York")
+
+
+def _est_today() -> date:
+    return datetime.now(_EST).date()
 
 
 class VoteRequest(BaseModel):
@@ -88,7 +95,7 @@ def submit_vote(
     """Submit a vote for a matchup. Works for both authenticated and anonymous users."""
     
     # Get today's daily set
-    today = date.today()
+    today = _est_today()
     daily_set = db.query(models.DailySet).filter(models.DailySet.date == today).first()
     if not daily_set:
         raise HTTPException(status_code=404, detail="No daily set available")
@@ -154,7 +161,7 @@ def get_voting_status(
     """Get current user's voting status for today"""
     
     # Get today's daily set
-    today = date.today()
+    today = _est_today()
     daily_set = db.query(models.DailySet).filter(models.DailySet.date == today).first()
     if not daily_set:
         return UserVotesResponse(votes_today=0, total_matchups=0, completed=False)
@@ -184,7 +191,7 @@ def get_my_votes(
 ):
     """Get current user's votes for today with details"""
     
-    today = date.today()
+    today = _est_today()
     daily_set = db.query(models.DailySet).filter(models.DailySet.date == today).first()
     if not daily_set:
         return UserVotesDetailResponse(votes_today=0, total_matchups=0, completed=False, votes={})
@@ -246,7 +253,7 @@ def get_global_rankings(db: Session = Depends(get_db)):
     Get today's global rankings based on all votes.
     Rankings are calculated by counting wins across all matchups.
     """
-    today = date.today()
+    today = _est_today()
     daily_set = db.query(models.DailySet).filter(models.DailySet.date == today).first()
     
     if not daily_set:

@@ -68,10 +68,12 @@ def _run_heavy_startup(app: FastAPI) -> None:
 
         batch_scheduler = BatchScheduler(db)
         status = batch_scheduler.get_schedule_status()
-        from datetime import date
+        from datetime import datetime
+        from zoneinfo import ZoneInfo
 
-        today = date.today()
+        today = datetime.now(ZoneInfo("America/New_York")).date()
         today_set = db.query(DailySet).filter(DailySet.date == today).first()
+        logger.info("Startup check: EST today=%s, UTC today=%s", today, datetime.utcnow().date())
 
         if status["total_daily_sets"] == 0 or not today_set:
             logger.info("No schedule for today (%s). Generating schedule...", today)

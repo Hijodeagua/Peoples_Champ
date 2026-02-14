@@ -5,6 +5,7 @@ import { getPlayerImageUrl } from "../utils/playerImages";
 import AgreementIndicator from "./AgreementIndicator";
 import FeedbackLink from "./FeedbackLink";
 import { formatDailyTopFiveShareText, rankPlayersFromVotes } from "../utils/dailyShare";
+import { trackStartRanking, trackVoteSubmitted, trackRankingCompleted, trackShareCompleted } from "../utils/analytics";
 
 // Stat label mapping for per-game stats
 const STAT_LABELS: Record<string, string> = {
@@ -223,6 +224,11 @@ export default function MatchupView() {
         completed: myVotes.completed
       });
 
+      // Fire start_ranking event when user first sees the game (not on revisit when already completed)
+      if (!myVotes.completed && Object.keys(myVotes.votes).length === 0) {
+        trackStartRanking(game.daily_set_id, game.players.length);
+      }
+
       // Restore previous votes from server
       setVotes(myVotes.votes);
 
@@ -290,6 +296,7 @@ export default function MatchupView() {
         });
         setShareMessage("Shared successfully.");
         setManualShareText(null);
+        trackShareCompleted("native_share");
         return;
       }
 
@@ -297,14 +304,17 @@ export default function MatchupView() {
         await navigator.clipboard.writeText(`${shareText}\n\n${shareUrl}`.trim());
         setShareMessage("Copied to clipboard.");
         setManualShareText(null);
+        trackShareCompleted("clipboard");
         return;
       }
 
       setManualShareText(`${shareText}\n\n${shareUrl}`.trim());
       setShareMessage("Copy the text below.");
+      trackShareCompleted("manual_copy");
     } catch (err) {
       setManualShareText(`${shareText}\n\n${shareUrl}`.trim());
       setShareMessage("Copy the text below.");
+      trackShareCompleted("manual_copy");
     }
   };
 
@@ -321,11 +331,17 @@ export default function MatchupView() {
       setVotes(newVotes);
 
       const votesCount = Object.keys(newVotes).length;
+      const isNowCompleted = votesCount >= gameData.matchups.length;
       setVotingStatus({
         votes_today: votesCount,
         total_matchups: gameData.matchups.length,
-        completed: votesCount >= gameData.matchups.length
+        completed: isNowCompleted,
       });
+
+      trackVoteSubmitted(currentMatchupIndex, gameData.matchups.length);
+      if (isNowCompleted) {
+        trackRankingCompleted(gameData.daily_set_id, gameData.matchups.length);
+      }
 
       // Move to next matchup
       const nextIndex = currentMatchupIndex + 1;

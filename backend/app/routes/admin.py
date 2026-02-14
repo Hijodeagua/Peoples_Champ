@@ -1,4 +1,5 @@
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta
+from zoneinfo import ZoneInfo
 from fastapi import APIRouter, Depends, Header, HTTPException
 from sqlalchemy.orm import Session
 from ..db.session import get_db
@@ -7,6 +8,12 @@ from ..services.scheduler import GameScheduler
 from ..services.batch_scheduler import BatchScheduler
 from ..core.config import settings
 import os
+
+_EST = ZoneInfo("America/New_York")
+
+
+def _est_today() -> date:
+    return datetime.now(_EST).date()
 
 
 def verify_admin_access(x_admin_key: str | None = Header(default=None)) -> None:
@@ -180,7 +187,7 @@ def generate_initial_schedule_endpoint(
         )
     
     # Generate schedule starting from 3 days ago
-    start_date = date.today() - timedelta(days=days_back)
+    start_date = _est_today() - timedelta(days=days_back)
     
     try:
         schedule = scheduler.generate_50_day_schedule(start_date)
@@ -280,7 +287,7 @@ def get_today_preview(db: Session = Depends(get_db)):
     """Preview today's matchup without the full game endpoint"""
     from ..models import DailySet
     
-    today = date.today()
+    today = _est_today()
     daily_set = db.query(DailySet).filter(DailySet.date == today).first()
     
     if not daily_set:
@@ -379,7 +386,7 @@ def full_reset_and_regenerate(db: Session = Depends(get_db), top_n: int = 30, da
         all_appearances = {p.id: 0 for p in top_players}
         
         # Generate for past days (archive) + today + future days
-        today = date.today()
+        today = _est_today()
         start_date = today - timedelta(days=days_back)
         total_days = days_back + 1 + 30  # past + today + 30 future days
         
