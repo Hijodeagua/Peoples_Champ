@@ -26,6 +26,38 @@
   </head>
   <body>
     <div id="root"></div>
+
+    <!-- Fallback UI shown if the React app fails to mount -->
+    <div id="app-fallback" style="display:none; text-align:center; padding:60px 24px; font-family:system-ui,sans-serif; color:#e2e8f0; background:#0f172a; min-height:100vh;">
+      <h1 style="font-size:1.75rem; font-weight:700; margin-bottom:16px;">Unable to load the page</h1>
+      <p style="color:#94a3b8; margin-bottom:24px; max-width:400px; margin-left:auto; margin-right:auto;">
+        We're having trouble loading Who's Yur GOAT right now. Please try again, or let us know about the issue.
+      </p>
+      <a href="https://forms.gle/xFGFXCDMsxuNAmK57" target="_blank" rel="noopener noreferrer"
+         style="display:inline-block; padding:12px 24px; background:#f59e0b; color:#000; font-weight:700; border-radius:12px; text-decoration:none; margin-bottom:12px;">
+        Report this issue
+      </a>
+      <br/>
+      <button onclick="window.location.reload()"
+              style="margin-top:8px; padding:12px 24px; background:transparent; border:2px solid #475569; color:#e2e8f0; font-weight:600; border-radius:12px; cursor:pointer;">
+        Reload page
+      </button>
+    </div>
+
+    <script>
+      // If the React app hasn't mounted after 8 seconds, show the fallback
+      window.__appMounted = false;
+      setTimeout(function() {
+        if (!window.__appMounted) {
+          var fallback = document.getElementById('app-fallback');
+          var root = document.getElementById('root');
+          if (fallback && root && !root.hasChildNodes()) {
+            fallback.style.display = 'block';
+          }
+        }
+      }, 8000);
+    </script>
+
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
