@@ -347,15 +347,17 @@ class PresetsResponse(BaseModel):
 async def list_presets():
     """
     Get all available preset player lists for GOAT rankings.
+    Returns only the count of players that actually exist in our data.
     """
     presets = get_all_presets()
+    all_time_dict = get_all_time_players_dict()
     return PresetsResponse(
         presets=[
             PresetOut(
                 id=p.id,
                 name=p.name,
                 description=p.description,
-                player_count=len(p.player_ids)
+                player_count=len([pid for pid in p.player_ids if pid in all_time_dict])
             )
             for p in presets
         ]
@@ -416,14 +418,17 @@ async def start_ranking(
         for pid in player_ids
     }
 
-    # Calculate total matchups for finite mode
+    # Calculate total matchups
+    # Presets are finite (even though ranking_size=0), so always compute total
     n = len(player_ids)
-    total_matchups = (n * (n - 1)) // 2 if request.ranking_size > 0 else None
+    is_finite = request.ranking_size > 0 or request.preset_id is not None
+    total_matchups = (n * (n - 1)) // 2 if is_finite else None
+    effective_ranking_size = n if (request.preset_id and request.ranking_size == 0) else request.ranking_size
 
     # Create ranking record
     ranking = models.AllTimeRanking(
         session_id=session_id,
-        ranking_size=request.ranking_size,
+        ranking_size=effective_ranking_size,
         player_rankings=json.dumps(player_scores),
         player_pool=json.dumps(player_ids),
         is_complete=False,
@@ -436,7 +441,7 @@ async def start_ranking(
 
     # Get first matchup
     completed_pairs = set()
-    next_pair = get_next_matchup(player_scores, completed_pairs, request.ranking_size, 0)
+    next_pair = get_next_matchup(player_scores, completed_pairs, effective_ranking_size, 0)
 
     if not next_pair:
         raise HTTPException(status_code=500, detail="Could not generate first matchup")

@@ -285,16 +285,15 @@ class AllTimeMatchupVote(Base):
     id = Column(Integer, primary_key=True, index=True)
     ranking_id = Column(Integer, ForeignKey("all_time_rankings.id"), nullable=False)
 
-    player1_id = Column(String, ForeignKey("players.id"), nullable=False)
-    player2_id = Column(String, ForeignKey("players.id"), nullable=False)
-    winner_id = Column(String, ForeignKey("players.id"), nullable=False)
+    # No FK to players table — all-time players come from career stats CSV,
+    # not the daily-game players table.
+    player1_id = Column(String, nullable=False)
+    player2_id = Column(String, nullable=False)
+    winner_id = Column(String, nullable=False)
 
     created_at = Column(DateTime, default=datetime.utcnow)
 
     ranking = relationship("AllTimeRanking")
-    player1 = relationship("Player", foreign_keys=[player1_id])
-    player2 = relationship("Player", foreign_keys=[player2_id])
-    winner = relationship("Player", foreign_keys=[winner_id])
 
 
 class CustomList(Base):

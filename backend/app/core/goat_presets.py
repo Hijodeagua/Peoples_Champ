@@ -14,16 +14,16 @@ class GoatPreset:
     player_ids: List[str]
 
 
-# NBA Top 75 Anniversary Team (2021) + Recent MVPs
+# NBA Top 75 Anniversary Team (2021) + Recent MVPs + Additional Legends
 # This list includes the official NBA 75 players with Basketball Reference IDs
-# Plus modern MVPs: SGA, Jokic, Giannis, Embiid (if not already included)
+# Plus modern MVPs and other all-time greats
+# NOTE: Only players present in all_time_careers.csv will be used at runtime
 NBA_75_PLUS_MVPS_IDS = [
     # All-time greats from NBA 75 list
     "abdulka01",    # Kareem Abdul-Jabbar
     "barklch01",    # Charles Barkley
     "birdla01",     # Larry Bird
     "bryanko01",    # Kobe Bryant
-    "chambwi01",    # Wilt Chamberlain (not in our CSV but iconic)
     "curryst01",    # Stephen Curry
     "duncati01",    # Tim Duncan
     "duranke01",    # Kevin Durant
@@ -34,7 +34,7 @@ NBA_75_PLUS_MVPS_IDS = [
     "hardeja01",    # James Harden
     "havlijo01",    # John Havlicek
     "hillgr01",     # Grant Hill
-    "iveral01",     # Allen Iverson
+    "iversal01",    # Allen Iverson
     "jamesle01",    # LeBron James
     "johnsma02",    # Magic Johnson
     "jordami01",    # Michael Jordan
@@ -55,7 +55,7 @@ NBA_75_PLUS_MVPS_IDS = [
     "pippesc01",    # Scottie Pippen
     "allenra02",    # Ray Allen
     "robinda01",    # David Robinson
-    "russewi01",    # Bill Russell (not in our CSV but iconic)
+    "rodmade01",    # Dennis Rodman
     "stockjo01",    # John Stockton
     "thomais01",    # Isiah Thomas
     "wadedw01",     # Dwyane Wade
@@ -65,7 +65,6 @@ NBA_75_PLUS_MVPS_IDS = [
     # Modern legends and recent MVPs
     "antetgi01",    # Giannis Antetokounmpo (MVP 2019, 2020)
     "jokicni01",    # Nikola Jokic (MVP 2021, 2022, 2024)
-    "embiijo01",    # Joel Embiid (MVP 2023)
     "gilgesh01",    # Shai Gilgeous-Alexander (MVP 2025)
     "leonaka01",    # Kawhi Leonard
     "lillada01",    # Damian Lillard
@@ -82,47 +81,29 @@ NBA_75_PLUS_MVPS_IDS = [
     "howardw01",    # Dwight Howard
     # Additional legends
     "drexlcl01",    # Clyde Drexler
-    "fraziwl01",    # Walt Frazier (alternate ID)
-    "roberos01",    # Oscar Robertson
+    "fraziwa01",    # Walt Frazier
     "barryri01",    # Rick Barry
-    "archibti01",   # Tiny Archibald
+    "architi01",    # Tiny Archibald
     "cowenda01",    # Dave Cowens
-    "westje01",     # Jerry West
+    "hayesel01",    # Elvin Hayes
     "moncrsi01",    # Sidney Moncrief
     "richmmi01",    # Mitch Richmond
     "dantlad01",    # Adrian Dantley
     "englial01",    # Alex English
     "kingbe01",     # Bernard King
+    "gilmoar01",    # Artis Gilmore
+    # Hall of Famers and legends
+    "gasolpa01",    # Pau Gasol
+    "cartevi01",    # Vince Carter
+    "mutomdi01",    # Dikembe Mutombo
+    "parketo01",    # Tony Parker
+    "ginobma01",    # Manu Ginobili
+    "billuch01",    # Chauncey Billups
+    "horfoal01",    # Al Horford
+    "aldrila01",    # LaMarcus Aldridge
+    "westppa01",    # Paul Westphal
 ]
 
-# Modern Superstars - Current top players
-MODERN_SUPERSTARS_IDS = [
-    "jokicni01",    # Nikola Jokic
-    "gilgesh01",    # Shai Gilgeous-Alexander
-    "antetgi01",    # Giannis Antetokounmpo
-    "doncilu01",    # Luka Doncic
-    "embiijo01",    # Joel Embiid
-    "curryst01",    # Stephen Curry
-    "duranke01",    # Kevin Durant
-    "jamesle01",    # LeBron James
-    "tatumja01",    # Jayson Tatum
-    "leonaka01",    # Kawhi Leonard
-    "davisan02",    # Anthony Davis
-    "lillada01",    # Damian Lillard
-    "mitchdo01",    # Donovan Mitchell
-    "youngtr01",    # Trae Young
-    "morantja01",   # Ja Morant
-    "edwaran01",    # Anthony Edwards
-    "irvinky01",    # Kyrie Irving
-    "hardeja01",    # James Harden
-    "paulch01",     # Chris Paul
-    "butleji01",    # Jimmy Butler
-    "georgpa01",    # Paul George
-    "townska01",    # Karl-Anthony Towns
-    "adebaba01",    # Bam Adebayo
-    "bookede01",    # Devin Booker
-    "brownma01",    # Jaylen Brown
-]
 
 # 90s Legends
 NINETIES_LEGENDS_IDS = [
@@ -153,15 +134,9 @@ NINETIES_LEGENDS_IDS = [
 GOAT_PRESETS: Dict[str, GoatPreset] = {
     "nba75_mvps": GoatPreset(
         id="nba75_mvps",
-        name="NBA 75 + Modern MVPs",
-        description="The NBA 75th Anniversary Team combined with recent MVP winners (Jokic, SGA, Giannis, Embiid)",
+        name="NBA Legends + Modern Stars",
+        description="NBA 75th Anniversary Team members, MVPs, and all-time greats",
         player_ids=NBA_75_PLUS_MVPS_IDS,
-    ),
-    "modern_superstars": GoatPreset(
-        id="modern_superstars",
-        name="Modern Superstars",
-        description="Today's top 25 NBA players",
-        player_ids=MODERN_SUPERSTARS_IDS,
     ),
     "90s_legends": GoatPreset(
         id="90s_legends",
