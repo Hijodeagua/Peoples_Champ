@@ -11,6 +11,7 @@ from fastapi.responses import JSONResponse
 # Load environment variables from .env file
 load_dotenv()
 
+from .core.config import settings
 from .db.base import Base
 from .db.session import engine
 from .routes import admin, all_time, analysis, auth, daily_set, game, players, voting
