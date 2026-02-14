@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
-import { getMyVotes } from "../api/game";
-import { getGlobalRankings, type GlobalRankingsResponse } from "../api/voting";
+import { getMyVotes, getTodayGame } from "../api/game";
+import { getGlobalRankings } from "../api/voting";
 import { loadRingerRankings, type RingerRanking } from "../data/loadRingerRankings";
 import { recordCompletion, type UserProgress } from "../utils/userProgress";
 
@@ -14,69 +14,76 @@ interface AgreementIndicatorProps {
 }
 
 /**
- * Alternative: Calculate agreement based on global rankings vs Ringer rankings
- * This compares the site's consensus ordering to The Ringer's ordering
+ * Calculate how much the user's individual votes agree with The Ringer's rankings.
+ * For each matchup where both players are in the Ringer rankings,
+ * check if the user picked the player ranked higher by The Ringer.
  */
-function calculateRankingAgreement(
-  globalRankings: GlobalRankingsResponse,
+function calculateUserAgreement(
+  userVotes: Record<number, string>,
+  matchups: { id: number; player_a_id: string; player_b_id: string }[],
+  playerNameMap: Map<string, string>,
   ringerRankings: RingerRanking[]
 ): number {
-  if (!globalRankings.rankings.length || !ringerRankings.length) {
+  if (!matchups.length || !ringerRankings.length || !Object.keys(userVotes).length) {
     return 0;
   }
 
-  // Create a map of Ringer rankings by normalized name
+  // Build Ringer rank lookup by normalized name
   const ringerMap = new Map<string, number>();
   for (const r of ringerRankings) {
     ringerMap.set(r.player.toLowerCase().trim(), r.rank);
   }
 
-  // For each player in global rankings that exists in Ringer, compare positions
-  let totalDiff = 0;
-  let matchCount = 0;
-  const maxRank = Math.max(globalRankings.rankings.length, ringerRankings.length);
+  // Helper to find a player's Ringer rank by name
+  const findRingerRank = (playerId: string): number | undefined => {
+    const name = playerNameMap.get(playerId);
+    if (!name) return undefined;
+    const nameLower = name.toLowerCase().trim();
 
-  for (let i = 0; i < globalRankings.rankings.length; i++) {
-    const player = globalRankings.rankings[i];
-    const globalRank = i + 1;
-    const playerNameLower = player.name.toLowerCase().trim();
-    
-    // Try to find in Ringer rankings
-    let ringerRank = ringerMap.get(playerNameLower);
-    
-    // Try partial matching if exact match fails
-    if (ringerRank === undefined) {
-      for (const [name, rank] of ringerMap.entries()) {
-        if (name.includes(playerNameLower) || playerNameLower.includes(name)) {
-          ringerRank = rank;
-          break;
-        }
+    // Exact match first
+    let rank = ringerMap.get(nameLower);
+    if (rank !== undefined) return rank;
+
+    // Partial match fallback
+    for (const [ringerName, ringerRank] of ringerMap.entries()) {
+      if (ringerName.includes(nameLower) || nameLower.includes(ringerName)) {
+        return ringerRank;
       }
     }
+    return undefined;
+  };
 
-    if (ringerRank !== undefined) {
-      // Calculate normalized difference (0 = perfect match, 1 = max difference)
-      const diff = Math.abs(globalRank - ringerRank) / maxRank;
-      totalDiff += diff;
-      matchCount++;
+  let agreements = 0;
+  let comparableMatchups = 0;
+
+  for (const matchup of matchups) {
+    const winnerId = userVotes[matchup.id];
+    if (!winnerId) continue; // User didn't vote on this matchup
+
+    const rankA = findRingerRank(matchup.player_a_id);
+    const rankB = findRingerRank(matchup.player_b_id);
+
+    // Both players must be in The Ringer's rankings
+    if (rankA === undefined || rankB === undefined) continue;
+
+    comparableMatchups++;
+
+    // Check if user picked the player ranked higher (lower rank number) by Ringer
+    const ringerPreferredId = rankA < rankB ? matchup.player_a_id : matchup.player_b_id;
+    if (winnerId === ringerPreferredId) {
+      agreements++;
     }
   }
 
-  if (matchCount === 0) {
-    return 0;
-  }
+  if (comparableMatchups === 0) return 0;
 
-  // Convert average difference to agreement percentage
-  // 0 diff = 100% agreement, 1 diff = 0% agreement
-  const avgDiff = totalDiff / matchCount;
-  const agreement = Math.round((1 - avgDiff) * 100);
-  return Math.max(0, Math.min(100, agreement));
+  return Math.round((agreements / comparableMatchups) * 100);
 }
 
-export default function AgreementIndicator({ 
-  refreshKey, 
+export default function AgreementIndicator({
+  refreshKey,
   showShareButtons = true,
-  onCompletionRecorded 
+  onCompletionRecorded
 }: AgreementIndicatorProps) {
   const [agreement, setAgreement] = useState<number | null>(null);
   const [benchmarkName, setBenchmarkName] = useState<string>("The Ringer's rankings");
@@ -90,10 +97,11 @@ export default function AgreementIndicator({
     async function loadAgreement() {
       setLoading(true);
       try {
-        const [myVotes, globalRankings, ringerRankings] = await Promise.all([
+        const [myVotes, globalRankings, ringerRankings, gameData] = await Promise.all([
           getMyVotes(),
           getGlobalRankings(),
-          loadRingerRankings()
+          loadRingerRankings(),
+          getTodayGame()
         ]);
 
         // Check if user has any votes
@@ -113,11 +121,22 @@ export default function AgreementIndicator({
         let finalAgreement = 0;
         let finalBenchmark = "WhosYurGOAT consensus";
 
-        // Try to calculate agreement with Ringer rankings first
-        if (ringerRankings.length > 0 && globalRankings.rankings.length > 0) {
-          const rankingAgreement = calculateRankingAgreement(globalRankings, ringerRankings);
-          if (rankingAgreement > 0) {
-            finalAgreement = rankingAgreement;
+        // Build player ID -> name map from game data
+        const playerNameMap = new Map<string, string>();
+        for (const player of gameData.players) {
+          playerNameMap.set(player.id, player.name);
+        }
+
+        // Calculate user-specific agreement with Ringer rankings
+        if (ringerRankings.length > 0 && gameData.matchups.length > 0) {
+          const userAgreement = calculateUserAgreement(
+            myVotes.votes,
+            gameData.matchups,
+            playerNameMap,
+            ringerRankings
+          );
+          if (userAgreement > 0) {
+            finalAgreement = userAgreement;
             finalBenchmark = "The Ringer's rankings";
           }
         }
@@ -162,11 +181,11 @@ export default function AgreementIndicator({
   const handleCopyResults = async () => {
     if (agreement === null) return;
 
-    const shortBenchmark = benchmarkName.includes("Ringer") 
-      ? "The Ringer's active player rankings" 
+    const shortBenchmark = benchmarkName.includes("Ringer")
+      ? "The Ringer's active player rankings"
       : "WhosYurGOAT consensus";
-    
-    const playerList = topPlayers.length > 0 
+
+    const playerList = topPlayers.length > 0
       ? topPlayers.map(name => name.split(" ").pop()).join(", ") // Use last names
       : "N/A";
 
@@ -195,11 +214,11 @@ Who's Yur GOAT? https://www.whosyurgoat.app`;
   const handleShare = async () => {
     if (agreement === null) return;
 
-    const shortBenchmark = benchmarkName.includes("Ringer") 
-      ? "The Ringer's active player rankings" 
+    const shortBenchmark = benchmarkName.includes("Ringer")
+      ? "The Ringer's active player rankings"
       : "WhosYurGOAT consensus";
-    
-    const playerList = topPlayers.length > 0 
+
+    const playerList = topPlayers.length > 0
       ? topPlayers.map(name => name.split(" ").pop()).join(", ")
       : "N/A";
 
@@ -239,7 +258,7 @@ Who's Yur GOAT? https://www.whosyurgoat.app`;
 
       {streak > 1 && (
         <p className="text-sm text-amber-400 font-medium">
-          🔥 Streak: {streak} days
+          Streak: {streak} days
         </p>
       )}
 
@@ -255,7 +274,7 @@ Who's Yur GOAT? https://www.whosyurgoat.app`;
             onClick={handleCopyResults}
             className="px-4 py-2 rounded-lg border border-slate-600 hover:border-slate-500 text-slate-200 text-sm font-medium transition w-full sm:w-auto"
           >
-            {copySuccess ? "✓ Copied!" : "Copy results"}
+            {copySuccess ? "Copied!" : "Copy results"}
           </button>
         </div>
       )}

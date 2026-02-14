@@ -105,6 +105,21 @@ async def lifespan(app: FastAPI):
     # Keep DB metadata creation synchronous. This is generally fast and avoids early query failures.
     Base.metadata.create_all(bind=engine)
 
+    # Drop stale FK constraints on all_time_matchup_votes if they exist (PostgreSQL only).
+    # All-time players come from career stats CSV, not the daily-game players table.
+    if settings.is_postgres:
+        from sqlalchemy import text
+        with engine.connect() as conn:
+            for col in ("player1_id", "player2_id", "winner_id"):
+                try:
+                    conn.execute(text(
+                        f"ALTER TABLE all_time_matchup_votes "
+                        f"DROP CONSTRAINT IF EXISTS all_time_matchup_votes_{col}_fkey"
+                    ))
+                except Exception:
+                    pass
+            conn.commit()
+
     startup_thread = threading.Thread(target=_run_heavy_startup, args=(app,), daemon=True)
     startup_thread.start()
 
