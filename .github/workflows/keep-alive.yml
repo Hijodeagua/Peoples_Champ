@@ -18,4 +18,18 @@ jobs:
             exit 1
           fi
 
-          curl --fail --silent --show-error --max-time 20 "$HEALTHCHECK_URL/health/live"
+          BASE_URL="${HEALTHCHECK_URL%/}"
+          if [[ "$BASE_URL" == *"/health/live" ]]; then
+            TARGET_URL="$BASE_URL"
+          else
+            TARGET_URL="$BASE_URL/health/live"
+          fi
+
+          echo "Pinging: $TARGET_URL"
+          curl --fail --silent --show-error \
+            --retry 5 \
+            --retry-delay 5 \
+            --retry-all-errors \
+            --connect-timeout 10 \
+            --max-time 45 \
+            "$TARGET_URL"
