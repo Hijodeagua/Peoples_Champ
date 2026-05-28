@@ -26,7 +26,7 @@ type AllTimePlayerRow = {
 
 export async function loadAllTimePlayers(): Promise<AllTimePlayer[]> {
   try {
-    const response = await fetch("/data/nba_top_75_alltime.csv");
+    const response = await fetch(`${import.meta.env.BASE_URL}data/nba_top_75_alltime.csv`);
     
     if (!response.ok) {
       throw new Error(`Failed to fetch all-time players: ${response.statusText}`);

@@ -3,6 +3,8 @@ import react from '@vitejs/plugin-react'
 
 // https://vite.dev/config/
 export default defineConfig({
+  // App is served under the /goat subpath behind the whosyurgoat.app hub.
+  base: '/goat/',
   plugins: [react()],
   server: {
     proxy: {

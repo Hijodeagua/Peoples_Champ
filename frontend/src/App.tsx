@@ -11,7 +11,7 @@ import AllTimeRankingsPage from "./pages/AllTimeRankingsPage";
 
 function App() {
   return (
-    <BrowserRouter>
+    <BrowserRouter basename="/goat">
       <div className="min-h-screen bg-slate-900 text-white">
         <NavBar />
         <main className="max-w-7xl mx-auto px-4 py-6 sm:py-8">

@@ -679,7 +679,7 @@ async def complete_ranking(
 
     if ranking.share_slug:
         share_slug = ranking.share_slug
-        share_url = f"https://whosyurgoat.app/share/alltime/{share_slug}"
+        share_url = f"https://whosyurgoat.app/goat/share/alltime/{share_slug}"
 
     db.commit()
 

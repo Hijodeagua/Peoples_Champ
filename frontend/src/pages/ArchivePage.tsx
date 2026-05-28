@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { api } from "../api/client";
 
 interface ArchiveEntry {
@@ -110,9 +110,9 @@ export default function ArchivePage() {
               </div>
               <p className="text-lg font-medium text-slate-300">No archived games found.</p>
               <p className="text-sm text-slate-500 mt-2">Games will appear here once daily matchups are created.</p>
-              <a href="/daily" className="btn-primary text-sm inline-block mt-6">
+              <Link to="/daily" className="btn-primary text-sm inline-block mt-6">
                 Play Today's Game
-              </a>
+              </Link>
             </div>
           ) : (
             archives.map((archive, index) => {

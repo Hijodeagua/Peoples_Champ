@@ -54,7 +54,7 @@ function parsePct(val: string): number | null {
 }
 
 export async function loadAllTimeStats(): Promise<AllTimePlayerStats[]> {
-  const response = await fetch('/data/all_time_pre_26.csv');
+  const response = await fetch(`${import.meta.env.BASE_URL}data/all_time_pre_26.csv`);
   if (!response.ok) {
     throw new Error('Failed to load all-time stats');
   }

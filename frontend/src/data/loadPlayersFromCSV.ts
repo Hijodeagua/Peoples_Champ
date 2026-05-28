@@ -103,7 +103,7 @@ function calculatePercentile(value: number, allValues: number[]): number {
 }
 
 export async function loadPlayers(): Promise<Player[]> {
-  const url = "/data/Bbref_Adv_25-26.csv";
+  const url = `${import.meta.env.BASE_URL}data/Bbref_Adv_25-26.csv`;
   console.log("Fetching CSV from:", url);
   
   const response = await fetch(url);
