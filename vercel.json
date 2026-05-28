@@ -1,0 +1,13 @@
+{
+  "rewrites": [
+    { "source": "/crime-maps", "destination": "https://crime-maps.vercel.app/" },
+    { "source": "/crime-maps/:path*", "destination": "https://crime-maps.vercel.app/:path*" },
+    { "source": "/worldcup", "destination": "https://world-cup-tickets.vercel.app/" },
+    { "source": "/worldcup/:path*", "destination": "https://world-cup-tickets.vercel.app/:path*" },
+    { "source": "/election", "destination": "https://election-models-by-tre.vercel.app/" },
+    { "source": "/election/:path*", "destination": "https://election-models-by-tre.vercel.app/:path*" },
+    { "source": "/vegas", "destination": "https://can-tre-beat-vegas.vercel.app/" },
+    { "source": "/vegas/:path*", "destination": "https://can-tre-beat-vegas.vercel.app/:path*" },
+    { "source": "/(.*)", "destination": "/index.html" }
+  ]
+}
