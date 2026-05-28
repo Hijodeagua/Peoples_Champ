@@ -8,6 +8,7 @@ import {
   type GameSubmitResponse,
   type GameMode,
 } from "../api/game";
+import { Link } from "react-router-dom";
 import FeedbackLink from "../components/FeedbackLink";
 
 type MatchupChoiceMap = Record<number, string>; // matchup_id -> winner_id
@@ -129,9 +130,9 @@ export default function PlayPage() {
   return (
     <div className="min-h-screen bg-slate-900 text-white flex flex-col">
       <header className="w-full border-b border-slate-800 px-4 py-3 flex items-center justify-between">
-        <a href="/" className="font-bold text-lg">
+        <Link to="/" className="font-bold text-lg">
           Who's Yur GOAT
-        </a>
+        </Link>
         <span className="text-xs text-slate-400">
           Daily set for {game.date}
         </span>

@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import { getTodayGame, getMyVotes, type GameTodayResponse, type Player, type SeasonOption, type PlayerStats, type AdvancedStats } from "../api/game";
 import { submitVote, type UserVotesResponse } from "../api/voting";
 import { getPlayerImageUrl } from "../utils/playerImages";
@@ -280,7 +281,12 @@ export default function MatchupView() {
       return;
     }
 
-    const shareUrl = typeof window !== "undefined" ? window.location.origin : "";
+    // Include the app's base path (/goat/) so shared links land on the GOAT app,
+    // not the hub root that owns whosyurgoat.app.
+    const shareUrl =
+      typeof window !== "undefined"
+        ? `${window.location.origin}${import.meta.env.BASE_URL}`
+        : "";
 
     try {
       if (typeof navigator !== "undefined" && navigator.share) {
@@ -424,9 +430,9 @@ export default function MatchupView() {
           <p className="text-slate-500 text-sm mb-4">
             Check back tomorrow or visit the Archive to replay past games.
           </p>
-          <a href="/archive" className="btn-gold text-sm">
+          <Link to="/archive" className="btn-gold text-sm">
             View Archive
-          </a>
+          </Link>
         </div>
       </div>
     );
@@ -577,9 +583,9 @@ export default function MatchupView() {
             )}
           </div>
 
-          <a href="/rankings" className="btn-primary inline-block">
+          <Link to="/rankings" className="btn-primary inline-block">
             View People&apos;s Rankings
-          </a>
+          </Link>
         </div>
       ) : (
         <>

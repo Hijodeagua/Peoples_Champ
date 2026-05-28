@@ -15,7 +15,7 @@ type RingerRow = {
 
 export async function loadRingerRankings(): Promise<RingerRanking[]> {
   try {
-    const response = await fetch("/data/ringer_top_100.csv");
+    const response = await fetch(`${import.meta.env.BASE_URL}data/ringer_top_100.csv`);
     
     if (!response.ok) {
       throw new Error(`Failed to fetch Ringer rankings: ${response.statusText}`);
