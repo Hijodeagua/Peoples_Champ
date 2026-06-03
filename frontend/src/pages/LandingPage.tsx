@@ -1,18 +1,16 @@
 import { Link } from "react-router-dom";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { loadUserProgress, getCurrentStreak, type UserProgress } from "../utils/userProgress";
 
 export default function LandingPage() {
-  const [userProgress, setUserProgress] = useState<UserProgress | null>(null);
-  const [currentStreak, setCurrentStreak] = useState(0);
-
-  useEffect(() => {
+  // Read persisted progress once on mount (localStorage is an external system).
+  const [userProgress] = useState<UserProgress | null>(() => {
     const progress = loadUserProgress();
-    if (progress.lastCompletionDate) {
-      setUserProgress(progress);
-      setCurrentStreak(getCurrentStreak());
-    }
-  }, []);
+    return progress.lastCompletionDate ? progress : null;
+  });
+  const [currentStreak] = useState(() =>
+    loadUserProgress().lastCompletionDate ? getCurrentStreak() : 0
+  );
 
   return (
     <div className="max-w-5xl mx-auto px-4 page-enter">

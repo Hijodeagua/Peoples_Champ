@@ -46,7 +46,7 @@ export function RankingsScatterPlot({ rankings, h2hVotes, simulatedH2H, useSimul
   } else if (h2hVotes) {
     // Compute ranks from real vote win rates
     const sortedByWinRate = [...h2hVotes.entries()]
-      .filter(([_, stats]) => stats.total_matchups > 0)
+      .filter(([, stats]) => stats.total_matchups > 0)
       .sort((a, b) => b[1].win_rate - a[1].win_rate);
     sortedByWinRate.forEach(([id], index) => {
       h2hRanks.set(id, index + 1);

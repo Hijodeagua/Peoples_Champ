@@ -156,10 +156,10 @@ export default function SortableRankingsTable({
   };
 
   // Format value for display
-  const formatValue = (value: any, column: Column): string => {
+  const formatValue = (value: unknown, column: Column): string => {
     if (value == null) return "—";
 
-    if (column.type === "percentage") {
+    if (column.type === "percentage" && typeof value === "number") {
       return `${(value * 100).toFixed(column.decimals ?? 1)}%`;
     }
 

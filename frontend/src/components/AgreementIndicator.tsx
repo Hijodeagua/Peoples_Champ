@@ -41,7 +41,7 @@ function calculateUserAgreement(
     const nameLower = name.toLowerCase().trim();
 
     // Exact match first
-    let rank = ringerMap.get(nameLower);
+    const rank = ringerMap.get(nameLower);
     if (rank !== undefined) return rank;
 
     // Partial match fallback
@@ -231,7 +231,7 @@ Who's Yur GOAT? https://www.whosyurgoat.app`;
     if (navigator.share) {
       try {
         await navigator.share(shareData);
-      } catch (err) {
+      } catch {
         // User cancelled or share failed, fall back to copy
         handleCopyResults();
       }
