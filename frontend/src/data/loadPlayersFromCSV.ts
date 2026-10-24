@@ -44,7 +44,7 @@ export type Player = {
     ts_pct: number;
     efg_pct: number;
   };
-  raw: Record<string, any>;
+  raw: Record<string, string | number | undefined>;
 };
 
 function toNumber(value: unknown): number {
@@ -104,30 +104,18 @@ function calculatePercentile(value: number, allValues: number[]): number {
 
 export async function loadPlayers(): Promise<Player[]> {
   const url = `${import.meta.env.BASE_URL}data/Bbref_Adv_25-26.csv`;
-  console.log("Fetching CSV from:", url);
-  
+
   const response = await fetch(url);
-  console.log("Response status:", response.status, response.statusText);
-  
   if (!response.ok) {
     throw new Error(`Failed to load CSV: ${response.status} ${response.statusText}`);
   }
 
   const csvText = await response.text();
-  console.log("CSV text length:", csvText.length);
-  
-  const parsed = Papa.parse<Record<string, any>>(csvText, {
+
+  const parsed = Papa.parse<Record<string, string>>(csvText, {
     header: true,
     skipEmptyLines: true,
   });
-
-  console.log("Raw parsed results:", parsed);
-  console.log("Number of rows parsed:", parsed.data.length);
-  
-  if (parsed.data.length > 0) {
-    console.log("Sample row:", parsed.data[0]);
-    console.log("Headers found:", Object.keys(parsed.data[0]));
-  }
 
   if (parsed.errors.length) {
     console.warn("CSV parse errors:", parsed.errors);
@@ -136,8 +124,8 @@ export async function loadPlayers(): Promise<Player[]> {
   const playerMap = new Map<string, Player>();
 
   parsed.data
-    .filter((row: Record<string, any>) => row && row["Player-additional"])
-    .forEach((row: Record<string, any>) => {
+    .filter((row: Record<string, string>) => row && row["Player-additional"])
+    .forEach((row: Record<string, string>) => {
       const player = mapRowToPlayer(row);
       const existing = playerMap.get(player.id);
       

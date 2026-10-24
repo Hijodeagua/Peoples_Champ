@@ -1,6 +1,7 @@
 import { useState, useCallback, useEffect } from "react";
 import SocialGraphicGenerator from "../components/SocialGraphicGenerator";
 import FeedbackLink from "../components/FeedbackLink";
+import { isAxiosError } from "axios";
 import apiClient from "../api/client";
 import { getPlayerImageUrlWithFallback } from "../utils/playerImages";
 
@@ -180,9 +181,9 @@ export default function AllTimeRankingsPage() {
       setMatchupsCompleted(0);
       setRankings([]);
       setPhase("playing");
-    } catch (err: any) {
-      const status = err.response?.status;
-      const detail = err.response?.data?.detail;
+    } catch (err: unknown) {
+      const status = isAxiosError(err) ? err.response?.status : undefined;
+      const detail = isAxiosError(err) ? err.response?.data?.detail : undefined;
       if (status === 404) {
         setError("API endpoint not found. The backend may not be configured correctly.");
       } else if (status === 502 || status === 503) {
@@ -218,8 +219,9 @@ export default function AllTimeRankingsPage() {
       } else if (data.next_matchup) {
         setCurrentMatchup(data.next_matchup);
       }
-    } catch (err: any) {
-      setError(err.response?.data?.detail || "Failed to submit vote");
+    } catch (err: unknown) {
+      const detail = isAxiosError(err) ? err.response?.data?.detail : undefined;
+      setError(detail || "Failed to submit vote");
     } finally {
       setLoading(false);
     }
@@ -242,8 +244,9 @@ export default function AllTimeRankingsPage() {
       setRankings(data.final_rankings);
       setShareSlug(data.share_slug);
       setPhase("results");
-    } catch (err: any) {
-      setError(err.response?.data?.detail || "Failed to complete ranking");
+    } catch (err: unknown) {
+      const detail = isAxiosError(err) ? err.response?.data?.detail : undefined;
+      setError(detail || "Failed to complete ranking");
     } finally {
       setLoading(false);
     }

@@ -308,7 +308,7 @@ export default function MatchupView() {
 
       setManualShareText(`${shareText}\n\n${shareUrl}`.trim());
       setShareMessage("Copy the text below.");
-    } catch (err) {
+    } catch {
       setManualShareText(`${shareText}\n\n${shareUrl}`.trim());
       setShareMessage("Copy the text below.");
     }

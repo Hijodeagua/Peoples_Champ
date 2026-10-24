@@ -14,12 +14,19 @@ const percent = (value: number) =>
 const perGame = (value: number) =>
   Number.isFinite(value) ? value.toFixed(1) : "N/A";
 
-export default function PlayerColumn({ player, selected, onSelect, statDescriptions }: PlayerColumnProps) {
-  const StatRow = ({ label, value, percentile }: { label: string; value: string; percentile?: number }) => (
+type StatRowProps = {
+  label: string;
+  value: string;
+  percentile?: number;
+  statDescriptions?: Record<string, string>;
+};
+
+function StatRow({ label, value, percentile, statDescriptions }: StatRowProps) {
+  return (
     <div className="space-y-1">
       <div className="flex items-baseline justify-between">
-        <span 
-          className="font-semibold text-slate-100 text-xs cursor-help" 
+        <span
+          className="font-semibold text-slate-100 text-xs cursor-help"
           title={statDescriptions?.[label] ?? ""}
         >
           {label}:
@@ -29,7 +36,9 @@ export default function PlayerColumn({ player, selected, onSelect, statDescripti
       {percentile !== undefined && <PercentileBar percentile={percentile} />}
     </div>
   );
+}
 
+export default function PlayerColumn({ player, selected, onSelect, statDescriptions }: PlayerColumnProps) {
   return (
     <button
       type="button"
@@ -51,61 +60,71 @@ export default function PlayerColumn({ player, selected, onSelect, statDescripti
       </div>
 
       <div className="space-y-3 text-slate-200">
-        <StatRow 
+        <StatRow
+          statDescriptions={statDescriptions}
           label="PPG" 
           value={perGame(player.stats.pts)} 
           percentile={player.percentiles?.pts} 
         />
-        <StatRow 
+        <StatRow
+          statDescriptions={statDescriptions}
           label="APG" 
           value={perGame(player.stats.ast)} 
           percentile={player.percentiles?.ast} 
         />
-        <StatRow 
+        <StatRow
+          statDescriptions={statDescriptions}
           label="RPG" 
           value={perGame(player.stats.trb)} 
           percentile={player.percentiles?.trb} 
         />
-        <StatRow 
+        <StatRow
+          statDescriptions={statDescriptions}
           label="SPG" 
           value={perGame(player.stats.stl)} 
           percentile={player.percentiles?.stl} 
         />
-        <StatRow 
+        <StatRow
+          statDescriptions={statDescriptions}
           label="BPG" 
           value={perGame(player.stats.blk)} 
           percentile={player.percentiles?.blk} 
         />
         
         <div className="border-t border-slate-700 pt-3 mt-3">
-          <StatRow 
+          <StatRow
+          statDescriptions={statDescriptions}
             label="FG%" 
             value={percent(player.stats.fg_pct)} 
             percentile={player.percentiles?.fg_pct} 
           />
           <div className="mt-3">
-            <StatRow 
+            <StatRow
+          statDescriptions={statDescriptions}
               label="3P%" 
               value={percent(player.stats.three_pct)} 
               percentile={player.percentiles?.three_pct} 
             />
           </div>
           <div className="mt-3">
-            <StatRow 
+            <StatRow
+          statDescriptions={statDescriptions}
               label="FT%" 
               value={percent(player.stats.ft_pct)} 
               percentile={player.percentiles?.ft_pct} 
             />
           </div>
           <div className="mt-3">
-            <StatRow 
+            <StatRow
+          statDescriptions={statDescriptions}
               label="TS%" 
               value={percent(player.stats.ts_pct)} 
               percentile={player.percentiles?.ts_pct} 
             />
           </div>
           <div className="mt-3">
-            <StatRow 
+            <StatRow
+          statDescriptions={statDescriptions}
               label="eFG%" 
               value={percent(player.stats.efg_pct)} 
               percentile={player.percentiles?.efg_pct} 

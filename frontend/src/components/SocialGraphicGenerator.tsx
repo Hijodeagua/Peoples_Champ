@@ -5,7 +5,7 @@ type Player = {
   team?: string | null;
   position?: string | null;
   jerseyNumber?: number | string | null;
-  [key: string]: any;
+  [key: string]: unknown;
 };
 
 type ImageFormat = "twitter" | "instagram" | "square";
